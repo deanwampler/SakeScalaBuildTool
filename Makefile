@@ -6,7 +6,7 @@ all: clean compile test
 test:
 	cd build; \
 	for f in $$(find sake -name '*Spec.class'); do ff=$$(echo $${f%.class} | tr / .); echo $$ff; \
-		scala -cp ${CLASSPATH} $$ff; done
+		scala -cp ${CLASSPATH} $$ff || exit $$?; done
 
 compile: build_dir
 	scalac -d build -cp ${CLASSPATH} -unchecked $$(find src spec -name '*.scala')

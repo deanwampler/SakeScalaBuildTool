@@ -7,15 +7,15 @@ object project {
 
     target('all -> List('clean, 'compile, 'spec))
     
-    target('spec) build {
-       files("**/*Spec.class").foreach(scala(_))
+    target('spec) {
+       spec('files -> files("**/*Spec.class"))
     }
 
-    target('compile) build {
-        scalac -cp ${CLASSPATH} *.scala
+    target('compile) {
+        scalac('files -> files("**/*.scala"))
     }
 
-    target('clean) build {
+    target('clean) {
        rm_dir(buildDir)
     }
 }
