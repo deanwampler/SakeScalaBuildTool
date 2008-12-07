@@ -38,29 +38,4 @@ object SymbolUtilSpec extends Specification {
             toSymbols(List('symbol1, 2, "symbol3", 'symbol4)) must throwA[BuildError]
         }
     }
-
-    "toList" should {
-        "return an empty list if given an empty list" in {
-            toList(List()) must be_==(List())
-        }
-
-        "when given a non-list item, return a one-item list containing the item, converted to a symbol" in {
-            toList('symbol) must be_==(List('symbol))
-            toList("symbol") must be_==(List('symbol))
-        }
-
-        "return a list of symbols if given all symbols" in {
-            toList(List('symbol1, 'symbol2)) must be_==(List('symbol1, 'symbol2))
-        }
-
-        "return a list of symbols if given mixed symbols and strings" in {
-            toList(List('symbol1, "symbol2", "symbol3", 'symbol4)) must be_==(
-                List('symbol1, 'symbol2, 'symbol3, 'symbol4))
-        }
-        
-        "throw a BuildError if any List item is not a string and not a symbol" in {
-            toList(2.2) must throwA[BuildError]
-            toList(List('symbol1, 2, "symbol3", 'symbol4)) must throwA[BuildError]
-        }
-    }
 }

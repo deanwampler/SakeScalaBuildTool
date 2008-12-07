@@ -1,7 +1,7 @@
 #!/bin/sh -- 
 
 CLASSPATH=/Library/tools/scala/scala-specs/specs-1.4.1.jar:build
-set -x
+set +x
 file=sake.scala
 args[0]=-cp
 args[1]=$CLASSPATH
@@ -13,13 +13,25 @@ do
 			shift
 			file=$1
 			;;
+		-*)
+			args[${#args[@]}]=$1
+			shift
+			args[${#args[@]}]=$1
+			;;
 		*)
-			args[$#]=$1
+			targets[${#targets[@]}]=$1
 			;;
 	esac
+	shift
 done
 
-scala "${args[@]}" $file
+if [ "${#targets[@]}" == 0 ]; then
+    targets[0]="all"
+fi
+
+( cat $file; for targ in ${targets[@]}; \
+    do echo "build('$targ)"; \
+done) |  scala "${args[@]}"
 
 # scala "${args[@]}" <<-EOF
 #     :load "$file"

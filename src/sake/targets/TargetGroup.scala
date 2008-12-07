@@ -1,5 +1,9 @@
 package sake.targets
 
+/**
+ * Wraps a list of targets and provides an apply() method to specify the 
+ * "action" function for all the targets.
+ */ 
 class TargetGroup(val targets: List[Target]) {
     
     def this(t: Target) = this(List(t))
@@ -13,9 +17,12 @@ class TargetGroup(val targets: List[Target]) {
      * An action is assigned to the Targets in the TargetGroup.
      * Creates new Targets, _replacing_ the existing action in each one (if any) with the new action.
      */
-    def apply(act: => Unit) = new TargetGroup(for {
-        t <- targets
-    }   yield new Target(t.name, t.dependencies, act))
+    def apply(act: => Unit) = {
+        val targetList = for {
+            t <- targets
+        }   yield new Target(t.name, t.dependencies, act)
+        new TargetGroup(targetList)
+    }
     
     override def equals(other: Any) = other match {
         case tg: TargetGroup => targets.equals(tg.targets)

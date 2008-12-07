@@ -21,7 +21,7 @@ object TargetGroupSpec extends Specification {
         }
     }
     
-    "A TargetGroup with N target" should {
+    "A TargetGroup with N targets" should {
         "have a list with the N targets" in {
             val t1 = new Target('t1)
             val t2 = new Target('t2)
@@ -33,8 +33,8 @@ object TargetGroupSpec extends Specification {
         }
     }
     
-    "Addition using '::'" should {
-        "return a new TargetGroup with the new Target prepended to the original list." in {
+    "Using '::'" should {
+        "return a new TargetGroup with the added Target prepended to the original list." in {
             val t1 = new Target('t1)
             val t2 = new Target('t2)
             val t3 = new Target('t3)
@@ -47,7 +47,7 @@ object TargetGroupSpec extends Specification {
     }
 
     "Concatenation using ':::'" should {
-        "return a new TargetGroup with the new Target list prepended to the original list." in {
+        "return a new TargetGroup with the added Target list prepended to the original list." in {
             val t1 = new Target('t1)
             val t2 = new Target('t2)
             val t3 = new Target('t3)
@@ -61,8 +61,8 @@ object TargetGroupSpec extends Specification {
         }
     }
 
-    "Apply()" should {
-        "return a new TargetGroup with new Targets." in {
+    "apply()" should {
+        "return a new TargetGroup with new Targets, each of which has the new 'action'." in {
             val t1 = new Target('t1)
             val t2 = new Target('t2)
             val t3 = new Target('t3)

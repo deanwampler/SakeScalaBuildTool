@@ -11,7 +11,7 @@ object TargetSpec extends Specification {
             (new Target('t)).name must be_==('t)
         }
 
-        "have zero dependencies" in {
+        "have no dependencies" in {
             (new Target('t)).dependencies must be_==(Nil)
         }
     }
@@ -47,8 +47,8 @@ object TargetSpec extends Specification {
         }
     }
     
-    "Building the Target" should {
-        "invoke the Target's action" in {
+    "Calling build() on the Target" should {
+        "invoke the Target's build action" in {
             var success = false
             val t = new Target('t, List('d1), { success = true })
             t.build()

@@ -14,7 +14,7 @@ object PredefSpec extends Specification {
         }
     }
     
-    "The target method specification" should {
+    "The target method" should {
         "accept a symbol as its name as the first parameter" in {
             val group = target('targetName)
             group.targets.length must be_==(1)
@@ -51,7 +51,7 @@ object PredefSpec extends Specification {
             }
         }
 
-        "accept a Nil list names and create no new targets" in {
+        "accept a Nil list of names and create no new targets" in {
             val group = target(Nil)
             group.targets.length must be_==(0)
         } 
@@ -105,7 +105,7 @@ object PredefSpec extends Specification {
     }
     
     "The target method with an action" should {
-        "accept the action as a no-argument closure" in {
+        "accept the action as a no-argument closure returning Unit" in {
             var invoked = 0
             val group = target('targetName) { 
                 invoked += 1

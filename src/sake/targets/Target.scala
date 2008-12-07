@@ -17,7 +17,14 @@ object Target {
         case Nil => new TargetGroup()
         case _ => {
             val name = SymbolUtil.toSymbol(names)
-            new TargetGroup(new Target(name, SymbolUtil.toList(deps)))
+            new TargetGroup(new Target(name, toList(deps)))
         }
     }
+    
+    private def toList(item: Any) = item match { 
+        case list: List[_] => SymbolUtil.toSymbols(list)
+        case _ => List(SymbolUtil.toSymbol(item))
+    }
+
+    
 }

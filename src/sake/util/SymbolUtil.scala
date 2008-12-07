@@ -1,10 +1,6 @@
 package sake.util
 
 object SymbolUtil {
-    def toList(item: Any) = item match { 
-        case list: List[_] => toSymbols(list)
-        case _ => List(toSymbol(item))
-    }
 
     def toSymbols(list: List[Any]) = {
         for (item <- list) 
