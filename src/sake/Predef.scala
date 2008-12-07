@@ -3,6 +3,7 @@ package sake {
     object Predef {
         
         import scala.collection.mutable.Map
+        import sake.targets._
         
         /**
          * The default "classpath" is a list of strings containing ".", 
@@ -11,34 +12,33 @@ package sake {
         var classpath = List[String](".")
         
         /**
-         * The map of user defined targets, with the target names as the keys.
+         * Manager of the defined targets and their relationships.
          */
-        val allTargets = Map[Symbol, Target]()
-        
+         
+        val targetManager = new TargetManager
+             
         // TODO
-        def build = println(allTargets)
+        def build = println(targetManager.allTargets())
         
         /**
          * Create one or more targets, passed in as a vararg list of Strings and/or
          * Symbols or Lists of the same. The last argument is the action for the the
          * target. Use "{}" for "do nothing".
          */
-        def target(targets: Any*)(action: => Unit): Unit = targets.foreach { 
-            t => t match {
+        def target(targets: Any*)(action: => Unit) = targets.foldLeft(new TargetGroup()) {
+            (group, targ) =>
+            group ++ (targ match {
                 case (n, deps) => makeTarget(n, deps, action)
                 case n         => makeTarget(n, Nil, action)
-            }
+            })
         }
         
-        private def makeTarget(names: Any, deps: Any, action: => Unit): Unit = names match {
-            case head :: tail => {
-                makeTarget(head, deps, action)
-                makeTarget(tail, deps, action)
-            }
-            case Nil => {}
+        private def makeTarget(names: Any, deps: Any, action: => Unit): TargetGroup = names match {
+            case head :: tail => makeTarget(head, deps, action) ++ makeTarget(tail, deps, action)
+            case Nil => new TargetGroup()
             case _ => {
                 val name = toSymbol(names)
-                allTargets += (name -> new Target(name, toSymbolsList(deps), action))
+                new TargetGroup(new Target(name, toSymbolsList(deps), action))
             }
         }
         
