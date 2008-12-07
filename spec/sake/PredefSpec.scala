@@ -13,9 +13,9 @@ package sake {
             }
         }
         
-        "The target method with no action function" should {
+        "The target method specification" should {
             "accept a symbol as its name as the first parameter" in {
-                val group = target('targetName) {}
+                val group = target('targetName)
                 group.targets.length must be_==(1)
                 val t = group.targets.head
                 t.name must be_==('targetName)
@@ -23,7 +23,7 @@ package sake {
             }
 
             "accept a string as its name as the first parameter" in {
-                val group = target("targetName") {}
+                val group = target("targetName")
                 group.targets.length must be_==(1)
                 val t = group.targets.head
                 t.name must be_==('targetName)
@@ -31,7 +31,7 @@ package sake {
             }
 
             "convert an input string name to a symbol" in {
-                val group = target("targetName") {}
+                val group = target("targetName")
                 group.targets.length must be_==(1)
                 val t = group.targets.head
                 t.name must be_==('targetName)
@@ -39,7 +39,7 @@ package sake {
             }
             
             "accept more than one symbol and/or string as the names of new targets, as the first parameter" in {
-                val group = target('targetName1, "targetName2", "targetName3", 'targetName4) {}
+                val group = target('targetName1, "targetName2", "targetName3", 'targetName4)
                 group.targets.length must be_==(4)
                 val t = group.targets.head
                 List('targetName1, 'targetName2, 'targetName3, 'targetName4).foreach { n =>
@@ -51,14 +51,14 @@ package sake {
             }
 
             "accept a Nil list names and create no new targets" in {
-                val group = target(Nil) {}
+                val group = target(Nil)
                 group.targets.length must be_==(0)
             } 
 
             """accept a list of one or more symbols and/or strings as the names of new targets, 
                 as the first parameter""" in {
                 val targs = List('targetName1, "targetName2", "targetName3", 'targetName4)
-                val group = target(targs) {}
+                val group = target(targs)
                 group.targets.length must be_==(4)
                 List('targetName1, 'targetName2, 'targetName3, 'targetName4).foreach { n =>
                     group.targets.find(t => t.name == n) match {
@@ -69,7 +69,7 @@ package sake {
             }
 
             "accept a single dependent after each name (and convert it to a List)" in {
-                val group = target('targetName1 -> 'dep11, "targetName2" -> "dep21") {}
+                val group = target('targetName1 -> 'dep11, "targetName2" -> "dep21")
                 group.targets.length must be_==(2)
                 Map('targetName1 -> List('dep11), 'targetName2 -> List('dep21)).foreach { n_d => 
                     group.targets.find(t => t.name == n_d._1) match {
@@ -80,7 +80,7 @@ package sake {
             }
 
             "accept a List of dependents after each name" in {
-                val group = target('targetName1 -> List('dep11, "dep12"), "targetName2" -> ("dep21" :: 'dep22 :: Nil)) {}
+                val group = target('targetName1 -> List('dep11, "dep12"), "targetName2" -> ("dep21" :: 'dep22 :: Nil))
                 group.targets.length must be_==(2)
                 Map('targetName1 -> List('dep11, 'dep12), 'targetName2 -> List('dep21, 'dep22)).foreach { n_d => 
                     group.targets.find(t => t.name == n_d._1) match {
@@ -92,7 +92,7 @@ package sake {
 
 
             "accept a List of dependents after a list of name, where each target gets the same list of dependencies" in {
-                val group = target(List('targetName1, "targetName2") -> List('depa, "depb", 'depc)) {}
+                val group = target(List('targetName1, "targetName2") -> List('depa, "depb", 'depc))
                 group.targets.length must be_==(2)
                 List('targetName1, 'targetName2).foreach { n =>
                     group.targets.find(t => t.name == n) match {
@@ -103,10 +103,10 @@ package sake {
             }
         }
         
-        "The target method with an action function" should {
+        "The target method with an action" should {
             "accept the action as a no-argument closure" in {
                 var invoked = 0
-                val group = target('targetName) { 
+                val group = target('targetName) action { 
                     invoked += 1
                 }
                 val t = group.targets.head

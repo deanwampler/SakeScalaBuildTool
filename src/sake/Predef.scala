@@ -25,20 +25,20 @@ package sake {
          * Symbols or Lists of the same. The last argument is the action for the the
          * target. Use "{}" for "do nothing".
          */
-        def target(targets: Any*)(action: => Unit) = targets.foldLeft(new TargetGroup()) {
+        def target(targets: Any*) = targets.foldLeft(new TargetGroup()) {
             (group, targ) =>
             group ++ (targ match {
-                case (n, deps) => makeTarget(n, deps, action)
-                case n         => makeTarget(n, Nil, action)
+                case (n, deps) => makeTarget(n, deps)
+                case n         => makeTarget(n, Nil)
             })
         }
         
-        private def makeTarget(names: Any, deps: Any, action: => Unit): TargetGroup = names match {
-            case head :: tail => makeTarget(head, deps, action) ++ makeTarget(tail, deps, action)
+        private def makeTarget(names: Any, deps: Any): TargetGroup = names match {
+            case head :: tail => makeTarget(head, deps) ++ makeTarget(tail, deps)
             case Nil => new TargetGroup()
             case _ => {
                 val name = toSymbol(names)
-                new TargetGroup(new Target(name, toSymbolsList(deps), action))
+                new TargetGroup(new Target(name, toSymbolsList(deps)))
             }
         }
         
