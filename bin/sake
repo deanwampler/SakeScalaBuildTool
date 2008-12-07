@@ -1,0 +1,27 @@
+#!/bin/sh -- 
+
+CLASSPATH=/Library/tools/scala/scala-specs/specs-1.4.1.jar:build
+set -x
+file=sake.scala
+args[0]=-cp
+args[1]=$CLASSPATH
+
+while [ $# -gt 0 ]
+do
+	case $1 in
+		-f)
+			shift
+			file=$1
+			;;
+		*)
+			args[$#]=$1
+			;;
+	esac
+done
+
+scala "${args[@]}" $file
+
+# scala "${args[@]}" <<-EOF
+#     :load "$file"
+#     build
+# EOF
