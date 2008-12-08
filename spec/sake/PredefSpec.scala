@@ -6,6 +6,7 @@ object PredefSpec extends Specification {
     
     import sake.Predef._
     import sake.targets._
+    import sake.util._
     
     def verifyDeps(t: Target, deps: List[Symbol]) = {
         t.dependencies.size must be_==(deps.size)
@@ -114,6 +115,20 @@ object PredefSpec extends Specification {
             t.build()
             t.build()
             invoked must be_==(2)
+        }
+
+        "include the target name in the exception message if the build fails" in {
+            var invoked = 0
+            val group = target('FailedTarget) { 
+                throw new BuildError("test")
+            }
+            val t = group.targets.head
+            try {
+                t.build()
+            } catch {
+                case BuildError(m, th) => m.contains("FailedTarget") must be_==(true)
+                case _ => fail()
+            }
         }
     }
 }

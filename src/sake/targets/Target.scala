@@ -4,7 +4,13 @@ import sake.util._
 
 class Target(val name: Symbol, val dependencies: List[Symbol], action: => Unit) {
 
-    def build() = action
+    def build() = {
+        try {
+            action
+        } catch {
+            case th:Throwable => new BuildError("target \""+name+"\" failed: ", th)
+        }
+    }
     
     def this(name:Symbol) = this(name, Nil, {})
     def this(name:Symbol, dependencies:List[Symbol]) = this(name, dependencies, {})

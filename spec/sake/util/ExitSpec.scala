@@ -11,7 +11,7 @@ object ExitSpec extends Specification {
                 Exit.error("message") 
                 fail()
             } catch {
-                case BuildError(msg) =>  msg must be_==("message")
+                case BuildError(msg, th) =>  msg must be_==("message")
                 case _ => fail()
             }
         }
