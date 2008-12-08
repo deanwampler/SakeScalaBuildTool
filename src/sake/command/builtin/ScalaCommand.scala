@@ -5,9 +5,9 @@ private class ScalaCommand(name: String, defaultOptions: Map[Symbol, Any])
         
     override val requiredOptions = List('command)
 }
-object ScalaCommand {
-    val scala = new Command("scala") {
-        override val requiredOptions = List[Any]('command)        
+*/
+object BuiltinCommands {
+    val scala = new Command[Symbol,Any]("scala") {
+        override val requiredOptions = List[Symbol]('command)        
     }
 }
-*/
