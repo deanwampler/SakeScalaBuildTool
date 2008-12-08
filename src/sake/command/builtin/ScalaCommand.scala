@@ -1,13 +1,13 @@
 package sake.command.builtin
-/*
-private class ScalaCommand(name: String, defaultOptions: Map[Symbol, Any]) 
-    extends Command(name, defaultOptions) {
-        
-    override val requiredOptions = List('command)
-}
-*/
+
+include sake.environment._
+
 object BuiltinCommands {
-    val scala = new Command[Symbol,Any]("scala") {
+    val scala = new Command[Symbol,Any]("scala")
+    
+    val scalac = new Command[Symbol,Any]("scalac", 'files -> ".", 'classpath -> classpath)
+
+    val sh = new Command[Symbol,Any]("sh") {
         override val requiredOptions = List[Symbol]('command)        
     }
 }

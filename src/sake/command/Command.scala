@@ -21,8 +21,14 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
     }
 
     /**
-     * Override as needed in subclasses, The user specified options will be checked to confirm
-     * that any required options are present.
+     * The user specified options will be checked to confirm that any required options are present.
+     * Override as needed in subclasses.
+     */
+    val requiredOptions: List[A] = Nil
+    
+    /**
+     * The user specified known options. If "None", any option is accepted. If Option(List()), any
+     * user-specified option with a key that is not in the list will result in a build failure.
      */
     val requiredOptions: List[A] = Nil
     
@@ -32,27 +38,28 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
             if (! options.contains(key)) 
         } yield key
         if (missingOptions.length > 0)
-            throw new BuildError(name+" requires option(s) "+missingOptions)
+            Exit.error(name+" requires option(s) "+missingOptions)
         optionsPostFilter(options)
     }
 
     /**
-    * Override as needed in subclasses, _e.g.,_ to handle option "aliases" or
-    * to verify the _values_ for certain _keys_ are valid.
+     * Final processing of the options before invoking "action", _e.g.,_ to handle option 
+     * "aliases" or to verify the _values_ for certain _keys_ are valid.
+     * Override as needed in subclasses.
      */
     protected def optionsPostFilter(options: Map[A,B]) = options
 
     /**
-     * Override as needed in subclasses. This is the method that does the normal work
-     * of the command. The override can discard the passed in result or return it, if 
-     * the action does nothing.
+     * This is the method that does the normal work of the command. A subclass override 
+     * can discard the passed in result or return it, if the action does nothing.
+     * Override as needed in subclasses.
      */
     protected def action(result: Result, options: Map[A,B]) = result
 
     /**
-     * Override as needed in subclasses. Perhaps to recover from an error.
-     * Users can post-process the result using the "command(...) and { result => ... }"
-     * idiom. 
+     * Perhaps to recover from an error. Users can post-process the result using the 
+     * "command(...) and { result => ... }" idiom. 
+     * Override as needed in subclasses.
      */
     protected def postFilterResult(result: Result) = result
 }

@@ -8,7 +8,7 @@ class Target(val name: Symbol, val dependencies: List[Symbol], action: => Unit) 
         try {
             action
         } catch {
-            case th:Throwable => new BuildError("target \""+name+"\" failed: ", th)
+            case th:Throwable => Exit.error("target \""+name+"\" failed: ", th)
         }
     }
     
