@@ -1,14 +1,17 @@
 package sake
 
 import sake.command.builtin.Commands
+import scala.collection.immutable._
+import sake.environment._
+import sake.targets._
 
-trait Project extends Commands {
+
+class Project extends Commands {
     
-    import sake.environment._
-    import sake.targets._
-
     var classpath = Environment.classpath
 
+    private var allTargets: Set[Target] = ListSet.empty
+    
     // TODO
     def build(targ: Symbol) = println("building: "+targ.toString())
     
@@ -17,11 +20,15 @@ trait Project extends Commands {
      * Symbols or Lists of the same.
      * @return TargetGroup containing the new Targets.
      */
-    def target(targets: Any*) = targets.foldLeft(new TargetGroup()) {
-        (group, targ) =>
-        group ::: (targ match {
-            case (n, deps) => Target.makeTarget(n, deps)
-            case n         => Target.makeTarget(n, Nil)
-        })
+    def target(targets: Any*) = {
+        val group = targets.foldLeft(new TargetGroup()) {
+            (group, targ) =>
+            group ::: (targ match {
+                case (n, deps) => Target.makeTarget(n, deps)
+                case n         => Target.makeTarget(n, Nil)
+            })
+        }
+        allTargets ++= group.targets
+        group
     }
 }
