@@ -12,7 +12,7 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
     def apply(options: (A,B)*) = {
         val opts = defaultOptions match {
             case Some(map) => map ++ options
-            case None => Map[A,B]() ++ options
+            case None => Map() ++ options
         }
         postFilterResult(
             action(

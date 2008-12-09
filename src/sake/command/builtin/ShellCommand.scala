@@ -17,7 +17,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
         
         process.exitValue() match {
             case 0 => new Passed()
-            case i:Int => new Failed(Some[Int](i))
+            case i:Int => new Failed(Some(i))
         }
     }
     

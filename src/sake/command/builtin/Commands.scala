@@ -10,8 +10,7 @@ trait Commands {
     
     val scalac = new ShellCommand("scalac", 'files -> ".", 'classpath -> Environment.classpath) {    
 
-        override val knownOptions: Option[List[Symbol]] = Some(List(
-            'help, 'opts, 'classpath, 'files))
+        override val knownOptions = Some(List('help, 'opts, 'classpath, 'files))
     }
 
     val echo = new ShellCommand("echo") {
