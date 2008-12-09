@@ -11,20 +11,14 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     val command = name
     
     override def action(result: Result, options: Map[Symbol,Any]) = {
-/*        import java.lang._
+        import java.lang._
         
         var process = Runtime.getRuntime().exec(command + " " + buildCommandString(options))
         
-        return if (exitValue() 
-                  Returns the exit value for the subprocess.
-        abstract  InputStream   getErrorStream() 
-                  Gets the error stream of the subprocess.
-        abstract  InputStream   getInputStream() 
-                  Gets the input stream of the subprocess.
-        abstract  OutputStream  getOutputStream() 
-                  Gets the output stream of the subprocess.
-*/
-        result
+        process.exitValue() match {
+            case 0 => new Passed()
+            case i:Int => new Failed(Some[Int](i))
+        }
     }
     
     protected def buildCommandString(options: Map[Symbol,Any]) = {

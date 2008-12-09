@@ -2,9 +2,8 @@ package sake
 
 import org.specs._ 
 
-object PredefSpec extends Specification {
+object ProjectSpec extends Specification with Project {
     
-    import sake.Predef._
     import sake.targets._
     import sake.util._
     

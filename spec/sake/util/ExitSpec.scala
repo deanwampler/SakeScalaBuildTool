@@ -1,7 +1,6 @@
 package sake.util
 
 import org.specs._ 
-import sake.Predef._
 
 object ExitSpec extends Specification { 
     "The error method with just a message" should {

@@ -2,7 +2,7 @@ package sake.command.builtin
 
 import sake.environment._
 
-object BuiltinCommands {
+trait Commands {
     val scala = new ShellCommand("scala", 'classpath -> Environment.classpath) {
 
         override val knownOptions: Option[List[Symbol]] = Some(List('help, 'opts, 'classpath))
@@ -12,6 +12,10 @@ object BuiltinCommands {
 
         override val knownOptions: Option[List[Symbol]] = Some(List(
             'help, 'opts, 'classpath, 'files))
+    }
+
+    val echo = new ShellCommand("echo") {
+        override val requiredOptions = List[Symbol]('message)        
     }
 
     val sh = new ShellCommand("sh") {

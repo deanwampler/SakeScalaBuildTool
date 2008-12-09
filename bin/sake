@@ -30,7 +30,7 @@ if [ "${#targets[@]}" == 0 ]; then
 fi
 
 ( cat $file; for targ in ${targets[@]}; \
-    do echo "build('$targ)"; \
+    do echo "project.build('$targ)"; \
 done) |  scala "${args[@]}"
 
 # scala "${args[@]}" <<-EOF

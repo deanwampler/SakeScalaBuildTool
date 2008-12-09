@@ -1,21 +1,25 @@
-import sake.Predef._
+import sake.Project
 
-object project {
-    classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar" 
+object project extends Project {
+    
+    // classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar" 
     val srcDir = "src"
     val buildDir = "build"
 
     target('all -> List('clean, 'compile, 'spec))
-    
+
     target('spec) {
-       spec('files -> files("**/*Spec.class"))
+        echo('message -> "spec")
+        //spec('files -> files("**/*Spec.class"))
     }
 
     target('compile) {
-        scalac('files -> files("**/*.scala"))
+        echo('message -> "compile")
+        //scalac('files -> files("**/*.scala"))
     }
 
     target('clean) {
-       rm_dir(buildDir)
+        echo('message -> "clean")
+        //rm_dir(buildDir)
     }
 }

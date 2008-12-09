@@ -1,17 +1,14 @@
 package sake
 
-object Predef {
+import sake.command.builtin.Commands
+
+trait Project extends Commands {
     
-    import sake.targets._
     import sake.environment._
-    
-    /**
-     * Manager of the defined targets and their relationships. 
-     * TODO
-     */
-     
-    val targetManager = new TargetManager
-         
+    import sake.targets._
+
+    var classpath = Environment.classpath
+
     // TODO
     def build(targ: Symbol) = println("building: "+targ.toString())
     
