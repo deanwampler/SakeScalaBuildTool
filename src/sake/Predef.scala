@@ -3,12 +3,7 @@ package sake
 object Predef {
     
     import sake.targets._
-    
-    /**
-     * The default "classpath" is a list of strings containing ".", 
-     * the current working directory. Use standard list operations to change it.
-     */
-    var classpath = List[String](".")
+    import sake.environment._
     
     /**
      * Manager of the defined targets and their relationships. 

@@ -72,6 +72,13 @@ object CommandSpec extends Specification {
             c('x -> "x2") must throwA[BuildError]
         }
         
+        "throw a BuildError if the passed-in options include specified unknown options" in {
+            val c = new Command("command", Map('x -> "x")) {
+                override val knownOptions = Some(List('y))
+            }
+            c('x -> "x2") must throwA[BuildError]
+        }
+        
         "invoke the action of the command" in {
             var invoked = false
             val c = new Command("command", Map('x -> "x")) {

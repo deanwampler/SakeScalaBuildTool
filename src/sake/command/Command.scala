@@ -30,16 +30,35 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
      * The user specified known options. If "None", any option is accepted. If Option(List()), any
      * user-specified option with a key that is not in the list will result in a build failure.
      */
-    val requiredOptions: List[A] = Nil
+    val knownOptions: Option[List[A]] = None
     
     private def filterOptions(options: Map[A,B]) = {
+        checkForMissingRequiredOptions(options)
+        checkForUnknownOptions(options)
+        optionsPostFilter(options)
+    }
+
+    private def checkForMissingRequiredOptions(options: Map[A,B]):Unit = {
         val missingOptions = for { 
             key <- requiredOptions
             if (! options.contains(key)) 
         } yield key
         if (missingOptions.length > 0)
             Exit.error(name+" requires option(s) "+missingOptions)
-        optionsPostFilter(options)
+    }
+
+    private def checkForUnknownOptions(options: Map[A,B]):Unit = {
+        knownOptions match {
+            case None => return
+            case Some(knownOpts) => {
+                val unknownOptions = for { 
+                    key <- options.keys
+                    if (! knownOpts.contains(key)) 
+                } yield key
+                if (unknownOptions.hasNext)
+                    Exit.error(name+" Option(s) "+unknownOptions.toList+" specified which are not known.")                
+            }
+        }
     }
 
     /**
