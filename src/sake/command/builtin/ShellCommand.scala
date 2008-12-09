@@ -25,7 +25,6 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
         val list = for { 
             (key, value) <- options
         } yield key match {
-            case 'help      => "-help"
             case 'opts      => value.toString()
             case 'classpath => "-cp \""+value.toString()+"\""
             case 'files     => value.toString() //new Files(value).toString()

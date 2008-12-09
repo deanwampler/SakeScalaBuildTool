@@ -29,9 +29,9 @@ if [ "${#targets[@]}" == 0 ]; then
     targets[0]="all"
 fi
 
-( cat $file; for targ in ${targets[@]}; \
-    do echo "project.build('$targ)"; \
-done) |  scala "${args[@]}"
+( cat $file; \
+  echo "project.build(\"${targets[@]}\")"
+) |  scala "${args[@]}"
 
 # scala "${args[@]}" <<-EOF
 #     :load "$file"

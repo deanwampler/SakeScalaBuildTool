@@ -4,7 +4,7 @@ import org.specs._
 
 object TargetGroupSpec extends Specification {
     
-    import sake.targets._
+    import sake.target._
         
     "An empty TargetGroup" should {
         "have no targets" in {
@@ -14,7 +14,7 @@ object TargetGroupSpec extends Specification {
     
     "A TargetGroup with one target" should {
         "have a list with the single target" in {
-            val t1 = new Target('t1)
+            val t1 = Target('t1)
             val tg = new TargetGroup(t1)
             tg.targets.size must be_==(1)
             tg.targets.head must be_==(t1)
@@ -23,9 +23,9 @@ object TargetGroupSpec extends Specification {
     
     "A TargetGroup with N targets" should {
         "have a list with the N targets" in {
-            val t1 = new Target('t1)
-            val t2 = new Target('t2)
-            val t3 = new Target('t3)
+            val t1 = Target('t1)
+            val t2 = Target('t2)
+            val t3 = Target('t3)
             val list = List(t1,t2,t3)
             val tg = new TargetGroup(list)
             tg.targets.size must be_==(3)
@@ -35,9 +35,9 @@ object TargetGroupSpec extends Specification {
     
     "Using '::'" should {
         "return a new TargetGroup with the added Target prepended to the original list." in {
-            val t1 = new Target('t1)
-            val t2 = new Target('t2)
-            val t3 = new Target('t3)
+            val t1 = Target('t1)
+            val t2 = Target('t2)
+            val t3 = Target('t3)
             val tg1 = new TargetGroup(List(t2,t3))
             val tg2 = t1 :: tg1
             tg1.targets must be_==(List(t2,t3))
@@ -48,10 +48,10 @@ object TargetGroupSpec extends Specification {
 
     "Concatenation using ':::'" should {
         "return a new TargetGroup with the added Target list prepended to the original list." in {
-            val t1 = new Target('t1)
-            val t2 = new Target('t2)
-            val t3 = new Target('t3)
-            val t4 = new Target('t4)
+            val t1 = Target('t1)
+            val t2 = Target('t2)
+            val t3 = Target('t3)
+            val t4 = Target('t4)
             val tg1 = new TargetGroup(List(t1,t2))
             val tg2 = new TargetGroup(List(t3,t4))
             val tg3 = tg1 ::: tg2
@@ -63,9 +63,9 @@ object TargetGroupSpec extends Specification {
 
     "apply()" should {
         "return a new TargetGroup with new Targets, each of which has the new 'action'." in {
-            val t1 = new Target('t1)
-            val t2 = new Target('t2)
-            val t3 = new Target('t3)
+            val t1 = Target('t1)
+            val t2 = Target('t2)
+            val t3 = Target('t3)
             val tg1 = new TargetGroup(List(t1,t2,t3))
             val tg2 = tg1 {println("hello!")}
             tg2.targets.foreach { t2 =>

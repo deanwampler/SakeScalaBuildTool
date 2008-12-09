@@ -22,6 +22,7 @@ object SymbolUtilSpec extends Specification {
 
     "toSymbols" should {
         "return an empty list if given an empty list" in {
+            toSymbols(Nil) must be_==(Nil)
             toSymbols(List()) must be_==(List())
         }
 
@@ -36,6 +37,13 @@ object SymbolUtilSpec extends Specification {
         
         "throw a BuildError if any List item is not a string and not a symbol" in {
             toSymbols(List('symbol1, 2, "symbol3", 'symbol4)) must throwA[BuildError]
+        }
+    }
+    
+    "removeDuplicates" should {
+        "return an empty list if given an empty list" in {
+            removeDuplicates(Nil) must be_==(Nil)
+            removeDuplicates(List()) must be_==(List())
         }
     }
 }

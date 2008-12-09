@@ -1,4 +1,4 @@
-package sake.targets
+package sake.target
 
 class TargetManager {
     import scala.collection.mutable.HashMap
