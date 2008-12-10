@@ -119,7 +119,7 @@ object ProjectSpec extends Specification {
         "include the target name in the exception message if the build fails" in {
             var invoked = 0
             val group = new Project().target('FailedTarget) { 
-                throw new BuildError("test")
+                throw new BuildError("failure text")
             }
             val t = group.targets.head
             try {

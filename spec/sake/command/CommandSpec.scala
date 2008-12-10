@@ -91,10 +91,25 @@ object CommandSpec extends Specification {
             invoked must be_==(true)
         }
         
+        "throw a BuildError if the command fails" in {
+            val c = new Command[Symbol,String]("fail") {
+                override def action(r: Result, o: Map[Symbol,String]) = new Failed()
+            }
+            c() must throwA[BuildError]
+        }
+        
+        "not throw a BuildError if the command's postFilterResult restores the status to passed" in {
+            val c = new Command[Symbol,String]("fail") {
+                override def action(r: Result, o: Map[Symbol,String]) = new Failed()
+                override def postFilterResult(r: Result) = new Passed()
+            }
+            c() must not(throwA[BuildError])
+        }
+        
         "invoke a user-specified 'and' block after the action of the command" in {
             var invoked = List[Int]()
             val c = new Command("command", Map('x -> "x")) {
-                override def action(result: Result, options: Map[Symbol, String]) = {
+                override def action(result: Result, options: Map[Symbol,String]) = {
                     invoked ::= 1
                     result
                 }
@@ -107,6 +122,28 @@ object CommandSpec extends Specification {
                 case 2 :: List(1) =>
                 case _ => fail(invoked.toString())
             }
+        }
+        
+        "allow a user-specified 'and' block to process a successful result" in {
+            var result:Result = new Passed(Some(1))
+            val c = new Command[Symbol,String]("fail") {
+                override def action(r: Result, o: Map[Symbol,String]) = result
+            }
+            (c() and { r => result = new Passed(Some(2)); result }) must not(throwA[BuildError])
+            result match {
+                case Passed(r,msg) => r must be_==(Some(2))
+                case Failed(r,msg) => fail()
+            }
+        }
+
+        "not allow a user-specified 'and' block to process a failed result (i.e., execution never gets to the block)" in {
+            var result:Result = new Failed()
+            val expected = result
+            val c = new Command[Symbol,String]("fail") {
+                override def action(r: Result, o: Map[Symbol,String]) = result
+            }
+            (c() and { r => result = new Passed(Some(2)); result }) must throwA[BuildError]
+            (result eq expected) must be_==(true)
         }
     }
     

@@ -43,16 +43,14 @@ object Environment {
     
     val environment:Environment = new Environment()
 
-    import java.lang.System._
-
     /**
      * Returns a system property or "" if not defined. If you would prefer null for
      * not defined, use System.getProperty() directory.
      */
-    def systemProperty(key:String) = getProperty(key) match {
+    def systemProperty(key:String) = System.getProperty(key) match {
         case null => ""
         case s    => s
     }
 
-    def systemProperty(key:String, value:String):Unit = setProperty(key, value)
+    def systemProperty(key:String, value:String):Unit = System.setProperty(key, value)
 }

@@ -13,6 +13,8 @@ class Project extends Commands {
     var log = Log.log
     val Level = sake.util.Level
     
+    var showStackTraces = true
+    
     private var allTargetGrps: List[TargetGroup] = Nil
     
     def allTargetGroups = allTargetGrps
@@ -36,12 +38,15 @@ class Project extends Commands {
     
     protected def doBuild(t: Target) = {
         t.dependencies match {
-            case Nil  => {}
+            case Nil  =>
             case deps => build(deps)
         }
-        log(Level.Info, "> building "+t.name)
-        t.build()
-        log(Level.Info, "< completed "+t.name)
+        log(Level.Info, "building "+t.name)
+        try {
+            t.build()
+        } catch {
+            case BuildError(msg, th) => handleBuildError(msg, th)
+        }
     }
     
     /**
@@ -77,4 +82,10 @@ class Project extends Commands {
         } yield targ
     }
     
+    private def handleBuildError(msg: String, th: Throwable) {
+        if (showStackTraces && th != null) {
+            th.printStackTrace(log.out)
+        }
+        System.exit(1)
+    }
 }

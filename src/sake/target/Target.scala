@@ -24,7 +24,7 @@ class TargetWithAction(name: Symbol, deps: List[Symbol], action: => Unit)
         try {
             action
         } catch {
-            case th:Throwable => Exit.error("target \""+name+"\" failed: ", th)
+            case th:Throwable => Exit.error("target \""+name.name+"\" failed: ", th)
         }
     }
 }

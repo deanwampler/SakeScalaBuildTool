@@ -1,13 +1,12 @@
 package sake.environment
 
 import org.specs._
-import java.lang.System._
 
 object EnvironmentSpec extends Specification { 
 
     def sysClassPath = {
         val seq = for {
-            s <- getProperty("java.class.path").split(getProperty("path.separator"))
+            s <- System.getProperty("java.class.path").split(System.getProperty("path.separator"))
         } yield s
         seq.foldLeft[List[String]](Nil) {(cp, elem) => elem :: cp }
     }
@@ -29,33 +28,33 @@ object EnvironmentSpec extends Specification {
     
     "The pathSeparator" should {
         "be the platform's path separator" in {
-            new Environment().pathSeparator must be_==(getProperty("path.separator"))
+            new Environment().pathSeparator must be_==(System.getProperty("path.separator"))
         }
     }
     
     "The fileSeparator" should {
         "be the platform's file separator" in {
-            new Environment().fileSeparator must be_==(getProperty("file.separator"))
+            new Environment().fileSeparator must be_==(System.getProperty("file.separator"))
         }
     }
     
     "The currentWorkingDirectory" should {
         "be the user's current directory" in {
-            new Environment().currentWorkingDirectory must be_==(getProperty("user.dir"))
+            new Environment().currentWorkingDirectory must be_==(System.getProperty("user.dir"))
         }
     }
     
     "The systemProperty getter" should {
         "return the system property" in {
-            val expected = getProperty("java.class.path")
+            val expected = System.getProperty("java.class.path")
             Environment.systemProperty("java.class.path") must be_==(expected)
         }
     }
     
     "The systemProperty setter" should {
         "set the system property" in {
-            val save = getProperty("java.class.path")
-            val expected = save + getProperty("file.separator") + "/foo/bar"
+            val save = System.getProperty("java.class.path")
+            val expected = save + System.getProperty("file.separator") + "/foo/bar"
             Environment.systemProperty("java.class.path", expected)
             Environment.systemProperty("java.class.path") must be_==(expected)
             Environment.systemProperty("java.class.path", save)

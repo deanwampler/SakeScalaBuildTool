@@ -6,6 +6,7 @@ object TargetSpec extends Specification {
     
     import sake.target._
     import sake.util._
+    import sake.command._
     
     def checkDependencies(t: Target, expected: List[Symbol]) =
             t.dependencies must be_==(expected)
@@ -52,12 +53,24 @@ object TargetSpec extends Specification {
         }
     }
     
-    "Calling build() on the Target" should {
+    "Calling build() on a Target" should {
         "invoke the Target's build action" in {
             var success = false
             val t = Target('t, List('d1), { success = true })
             t.build()
             success must be_==(true)
+        }
+    }
+    
+    "Calling build() on a Target that fails" should {
+        "throw a BuildError" in {
+            val t = Target('t, List('d1), { 
+                val c = new Command[Symbol,String]("failure") {
+                    override def action(r: Result, o: Map[Symbol,String]) = new Failed()
+                }
+                c()
+             })
+            t.build() must throwA[BuildError]
         }
     }
     
