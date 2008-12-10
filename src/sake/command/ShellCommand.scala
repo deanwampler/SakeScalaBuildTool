@@ -15,7 +15,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     val command = name
     
     override def action(result: Result, options: Map[Symbol,Any]) = {
-        val cmd = "echo "+command + " " + buildCommandString(options)
+        val cmd = command + " " + buildCommandString(options)
         Log.log(Level.Notice, "shell: "+cmd)
         if (Environment.environment.dryRun == true)
             result
@@ -36,6 +36,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
             case 'cp        => "-cp "+valueToString(value)
             case 'classpath => "-cp "+valueToString(value)
             case 'opts      => value.toString()
+            case 'command   => "-c " + "'" + value.toString() + "'"
             case 'files     => valueToString(value) // TODO: expand to real file names
             case other      => "-"+other.name+" "+valueToString(value)
         }

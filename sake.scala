@@ -2,7 +2,7 @@ import sake.Project
 
 object project extends Project {
     
-    environment.dryRun = true
+    environment.dryRun = false //true
     log.threshold = Level.Info
     environment.classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar" 
     val srcDir = "src"
@@ -23,6 +23,8 @@ object project extends Project {
     }
 
     target('sh1) {
-        sh('opts -> """find . -name '*.scala' -exec grep -H 'must be_' {} \;""")
+        sh('command -> """find . -name '*.scala' -exec grep -H 'must be_' {} \;""")
+        sh('command -> "touch foobar.txt")
+        sh('command -> """[ "X" = "Y" ]""")
     }
 }
