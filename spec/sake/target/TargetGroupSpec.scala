@@ -62,14 +62,15 @@ object TargetGroupSpec extends Specification {
     }
 
     "apply()" should {
-        "return a new TargetGroup with new Targets, each of which has the new 'action'." in {
+        "return an updated TargetGroup with new Targets, each of which has the new 'action'." in {
             val t1 = Target('t1)
             val t2 = Target('t2)
             val t3 = Target('t3)
             val tg1 = new TargetGroup(List(t1,t2,t3))
+            val tg1Targets = tg1.targets
             val tg2 = tg1 {println("hello!")}
             tg2.targets.foreach { t2 =>
-                tg1.targets.find(t => t.name == t2.name) match {
+                tg1Targets.find(t => t.name == t2.name) match {
                     case None => fail(t2.name.toString())
                     case Some(t1) => (t1 eq t2) must be_==(false)
                 }

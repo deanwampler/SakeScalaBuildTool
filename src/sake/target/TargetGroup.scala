@@ -4,9 +4,11 @@ import sake.util._
 
 /**
  * Wraps a list of targets and provides an apply() method to specify the 
- * "action" function for all the targets.
+ * "action" function for all the targets. For the action to work in larger
+ * project context, the target list needs to be overriden with new targets,
+ * rather then returning a new group.
  */ 
-class TargetGroup(val targets: List[Target]) {
+class TargetGroup(var targets: List[Target]) {
     
     def this(t: Target) = this(List(t))
     def this() = this(Nil)
@@ -20,10 +22,10 @@ class TargetGroup(val targets: List[Target]) {
      * Creates new Targets, _replacing_ the existing action in each one (if any) with the new action.
      */
     def apply(act: => Unit) = {
-        val targetList = for {
-            t <- targets
-        }   yield Target(t.name, t.dependencies, act)
-        new TargetGroup(targetList)
+        targets = targets.map{ t => 
+            Target(t.name, t.dependencies, act)
+        }
+        this
     }
     
     override def equals(other: Any) = other match {

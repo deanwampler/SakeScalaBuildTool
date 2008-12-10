@@ -1,9 +1,19 @@
 package sake.util
 
+import sake.environment.Environment
+
 object Exit {
-    /**
-     * Error out of the build.
-     */
-    def error(message:String) = throw new BuildError(message)
-    def error(message:String, throwable: Throwable) = throw new BuildError(message, throwable)
+    
+    def error(message:String) = {
+        logMessage(message)
+        throw new BuildError(message)
+    }
+
+    def error(message:String, throwable: Throwable) = {
+        logMessage(message)
+        throw new BuildError(message, throwable)
+    }
+    
+    private def logMessage(message: String) = Log.log(Level.Fatal, message)
 }
+    

@@ -12,8 +12,12 @@ object SymbolUtil {
     }
     
     def removeDuplicates(list: Collection[Symbol]) = {
-        list.foldLeft(Set.empty[Symbol]) { (set, item) => 
-            set + item
-        }.toList
+        // Preserve the order. ListSet doesn't seem to do this. Hmmm.
+        list.foldLeft(List[Symbol]()) { (list2, item) => 
+            if (list2.contains(item)) 
+                list2
+            else 
+                item :: list2
+        }.reverse
     }
 }

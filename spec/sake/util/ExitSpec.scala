@@ -3,8 +3,20 @@ package sake.util
 import org.specs._ 
 
 object ExitSpec extends Specification { 
+    val oldLog = Log.log
+    
+    doBeforeSpec {
+        // Suppress stdout/stderr output...
+        import java.io.{PrintStream, ByteArrayOutputStream}
+        val newStream = new PrintStream(new ByteArrayOutputStream())
+        Log.log = new Log(Level.Warn, newStream)
+    }
+    
+    doAfterSpec {
+        Log.log = oldLog
+    }
+    
     "The error method with just a message" should {
-
         "throw a BuildError with the message" in {
             try {
                 Exit.error("message") 

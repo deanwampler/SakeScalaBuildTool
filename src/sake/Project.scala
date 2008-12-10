@@ -4,12 +4,15 @@ import sake.command.builtin.Commands
 import scala.collection.immutable._
 import sake.environment._
 import sake.target._
+import sake.util._
 
 
 class Project extends Commands {
     
-    var classpath = Environment.classpath
-
+    val environment = Environment.environment
+    var log = Log.log
+    val Level = sake.util.Level
+    
     private var allTargetGrps: List[TargetGroup] = Nil
     
     def allTargetGroups = allTargetGrps
@@ -25,7 +28,20 @@ class Project extends Commands {
     def build(targs: String):Unit = build(targs.split(" ").map(Symbol(_)))
     
     def build(targs: Collection[Symbol]):Unit = targs.foreach { t =>
-        println("building: "+t.toString())
+        allTargets.get(t) match {
+            case None => Exit.error("No target "+t+" found!")
+            case Some(targ) => doBuild(targ)
+        }
+    }
+    
+    protected def doBuild(t: Target) = {
+        t.dependencies match {
+            case Nil  => {}
+            case deps => build(deps)
+        }
+        log(Level.Info, "> building "+t.name)
+        t.build()
+        log(Level.Info, "< completed "+t.name)
     }
     
     /**
@@ -41,7 +57,7 @@ class Project extends Commands {
                 case n         => TargetGroup(n, Nil)
             })
         }
-        allTargetGrps ::= group
+        allTargetGrps += group  // keep lexical order of group declarations.
         group
     }
     

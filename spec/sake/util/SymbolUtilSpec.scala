@@ -45,5 +45,16 @@ object SymbolUtilSpec extends Specification {
             removeDuplicates(Nil) must be_==(Nil)
             removeDuplicates(List()) must be_==(List())
         }
+        
+        "return an equivalent list if given a list without duplicates" in {
+            removeDuplicates(List('t1)) must be_==(List('t1))
+            removeDuplicates(List('t1, 't2)) must be_==(List('t1, 't2))
+            removeDuplicates(List('t1, 't2, 't3)) must be_==(List('t1, 't2, 't3))
+        }
+        
+        "return a list with duplicates removed preserving the order of the original entries" in {
+            removeDuplicates(List('t1, 't2, 't2, 't3, 't4, 't4, 't5, 't5)) must 
+                be_==(List('t1, 't2, 't3, 't4, 't5))
+        }
     }
 }

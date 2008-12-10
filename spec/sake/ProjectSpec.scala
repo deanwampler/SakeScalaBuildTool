@@ -149,12 +149,33 @@ object ProjectSpec extends Specification {
     "allTargets" should {
         "return all the targets that have been created in a project" in {
             val project = new Project()
-            val group1 = project.target('t1, 't2)
-            val group2 = project.target('t2, 't3, 't4)
+            project.target('t1, 't2)
+            project.target('t2, 't3, 't4)
             project.allTargets.size must be_==(4) 
             List('t1, 't2, 't3, 't4).foreach { t =>
                 project.allTargets.contains(t) must be_==(true)
             }
+        }
+
+        "merge all the duplicate targets" in {
+            val project = new Project()
+            project.target(List('t1, 't2, 't3) -> List('d1, 'd2, 'd3))
+            project.target(List('t2, 't4) -> List('d2, 'd4)) {}
+            project.allTargets.size must be_==(4) 
+
+            def checkTarget(project:Project, name:Symbol, expectedDeps:List[Symbol]) = {
+                project.allTargets.get(name) match {
+                    case None => fail(name.toString())
+                    case Some(t) => {
+                        t.name must be_==(name)
+                        t.dependencies must be_==(expectedDeps)
+                    }
+                }
+            }
+            checkTarget(project, 't1, List('d1, 'd2, 'd3))
+            checkTarget(project, 't2, List('d1, 'd2, 'd3, 'd4))
+            checkTarget(project, 't3, List('d1, 'd2, 'd3))
+            checkTarget(project, 't4, List('d2, 'd4))
         }
     } 
 }

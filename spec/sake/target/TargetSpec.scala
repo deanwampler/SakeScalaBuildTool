@@ -61,15 +61,98 @@ object TargetSpec extends Specification {
         }
     }
     
-    "Merging targets when they don't have the same name" should {
-        "Throw a BuildError" in {
-            Target.merge(Target('t1), Target('t2)) must throwA[BuildError]
+    "Merging targets" should {
+        "when they don't have the same name" in {
+            "Throw a BuildError" in {
+                Target.merge(Target('t1), Target('t2)) must throwA[BuildError]
+            }
         }
-    }
     
-    "Merging targets when neither has dependencies nor an action" should {
-        "return a target with the same name" in {
-            Target.merge(Target('t1), Target('t1)).name must be_==('t1)
+        "when neither has an action" in {
+            "when neither has dependencies" in {
+                "return a target with the same name" in {
+                    val t = Target.merge(Target('t1), Target('t1))
+                    t.name must be_==('t1)
+                    t.dependencies.size must be_==(0)
+                }
+            }
+
+            "when the first has dependencies" in {
+                "return a target with the dependencies from the first" in {
+                    val t = Target.merge(Target('t1, List('d1, 'd2)), Target('t1))
+                    t.name must be_==('t1)
+                    t.dependencies must be_==(List('d1, 'd2))
+                }
+            }
+
+            "when the second has dependencies" in {
+                "return a target with the dependencies from the second" in {
+                    val t = Target.merge(Target('t1), Target('t1, List('d1, 'd2)))
+                    t.name must be_==('t1)
+                    t.dependencies must be_==(List('d1, 'd2))
+                }
+            }
+
+            "when both have dependencies" in {
+                "return a target with the merged dependencies with duplicates removed" in {
+                    val t = Target.merge(Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5)), 
+                                         Target('t1, List('d2, 'd4, 'd6)))
+                    t.name must be_==('t1)
+                    t.dependencies must be_==(List('d1, 'd2, 'd3, 'd4, 'd5, 'd6))
+                }
+            }
+        }
+        
+        "when the first has an action" in {
+            "return the first target with the same name" in {
+                val t1 = Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5), {})
+                val t2 = Target('t1, List('d2, 'd4, 'd6))
+                t1.isInstanceOf[TargetWithAction] must be_==(true)
+                val t  = Target.merge(t1, t2)
+                (t eq t1) must be_==(true)
+                (t eq t2) must be_==(false)
+                t.name must be_==('t1)
+            }
+            
+            """return the first target with the merged dependencies with duplicates removed, 
+               with preference to the first targets dependency list""" in {
+                val t1 = Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5), {})
+                val t2 = Target('t1, List('d2, 'd4, 'd6))
+                val t  = Target.merge(t1, t2)
+                (t eq t1) must be_==(true)
+                (t eq t2) must be_==(false)
+                t.name must be_==('t1)
+                t.dependencies must be_==(List('d1, 'd2, 'd3, 'd4, 'd5, 'd6))
+            }
+        }
+        
+        "when the second has an action" in {
+            "return the second target with the same name" in {
+                val t1 = Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5))
+                val t2 = Target('t1, List('d2, 'd4, 'd6), {})
+                val t  = Target.merge(t1, t2)
+                (t eq t1) must be_==(false)
+                (t eq t2) must be_==(true)
+                t.name must be_==('t1)
+            }
+            
+            """return the second target with the merged dependencies with duplicates removed, 
+               with preference to the first targets dependency list""" in {
+                val t1 = Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5))
+                val t2 = Target('t1, List('d2, 'd4, 'd6), {})
+                val t  = Target.merge(t1, t2)
+                (t eq t1) must be_==(false)
+                (t eq t2) must be_==(true)
+                t.dependencies must be_==(List('d1, 'd2, 'd3, 'd4, 'd5, 'd6))
+            }
+        }
+        
+        "when both have an action" in {
+            "throw a BuildError" in {
+                val t1 = Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5), {})
+                val t2 = Target('t1, List('d2, 'd4, 'd6), {})
+                Target.merge(t1, t2) must throwA[BuildError]
+            }
         }
     }
 }

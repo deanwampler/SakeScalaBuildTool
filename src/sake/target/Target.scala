@@ -36,18 +36,22 @@ object Target {
         new TargetWithAction(name, dependencies, action)
 
     def merge(t1: Target, t2: Target) = {
-        if (t1.name != t2.name)
-            Exit.error("Target.merge() called with two targets that don't have the same name: "+t1.name+", "+t2.name)
+        validateMerge(t1, t2)
         doMerge(t1, t2)
     }
     
+    private def validateMerge(t1: Target, t2: Target) = {
+        if (t1.name != t2.name)
+            Exit.error("Target.merge() called with two targets that don't have the same name: "+t1.name+", "+t2.name)
+        if (t1.isInstanceOf[TargetWithAction] && t2.isInstanceOf[TargetWithAction])
+            Exit.error("A target can have only one action. Two targets named "+t2.name
+                        +" both have actions defined.")
+    }
+        
     private def doMerge(t1: Target, t2: Target) = t1 match {
-        case t:TargetWithAction => t2 match {
-            case t:TargetWithAction => Exit.error("A target can have only one action. Target "+t2.name
-                +"has at least two actions defined.")
-            case _ => mergeDepsAndReturn(t1, t1, t2)
-        }
-        case _ => mergeDepsAndReturn(t2, t1, t2)  // merge dependencies in the declaration order!
+        // Merge dependencies in the declaration (lexical) order: t1 then t2!
+        case t:TargetWithAction => mergeDepsAndReturn(t1, t1, t2)
+        case _                  => mergeDepsAndReturn(t2, t1, t2)
     }
     
     private def mergeDepsAndReturn(returnedTarget: Target, t1: Target, t2: Target) = {
