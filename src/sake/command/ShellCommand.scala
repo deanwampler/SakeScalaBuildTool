@@ -28,15 +28,16 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
             (key, value) <- options
         } yield key match {
             // TODO CLEAN UP.
+            case 'f         => "-f"
+            case 'r         => "-r"
+            case 'rf        => "-rf"
+            case 'recursive => "-r"
+            case 'force     => "-f"
+            case 'cp        => "-cp "+valueToString(value)
+            case 'classpath => "-cp "+valueToString(value)
             case 'opts      => value.toString()
-            case 'f         => value.toString()
-            case 'r         => value.toString()
-            case 'rf        => value.toString()
-            case 'recursive => value.toString()
-            case 'force     => value.toString()
-            case 'classpath => "-cp \""+doPath(value)+"\""
-            case 'files     => value.toString() //new Files(value).toString()
-            case other      => "-"+other.name+" \""+doPath(value)+"\""
+            case 'files     => valueToString(value) // TODO: expand to real file names
+            case other      => "-"+other.name+" "+valueToString(value)
         }
         list.toList.foldLeft("")(_ + " " + _ )
     }
@@ -49,8 +50,9 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
         }
     }
     
-    private def doPath(path: Any) = path match {
+    private def valueToString(value: Any) = value match {
         case seq:Seq[_] => Path(seq)
-        case _ => path.toString()  // "Hail Mary..."
+        case p:Product  => p.toString()  // TODO: wrap each item in "..."?
+        case _ => value.toString()
     }
 }

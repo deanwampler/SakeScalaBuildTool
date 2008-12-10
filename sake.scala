@@ -21,4 +21,8 @@ object project extends Project {
     target('clean) {
         remove_recursive('files -> buildDir)
     }
+
+    target('sh1) {
+        sh('opts -> """find . -name '*.scala' -exec grep -H 'must be_' {} \;""")
+    }
 }

@@ -1,6 +1,7 @@
 package sake.command
 
 import org.specs._
+import scala.util.matching.Regex
 import sake.util._
 import sake.environment._
 import java.io.{PrintStream, ByteArrayOutputStream}
@@ -11,6 +12,13 @@ object ShellCommandSpec extends Specification {
     var byteStream  = new ByteArrayOutputStream()
     var newStream   = new PrintStream(byteStream)
     val delim = Environment.environment.pathSeparator
+    
+    def checkString(regex: Regex, actual: String) = {
+        (regex findFirstIn actual) match {
+            case Some(s) =>
+            case None => fail(actual)
+        }
+    }
     
     doBeforeSpec {
         Environment.environment.dryRun = true
@@ -89,10 +97,7 @@ object ShellCommandSpec extends Specification {
         "compose the default options into a command string, starting with the command name." in {
              val cmd = new ShellCommand("shcmd", Map('foo -> "foo", 'bar -> List("bar1", "bar2")))
              cmd()
-             val actual = byteStream.toString()
-             // check command and arguments separately to ignore space...
-             actual.contains("shcmd") must be_==(true)
-             actual.contains("-foo \"foo\" -bar \"bar1"+delim+"bar2\"") must be_==(true)
+             checkString("""shcmd\s+-foo foo -bar "bar1[:;]bar2"\s*""".r, byteStream.toString())
         }        
     }        
     
@@ -106,9 +111,7 @@ object ShellCommandSpec extends Specification {
         "compose the additional and default options, overwriting the later into a command string, starting with the command name." in {
              val cmd = new ShellCommand("shcmd", Map('foo -> "foo", 'bar -> List("bar1", "bar2")))
              cmd('foo -> "foobar", 'baz -> ("a", "b"))
-             val actual = byteStream.toString()
-             actual.contains("shcmd") must be_==(true)
-             actual.contains("-foo \"foobar\" -bar \"bar1"+delim+"bar2\" -baz \"(a,b)\"") must be_==(true)
+             checkString("""shcmd\s+-foo foobar -bar "bar1[:;]bar2" -baz \(a,b\)""".r, byteStream.toString())
         }        
     }
     
@@ -122,9 +125,7 @@ object ShellCommandSpec extends Specification {
         "maps 'classpath -> List(a,b,c) to '-cp \"a:b:c\"' (with quotes)" in {
              val cmd = new ShellCommand("shcmd", Map('classpath -> List("bar1", "bar2", "bar3")))
              cmd()
-             val actual = byteStream.toString()
-             actual.contains("shcmd") must be_==(true)
-             actual.contains("-cp \"bar1:bar2:bar3\"") must be_==(true)
+             checkString("""shcmd\s+-cp "bar1[:;]bar2[:;]bar3"\s*""".r, byteStream.toString())
         }        
 
         // TODO - currently just prints the specification string verbatim!
@@ -132,35 +133,46 @@ object ShellCommandSpec extends Specification {
              val cmd = new ShellCommand("shcmd")
              cmd('files -> "**/*.scala")
              val actual = byteStream.toString()
-             actual.contains("shcmd") must be_==(true)
-             actual.contains("-files") must be_==(false)
-             actual.contains("**/*.scala") must be_==(true)
+             checkString("""shcmd\s+(?!-files)\s*\*\*/\*.scala""".r, byteStream.toString())
         }        
 
-        "maps any one of 'force, 'f, 'recursive, 'r, rf, 'opts -> string to 'string' (ie., verbatim, with no added argument quoting)" in {
+        "maps 'opts -> string to 'string' (i.e., verbatim, with no added argument quoting)" in {
              val cmd = new ShellCommand("shcmd")
              cmd('opts -> "-cp foo:bar -Dx=y -d -g:1")
-             val actual = byteStream.toString()
-             actual.contains("shcmd") must be_==(true)
-             actual.contains("-cp foo:bar -Dx=y -d -g:1") must be_==(true)
+             checkString("""shcmd\s+-cp foo[:;]bar -Dx=y -d -g:1""".r, byteStream.toString())
         }        
 
-        "maps another other 'opt -> List(a,b,c) to '-opt -> \"a:b:c\"' (with quotes)" in {
+        "maps any other unknown 'opt -> List(a,b,c) to a path-like '-opt -> \"a:b:c\"' (with quotes)" in {
              val cmd = new ShellCommand("shcmd")
              cmd('foo -> List("a", "b", "c"))
-             val actual = byteStream.toString()
-             actual.contains("shcmd") must be_==(true)
-             actual.contains("-foo \"a:b:c\"") must be_==(true)
+             checkString("""shcmd\s+-foo "a[:;]b[:;]c"\s*""".r, byteStream.toString())
         }        
 
-        "maps another other 'opt -> obj to '-opt -> +\"obj.toString()\"  (with quotes)" in {
+        "maps any other unknown 'opt -> Any to '-opt -> Any.toString()' (without quotes)" in {
              val cmd = new ShellCommand("shcmd")
              cmd('foo -> ("a", "b", "c"))
-             val actual = byteStream.toString()
-             actual.contains("shcmd") must be_==(true)
-             actual.contains("-foo \"(a,b,c)\"") must be_==(true)
+             checkString("""shcmd\s+-foo \(a,b,c\)""".r, byteStream.toString())
         }        
 
+        "maps any one of 'f, 'r, 'rf to itself (i.e., as in \"rm -rf\" options)" in {
+             val cmd = new ShellCommand("shcmd")
+             List('f, 'r, 'rf)foreach { opt =>
+                 cmd(opt -> "hello world!")
+                 checkString(("shcmd\\s+-"+opt.name).r, byteStream.toString())
+             }
+        }        
+
+        "maps 'force to -f (i.e., as in \"rm -f\")" in {
+             val cmd = new ShellCommand("shcmd")
+             cmd('force -> "hello world!")
+             checkString("""shcmd\s+-f""".r, byteStream.toString())
+        }
+
+        "maps 'recursive to -r (i.e., as in \"rm -r\")" in {
+             val cmd = new ShellCommand("shcmd")
+             cmd('recursive -> "hello world!")
+             checkString("""shcmd\s+-r""".r, byteStream.toString())
+        }
     }
     
 }
