@@ -16,7 +16,10 @@ object project extends Project {
     }
 
     target('compile -> 'clean) {
-        scalac('files -> (srcDir+"/**/*.scala"), 'opts -> ("-d "+buildDir))
+        scalac (
+            'files -> (srcDir+"/**/*.scala"),
+            'opts -> ("-d "+buildDir)
+        )
     }
 
     target('clean) {
@@ -24,8 +27,18 @@ object project extends Project {
     }
 
     target('sh1) {
-        sh('command -> "touch foobar.txt")
-        sh('command -> """[ "X" = "Y" ]""")
-        sh('command -> """find . -name '*.scala' -exec grep -H \'must be_\' {} \;""")
+        sh (
+            'command -> "touch",
+            'opts    -> "foobar.txt"
+        )
+/*
+        sh (
+            command("touch")
+            opts("foobar.txt")
+        )
+        sh {
+            'command -> "find" . -name '*.scala' -exec grep -H \'must be_\' {} \;""")
+*/
+//        sh('command -> """[ "X" = "Y" ]""")
     }
 }

@@ -39,7 +39,7 @@ trait Commands {
         override val knownOptions = Some(List('opts, 'classpath, 'files))
     }
 
-    val sh = new ShellCommand("bash") {
+    val sh = new ShellCommand("") {
         override val requiredOptions = List[Symbol]('command)        
     }
 }

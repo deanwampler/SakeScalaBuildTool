@@ -17,7 +17,7 @@ class Project extends Commands {
     
     private var allTargetGrps: List[TargetGroup] = Nil
     
-    def allTargetGroups = allTargetGrps
+    def allTargetGroups = allTargetGrps.reverse // return in declared order
     
     private var allTargs: Map[Symbol, Target] = Map().empty
     
@@ -62,7 +62,7 @@ class Project extends Commands {
                 case n         => TargetGroup(n, Nil)
             })
         }
-        allTargetGrps += group  // keep lexical order of group declarations.
+        allTargetGrps ::= group
         group
     }
     

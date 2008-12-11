@@ -16,7 +16,7 @@ object ShellCommandSpec extends Specification {
     def checkString(regex: Regex, actual: String) = {
         (regex findFirstIn actual) match {
             case Some(s) =>
-            case None => fail(actual)
+            case None => fail("expected (regex): "+regex+", actual: "+actual)
         }
     }
     
@@ -136,10 +136,10 @@ object ShellCommandSpec extends Specification {
              checkString("""shcmd\s+(?!-files)\s*\*\*/\*.scala""".r, byteStream.toString())
         }        
 
-        "maps 'command -> string to -c 'string' (i.e., for passing commands to a shell)" in {
+        "maps 'command -> string to string verbatim (i.e., for argument as a shell command)" in {
              val cmd = new ShellCommand("shcmd")
-             cmd('command -> "-cp foo:bar -Dx=y -d -g:1")
-             checkString("""shcmd\s+-c '-cp foo[:;]bar -Dx=y -d -g:1'""".r, byteStream.toString())
+             cmd('command -> "java -cp foo:bar -Dx=y -d -g:1")
+             checkString("""shcmd\s+java -cp foo[:;]bar -Dx=y -d -g:1""".r, byteStream.toString())
         }        
 
         "maps 'opts -> string to 'string' (i.e., verbatim, with no added argument quoting)" in {

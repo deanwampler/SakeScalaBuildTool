@@ -1,6 +1,8 @@
 package sake.command
 
 import java.lang._
+import scala.actors._ 
+import scala.actors.Actor._ 
 import sake.util._
 import sake.environment._
 
@@ -8,8 +10,10 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     extends Command[Symbol,Any](name, defaultOptions) {
 
     def this(name:String, defaultOpts: Map[Symbol,Any]) = this(name, Some(defaultOpts))
+    
     def this(name:String, defaultOpt0: (Symbol,Any), defaultOpts: (Symbol,Any)*) = 
         this(name, Map[Symbol,Any](defaultOpt0)++defaultOpts)
+    
     def this(name:String) = this(name, None)
 
     val command = name
@@ -36,24 +40,39 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
             case 'cp        => "-cp "+valueToString(value)
             case 'classpath => "-cp "+valueToString(value)
             case 'opts      => value.toString()
-            case 'command   => "-c " + "'" + value.toString() + "'"
+            case 'command   => value.toString()
             case 'files     => valueToString(value) // TODO: expand to real file names
-            case other      => "-"+other.name+" "+valueToString(value)
+            case other      => "-"+stringize(other)+" "+valueToString(value)
         }
-        list.toList.foldLeft("")(_ + " " + _ )
+        toCommandString(list.toList)
     }
 
-    protected def runCmd(cmd: String) = {
-        val process = Runtime.getRuntime().exec(cmd)
-        process.waitFor() match {
-            case 0 => new Passed()
-            case i:Int => new Failed(Some(i))
-        }
-    }
-    
-    private def valueToString(value: Any) = value match {
+    protected def valueToString(value: Any) = value match {
         case seq:Seq[_] => Path(seq)
         case p:Product  => p.toString()  // TODO: wrap each item in "..."?
         case _ => value.toString()
     }
+
+    protected def runCmd(cmd: String):Result = {
+        actor {
+            var shell = new sake.util.actors.ShellActor()
+            shell.start()
+            shell ! (cmd, self)
+            loop {
+                react {
+                    case r: Result => {println("got: "+r); return(r)}
+                    case x: Any => println(x.toString())
+                }
+            }
+        }
+        new Passed()  // never gets here, but makes compiler happy ;)
+    }
+    
+    protected def stringize(item: Any) = item match {
+        case s:String => s
+        case s:Symbol => s.name // not toString()
+        case _  => item.toString()
+    }
+    
+    protected def toCommandString(list: List[String]) = list.foldLeft("")(_ + " " + _ )
 }

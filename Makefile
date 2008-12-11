@@ -9,7 +9,7 @@ test:
 		scala -cp ${CLASSPATH} $$ff || exit $$?; done
 
 compile: build_dir
-	scalac -d build -cp ${CLASSPATH} -unchecked $$(find src spec -name '*.scala')
+	scalac -d build -cp ${CLASSPATH} -unchecked -deprecation $$(find src spec -name '*.scala')
 
 clean:
 	rm -rf build

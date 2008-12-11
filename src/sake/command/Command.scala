@@ -47,11 +47,11 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
             val opts = optionsToMap(options)
             val result = postFilterResult(
                 action(
-                    new Passed(), 
-                    filterOptions(opts))) 
+                    new Passed(),
+                    filterOptions(opts)))
             result match {
                 case s:Passed[_] => s.message match {
-                    case None => 
+                    case None =>
                     case Some(msg) => Log.log(Level.Info, msg)
                 }
                 case f:Failed[_] => Exit.error("command \""+name+"\" failed with result: "+f)
