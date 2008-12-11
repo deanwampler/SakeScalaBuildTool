@@ -62,7 +62,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     protected def toStringList(value: Any): List[String] = value match {
         case s:String => s.contains(" ") match {
             case true  => toStringListFromList(s.split(" ").toList)
-            case false => List(stringize(s))
+            case false => List(s)
         }
         case l:List[_] => toStringListFromList(l)
         case x => List(stringize(x))
