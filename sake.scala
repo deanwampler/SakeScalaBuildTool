@@ -31,14 +31,11 @@ object project extends Project {
             'command -> "touch",
             'opts    -> "foobar.txt"
         )
-/*
         sh (
-            command("touch")
-            opts("foobar.txt")
+            'command -> "ls",
+            'opts    -> "-l"
         )
-        sh {
-            'command -> "find" . -name '*.scala' -exec grep -H \'must be_\' {} \;""")
-*/
-//        sh('command -> """[ "X" = "Y" ]""")
+        sh ("ls -l bin")
+        remove('files -> "foobar.txt")
     }
 }

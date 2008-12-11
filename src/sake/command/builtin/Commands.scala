@@ -17,12 +17,12 @@ trait Commands {
         override val requiredOptions: List[Symbol] = List('files)
     }
 
-    val remove_force = new ShellCommand("rm", 'f -> "-f") {
+    val remove_force = new ShellCommand("rm", 'force -> "-f") {
         override val knownOptions: Option[List[Symbol]] = remove_opts
         override val requiredOptions: List[Symbol] = List('files)
     }
 
-    val remove_recursive = new ShellCommand("rm", 'rf -> "-rf") {
+    val remove_recursive = new ShellCommand("rm", 'recursive -> "-rf") {
         override val knownOptions: Option[List[Symbol]] = remove_opts
         override val requiredOptions: List[Symbol] = List('files)
     }
@@ -39,7 +39,5 @@ trait Commands {
         override val knownOptions = Some(List('opts, 'classpath, 'files))
     }
 
-    val sh = new ShellCommand("") {
-        override val requiredOptions = List[Symbol]('command)        
-    }
+    val sh = new ShellCommand("")
 }

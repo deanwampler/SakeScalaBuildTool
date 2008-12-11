@@ -42,7 +42,7 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
      */
     protected def postFilterResult(result: Result) = result
 
-    def apply(options: (A,B)*) = {
+    def apply(options: (A,B)*): Result = {
         try {
             val opts = optionsToMap(options)
             val result = postFilterResult(
@@ -98,4 +98,5 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
             }
         }
     }
-}        
+}    
+

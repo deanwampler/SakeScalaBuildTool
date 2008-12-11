@@ -16,7 +16,7 @@ object PathSpec extends Specification {
     "apply" should {
         "convert a sequence of Any's into a delim-separated string" in {
             sake.util.Path(List(1, 2.3, "boo", 'boo, List("x", "y"), ("a", 'b))) must 
-                be_==("\"1:2.3:boo:'boo:List(x, y):(a,'b)\"")
+                be_==("1:2.3:boo:'boo:List(x, y):(a,'b)")
         }
     }
 }

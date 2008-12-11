@@ -1,11 +1,13 @@
 package sake.command
 
 import java.lang._
-import scala.actors._ 
-import scala.actors.Actor._ 
 import sake.util._
 import sake.environment._
 
+/**
+ * Defining and running arbitrary shell commands. 
+ * TODO Assumes a *nix-like OS.
+ */
 class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]]) 
     extends Command[Symbol,Any](name, defaultOptions) {
 
@@ -16,56 +18,59 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     
     def this(name:String) = this(name, None)
 
-    val command = name
-    
+    def apply[Symbol,B](str: String): Result = {
+        val list = str.split(" ").toList
+        apply('command -> list.head, 'opts -> toStringListFromList(list.tail))
+    }
+
     override def action(result: Result, options: Map[Symbol,Any]) = {
-        val cmd = command + " " + buildCommandString(options)
-        Log.log(Level.Notice, "shell: "+cmd)
+        val command = determineCommandName(options)
+        val opts = buildCommandOptions(options)
+        Log.log(Level.Notice, "shell: " + toCommandString(command, opts))
         if (Environment.environment.dryRun == true)
             result
         else
-            runCmd(cmd)
+            new CommandRunner(command, opts).run()
     }
     
-    protected def buildCommandString(options: Map[Symbol,Any]) = {
-        val list = for { 
-            (key, value) <- options
-        } yield key match {
-            // TODO CLEAN UP.
-            case 'f         => "-f"
-            case 'r         => "-r"
-            case 'rf        => "-rf"
-            case 'recursive => "-r"
-            case 'force     => "-f"
-            case 'cp        => "-cp "+valueToString(value)
-            case 'classpath => "-cp "+valueToString(value)
-            case 'opts      => value.toString()
-            case 'command   => value.toString()
-            case 'files     => valueToString(value) // TODO: expand to real file names
-            case other      => "-"+stringize(other)+" "+valueToString(value)
-        }
-        toCommandString(list.toList)
+    protected def determineCommandName(options: Map[Symbol,Any]) = options.get('command) match {
+        case None => name
+        case Some(x) => stringize(x)
     }
 
-    protected def valueToString(value: Any) = value match {
+    // Builds up the list in reverse order (due to list semantics), then reverses.
+    protected def buildCommandOptions(options: Map[Symbol,Any]):List[String] =
+        options.foldLeft(List[String]()) { (list, k_v) => 
+            val value = k_v._2
+            k_v._1 match {
+                case 'recursive => "-r"  :: list
+                case 'force     => "-f"  :: list
+                case 'cp        => pathToString(value) :: "-cp" :: list
+                case 'classpath => pathToString(value) :: "-cp" :: list
+                case 'opts      => toStringList(value).reverse ::: list
+                case 'command   => list  // already handled.
+                case 'files     => toStringList(value).reverse ::: list // TODO: expand to real file names
+                case other      => pathToString(value) :: "-"+stringize(other) :: list
+            }
+        }.reverse
+    
+    protected def pathToString(value: Any) = value match {
         case seq:Seq[_] => Path(seq)
-        case p:Product  => p.toString()  // TODO: wrap each item in "..."?
         case _ => value.toString()
     }
-
-    protected def runCmd(cmd: String):Result = {
-        actor {
-            var shell = new sake.util.actors.ShellActor()
-            shell.start()
-            shell ! (cmd, self)
-            loop {
-                react {
-                    case r: Result => {println("got: "+r); return(r)}
-                    case x: Any => println(x.toString())
-                }
-            }
+    
+    protected def toStringList(value: Any): List[String] = value match {
+        case s:String => s.contains(" ") match {
+            case true  => toStringListFromList(s.split(" ").toList)
+            case false => List(stringize(s))
         }
-        new Passed()  // never gets here, but makes compiler happy ;)
+        case l:List[_] => toStringListFromList(l)
+        case x => List(stringize(x))
+    }
+    
+    protected def toStringListFromList(list: List[Any]): List[String] = list match {
+        case head :: tail => stringize(head) :: toStringListFromList(tail)
+        case Nil => Nil
     }
     
     protected def stringize(item: Any) = item match {
@@ -74,5 +79,6 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
         case _  => item.toString()
     }
     
-    protected def toCommandString(list: List[String]) = list.foldLeft("")(_ + " " + _ )
+    protected def toCommandString(command: String, list: List[String]) = 
+        list.foldLeft(command)(_ + " " + _ )
 }
