@@ -178,4 +178,21 @@ object ProjectSpec extends Specification {
             checkTarget(project, 't4, List('d2, 'd4))
         }
     } 
+    
+    "building multiple targets with shared dependencies" should {
+        "will eliminate duplicates and build in the correct order" in {
+            val project = new Project() {
+                override def determineTargets(targs: List[Symbol]):List[Target] = {
+                    val list = super.determineTargets(targs)
+                    list.map(_.name) must be_==(List('t3, 't4, 't2, 't1, 't5))
+                    list
+                }
+            }
+            project.target('t1 -> List('t2, 't3))
+            project.target('t2 -> List('t3, 't4))
+            project.target('t5 -> List('t2))
+            project.target(List('t3, 't4))
+            project.build("t1 t5")
+        }
+    }
 }

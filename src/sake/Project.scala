@@ -27,20 +27,26 @@ class Project extends Commands {
         allTargs        
     }
     
-    def build(targs: String):Unit = build(targs.split(" ").map(Symbol(_)))
+    def build(targs: String):Unit = build(targs.split(" ").map(Symbol(_)).toList)
     
-    def build(targs: Collection[Symbol]):Unit = targs.foreach { t =>
-        allTargets.get(t) match {
-            case None => Exit.error("No target "+t+" found!")
-            case Some(targ) => doBuild(targ)
+    def build(targs: List[Symbol]):Unit =
+        determineTargets(targs).foreach { t => doBuild(t) }
+        
+    // removeDuplicates removes from left, but we need it to remove from the right.
+    protected def determineTargets(targs: List[Symbol]):List[Target] = 
+        determineBuildOrder(targs).reverse.removeDuplicates.reverse
+
+    protected def determineBuildOrder(targs: List[Symbol]): List[Target] = {
+        targs.reverse.foldLeft(List[Target]()) { (all, t) => 
+            allTargets.get(t) match {
+                case None => Exit.error("No target "+t+" found!")
+                case Some(targ) => determineBuildOrder(targ.dependencies) ::: (targ :: all)
+            }
         }
     }
     
+    
     protected def doBuild(t: Target) = {
-        t.dependencies match {
-            case Nil  =>
-            case deps => build(deps)
-        }
         log(Level.Info, "building "+t.name)
         try {
             t.build()
