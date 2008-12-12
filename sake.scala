@@ -2,28 +2,38 @@ import sake.Project
 
 object project extends Project {
     
-    environment.dryRun = false //true
+    val srcDir = "src"
+    val buildDir = "build"
+
+    environment.dryRun = false
     showStackTraces = false
     log.threshold = Level.Info
     environment.classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar" 
-    val srcDir = "src"
-    val buildDir = "build"
+    environment.classpath ::= buildDir
 
     target('all -> List('clean, 'compile, 'spec))
 
     target('spec) {
-        spec('files -> {buildDir+"/**/*Spec.class"})
+        spec(
+            'specs -> "sake.util.PathSpec",
+            'classpath -> environment.classpath
+        )
     }
 
     target('compile -> 'clean) {
         scalac (
             'files -> (srcDir+"/**/*.scala"),
-            'opts -> ("-d "+buildDir)
+            'classpath -> environment.classpath,
+            'd     -> buildDir
         )
     }
 
     target('clean) {
         remove_recursive('files -> buildDir)
+    }
+    
+    target('echo) {
+        echo("hello world!")
     }
 
     target('sh1) {

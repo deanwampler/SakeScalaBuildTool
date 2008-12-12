@@ -18,7 +18,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     
     def this(name:String) = this(name, None)
 
-    def apply[Symbol,B](str: String): Result = {
+    def apply[Symbol,Any](str: String): Result = {
         val list = str.split(" ").toList
         apply('command -> list.head, 'opts -> toStringListFromList(list.tail))
     }
@@ -33,26 +33,37 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
             new CommandRunner(command, opts).run()
     }
     
+    private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
+        key match {
+            case 'command => None  // already handled.
+            case 'opts    => Some(toStringList(value))
+            case 'files   => Some(toStringList(value)) // TODO: expand to real file names
+            case other    => Some(List("-"+stringize(other), pathToString(value)))
+        }
+    
+    protected var optionProcessors: List[(Symbol, Any) => Option[List[String]]] = List(optionProcessor _)
+
     protected def determineCommandName(options: Map[Symbol,Any]) = options.get('command) match {
         case None => name
         case Some(x) => stringize(x)
     }
 
     // Builds up the list in reverse order (due to list semantics), then reverses.
-    protected def buildCommandOptions(options: Map[Symbol,Any]):List[String] =
+    protected def buildCommandOptions(options: Map[Symbol,Any]): List[String] =
         options.foldLeft(List[String]()) { (list, k_v) => 
-            val value = k_v._2
-            k_v._1 match {
-                case 'recursive => "-r"  :: list
-                case 'force     => "-f"  :: list
-                case 'cp        => pathToString(value) :: "-cp" :: list
-                case 'classpath => pathToString(value) :: "-cp" :: list
-                case 'opts      => toStringList(value).reverse ::: list
-                case 'command   => list  // already handled.
-                case 'files     => toStringList(value).reverse ::: list // TODO: expand to real file names
-                case other      => pathToString(value) :: "-"+stringize(other) :: list
-            }
+            evaluateOption(k_v._1, k_v._2) ::: list
         }.reverse
+
+    private def evaluateOption(key: Symbol, value: Any): List[String] = {
+        for {
+            f <- optionProcessors
+            list = f(key, value)
+        } list match {
+            case Some(s) => return s.reverse
+            case None =>
+        }
+        Nil
+    }
     
     protected def pathToString(value: Any) = value match {
         case seq:Seq[_] => Path(seq)

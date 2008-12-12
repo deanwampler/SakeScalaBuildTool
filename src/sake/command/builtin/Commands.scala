@@ -1,43 +1,32 @@
 package sake.command.builtin
 
-import sake.util._
-import sake.command.ShellCommand
+import sake.command._
 
 trait Commands {
 
     var classpath: List[String] = Nil
-    
-    val echo = new ShellCommand("echo") {
-        override val requiredOptions = List[Symbol]('message)        
-    }
-
-    private val remove_opts = Some(List('files, 'rf, 'recursive, 'force))
-    val remove = new ShellCommand("rm") {
-        override val knownOptions: Option[List[Symbol]] = remove_opts
-        override val requiredOptions: List[Symbol] = List('files)
-    }
-
-    val remove_force = new ShellCommand("rm", 'force -> "-f") {
-        override val knownOptions: Option[List[Symbol]] = remove_opts
-        override val requiredOptions: List[Symbol] = List('files)
-    }
-
-    val remove_recursive = new ShellCommand("rm", 'recursive -> "-rf") {
-        override val knownOptions: Option[List[Symbol]] = remove_opts
-        override val requiredOptions: List[Symbol] = List('files)
-    }
-
-    val scala = new ShellCommand("scala", 'classpath -> classpath) {
-        override val knownOptions: Option[List[Symbol]] = Some(List('opts, 'classpath))
-    }
-    
-    val scalac = new ShellCommand("scalac", 'files -> ".", 'classpath -> classpath) {    
-        override val knownOptions = Some(List('opts, 'classpath, 'files))
-    }
-
-    val spec = new ShellCommand("spec", 'files -> ".", 'classpath -> classpath) {    
-        override val knownOptions = Some(List('opts, 'classpath, 'files))
-    }
 
     val sh = new ShellCommand("")
+
+    val echo = new EchoCommand()
+    
+    // TODO: OS specific default: "rm".
+    val remove           = new RemoveShellCommand("rm")
+    val remove_force     = new RemoveShellCommand("rm", 'force -> true)
+    val remove_recursive = new RemoveShellCommand("rm", 'recursive -> true)
+    
+    val scala  = new JVMShellCommand("scala")
+    val scalac = new JVMShellCommand("scalac", 'files -> ".")
+    val spec   = new JVMShellCommand("scala") {
+        private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
+            key match {
+                case 'specs => Some(List(stringize(value)))
+                case _      => None
+            }
+        
+        optionProcessors ::= optionProcessor _
+    }
+
+    val java   = new JVMShellCommand("java")
+    val javac  = new JVMShellCommand("javac", 'files -> ".")
 }

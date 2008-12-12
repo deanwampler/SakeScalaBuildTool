@@ -16,12 +16,6 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
     val requiredOptions: List[A] = Nil
     
     /**
-     * The user specified known options. If "None", any option is accepted. If Option(List()), any
-     * user-specified option with a key that is not in the list will result in a build failure.
-     */
-    val knownOptions: Option[List[A]] = None
-    
-    /**
      * Final processing of the options before invoking "action", _e.g.,_ to handle option 
      * "aliases" or to verify the _values_ for certain _keys_ are valid.
      * Override as needed in subclasses.
@@ -72,7 +66,6 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
 
     private def filterOptions(options: Map[A,B]) = {
         checkForMissingRequiredOptions(options)
-        checkForUnknownOptions(options)
         optionsPostFilter(options)
     }
 
@@ -85,18 +78,7 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
             Exit.error(name+" requires option(s) "+missingOptions)
     }
 
-    private def checkForUnknownOptions(options: Map[A,B]):Unit = {
-        knownOptions match {
-            case None => return
-            case Some(knownOpts) => {
-                val unknownOptions = for { 
-                    key <- options.keys
-                    if (! knownOpts.contains(key)) 
-                } yield key
-                if (unknownOptions.hasNext)
-                    Exit.error(name+" Option(s) "+unknownOptions.toList+" specified which are not known.")                
-            }
-        }
-    }
+    private def asString(iter: Iterator[A]) = 
+        iter.map(_.toString()).reduceLeft(_.toString() + ", " + _.toString())
 }    
 
