@@ -8,8 +8,8 @@ object project extends Project {
     environment.dryRun = false
     showStackTraces = false
     log.threshold = Level.Info
-    environment.classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar" 
     environment.classpath ::= buildDir
+    environment.classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar" 
 
     target('all -> List('clean, 'compile, 'spec))
 
@@ -47,5 +47,11 @@ object project extends Project {
         )
         sh ("ls -l bin")
         remove('files -> "foobar.txt")
+    }
+    target('dir) {
+        sh (
+            'command -> "ls",
+            'opts    -> "-l ../.."
+        )
     }
 }

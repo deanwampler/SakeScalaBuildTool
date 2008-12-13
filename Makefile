@@ -1,5 +1,5 @@
 
-CLASSPATH=/Library/tools/scala/scala-specs/specs-1.4.1.jar:.
+CLASSPATH=/Library/tools/scala/scala-specs/specs-1.4.1.jar:lib/jmock-2.5.1.jar:lib/cglib-nodep-2.1_3.jar:.
 
 all: clean compile test
     
