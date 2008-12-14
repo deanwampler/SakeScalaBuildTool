@@ -22,14 +22,22 @@ object project extends Project {
 
     target('compile -> 'clean) {
         scalac (
-            'files -> (srcDir+"/**/*.scala"),
+            'files  -> files(srcDir+"/**/*.scala"),
             'classpath -> environment.classpath,
-            'd     -> buildDir
+            'd      -> buildDir,
+            'opts   -> "-unchecked -deprecation"
         )
     }
 
     target('clean) {
         remove_recursive('files -> buildDir)
+    }
+    
+    target('files) {
+        sh (
+            'command -> "ls",
+            'opts    -> files(buildDir+"**/*.class")
+        )
     }
     
     target('echo) {

@@ -38,17 +38,23 @@ object RemoveShellCommandSpec extends Specification {
         }
 
         "maps 'recursive -> Any to '-rf'" in {
-             val cmd = new RemoveShellCommand("remove", 
-                Map('recursive -> List("bar1", "bar2", "bar3"), 'files -> "foobar.txt"))
-             cmd()
-             checkString("""remove\s+-rf foobar.txt""".r, byteStream.toString())
+            val cmd = new RemoveShellCommand("remove", 
+                Map('recursive -> true, 'files -> "foo/bar1/**/*Spec.class")) {
+                    override def makeFilesLister = FakeFileForSpecs.oneFakeFile
+                }
+            cmd()
+            val expected = FakeFileForSpecs.oneFakeFileExpected.reduceLeft(_+" "+_)
+            checkString(("""remove\s+-rf """+expected).r, byteStream.toString())
         }        
 
         "maps 'force -> Any to '-f'" in {
-            val cmd = new RemoveShellCommand("remove", 
-               Map('force -> List("bar1", "bar2", "bar3"), 'files -> "foobar.txt"))
+            val cmd = new RemoveShellCommand("force", 
+                Map('recursive -> true, 'files -> "foo/bar1/**/*Spec.class")) {
+                    override def makeFilesLister = FakeFileForSpecs.oneFakeFile
+                }
             cmd()
-            checkString("""remove\s+-f foobar.txt""".r, byteStream.toString())
+            val expected = FakeFileForSpecs.oneFakeFileExpected.reduceLeft(_+" "+_)
+            checkString(("""force\s+-rf """+expected).r, byteStream.toString())
         }        
     }
 }

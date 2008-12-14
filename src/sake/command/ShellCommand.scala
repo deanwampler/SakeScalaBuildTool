@@ -37,7 +37,11 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
         key match {
             case 'command => None  // already handled.
             case 'opts    => Some(toStringList(value))
-            case 'files   => Some(toStringList(value)) // TODO: expand to real file names
+            case 'files   => value match {
+                case f:Files   => Some(f())
+                case l:List[_] => Some(makeFilesLister()(l.map(_.toString())))
+                case x         => Some(makeFilesLister()(List(x.toString())))
+            }
             case other    => Some(List("-"+stringize(other), pathToString(value)))
         }
     
@@ -92,4 +96,6 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     
     protected def toCommandString(command: String, list: List[String]) = 
         list.foldLeft(command)(_ + " " + _ )
+        
+    protected def makeFilesLister() = new Files()
 }

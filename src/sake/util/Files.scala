@@ -2,17 +2,16 @@ package sake.util
 
 import sake.environment._
 
-class Files(val specs: List[String]) {
+class Files() {
     
-    def this(spec: String, specs: String*) = this(spec :: specs.toList)
-
-    val specification = specs.filter(_.length() > 0)
+    def apply(specifications: String*): List[String] = apply(specifications.toList)
     
-    if (specification.size == 0)
-        Exit.error("You must specify at least one non-empty string to Files(...)")
+    def apply(specifications: List[String]): List[String] = {
+        val specs = specifications.filter(_.length() > 0)
+        if (specs.size == 0)
+            Exit.error("You must specify at least one non-empty string to Files(...)")
         
-    def apply(): List[String] = {
-        specification.foldLeft(List[String]()) { (all, spec) =>
+        specs.foldLeft(List[String]()) { (all, spec) =>
             findFiles(spec) ::: all
         }.removeDuplicates.reverse
     }
@@ -25,24 +24,27 @@ class Files(val specs: List[String]) {
     }
 
     // The lists are constructed to provide a reasonably natural order.
-    protected def findFiles(prefix: String, spec: List[String]): List[String] = spec match {
-        case head :: tail => head match {
-            case "**" => findInCurrentDirRecur(prefix).foldLeft(List[String]()) { (l, s) =>
-                l ::: findFiles(s, tail)
-            }
-            case "*"  => findInCurrentDir(prefix).foldLeft(List[String]()) { (l, s) =>
-                findFiles(s, tail) ::: l
-            }
-            case x    => {
-                val newpath = makePath(prefix, head)
-                exists(newpath) match {
-                    case false => Nil
-                    case true  => findFiles(newpath, tail)
+    protected def findFiles(prefix: String, specInPathPieces: List[String]): List[String] = 
+        specInPathPieces match {
+            case head :: tail => head match {
+                case "**" => findInCurrentDirRecur(prefix).foldLeft(List[String]()) { (l, s) =>
+                    l ::: findFiles(s, tail)
+                }
+                case s    => s.contains("*") match {
+                    case true  => findInCurrentDir(prefix, head).foldLeft(List[String]()) { (l, s) =>
+                        findFiles(s, tail) ::: l
+                    }
+                    case false => {
+                        val newpath = makePath(prefix, s)
+                        exists(newpath) match {
+                            case false => Nil
+                            case true  => findFiles(newpath, tail)
+                        }
+                    }
                 }
             }
+            case Nil => List(prefix)
         }
-        case Nil => List(prefix)
-    }
 
     protected def validateSpec(spec: String) = {
         """\*\*\w""".r findFirstIn spec match {
@@ -51,11 +53,11 @@ class Files(val specs: List[String]) {
         }
     }
 
-    protected def findInCurrentDir(path: String) = {
+    protected def findInCurrentDir(path: String, pattern: String) = {
         val file = makeFile(path)
         isDirectory(file) match {
             case false => Nil  // e.g., "/dir/file/*", which doesn't exist.
-            case true  => file.contents.map(path+sep+_)
+            case true  => file.contentsFilteredBy(pattern).map(path+sep+_)
         }
     }
     
@@ -65,7 +67,7 @@ class Files(val specs: List[String]) {
             case false => List(path)  // e.g., "/dir/file/**" allowed.
             case true  => file.contents.foldLeft(List[String]()) { (list, path2) =>
                 val fullpath = makePath(path, path2)
-                findInCurrentDirRecur(fullpath) ::: (fullpath :: list)
+                findInCurrentDirRecur(fullpath) ::: (fullpath :: path :: list)
             }
         }
     }

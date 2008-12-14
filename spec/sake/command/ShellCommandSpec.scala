@@ -141,67 +141,45 @@ object ShellCommandSpec extends Specification {
             Log.log.out = newStream
         }
 
-/*        "maps 'classpath -> List(a,b,c) to '-cp a:b:c'" in {
-             val cmd = new ShellCommand("shcmd", Map('classpath -> List("bar1", "bar2", "bar3")))
-             cmd()
-             checkString("""shcmd\s+-cp bar1[:;]bar2[:;]bar3""".r, byteStream.toString())
-        }        
-
-        "maps 'cp -> List(a,b,c) to '-cp a:b:c'" in {
-             val cmd = new ShellCommand("shcmd", Map('classpath -> List("bar1", "bar2", "bar3")))
-             cmd()
-             checkString("""shcmd\s+-cp bar1[:;]bar2[:;]bar3""".r, byteStream.toString())
-        }        
-*/
-        // TODO - currently just prints the specification string verbatim!
-        "map 'files -> file_spec to the list of files matching the spec. (ie., verbatim)" in {
-             val cmd = new ShellCommand("shcmd")
-             cmd('files -> "**/*.scala")
-             val actual = byteStream.toString()
-             checkString("""shcmd\s+(?!-files)\s*\*\*/\*.scala""".r, byteStream.toString())
-        }        
+        "map 'files -> file_spec to the list of files matching the spec." in {
+            val cmd = new ShellCommand("shcmd") {
+                override def makeFilesLister = FakeFileForSpecs.fakeFiles
+            }
+            cmd('files -> "foo/**/*Spec.class")
+            val actual = byteStream.toString()
+            val expected = FakeFileForSpecs.fakeFilesExpected.reduceLeft(_+" "+_)
+            checkString(("""shcmd\s+(?!-files)\s*"""+expected).r, byteStream.toString())
+        }
 
         "map 'command -> string to use 'string' as the shell command name" in {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "java", 'opts -> "-cp foo:bar -Dx=y -d -g:1")
              checkString("""java\s+-cp foo[:;]bar -Dx=y -d -g:1""".r, byteStream.toString())
-        }        
+        }
 
         "map 'opts -> string to a string with each word (split on whitespace)" in {
              val cmd = new ShellCommand("shcmd")
              cmd('opts -> "-x foo:bar -Dx=y -d -g:1 -x'y z'")
              checkString("""shcmd\s+-x foo:bar -Dx=y -d -g:1 -x'y z'\s*""".r, byteStream.toString())
-        }        
+        }
 
         "map 'opts -> List[String] to a string with each element of the list" in {
              val cmd = new ShellCommand("shcmd")
              cmd('opts -> List("-x", "foo:bar", "-Dx=y", "-d", "-g:1", "-x'y z'"))
              checkString("""shcmd\s+-x foo:bar -Dx=y -d -g:1 -x'y z'\s*""".r, byteStream.toString())
-        }        
+        }
 
         "map any other unknown 'opt -> List(a,b,c) to a path-like '-opt -> a:b:c'" in {
              val cmd = new ShellCommand("shcmd")
              cmd('foo -> List("a", "b", "c"))
              checkString("""shcmd\s+-foo a[:;]b[:;]c""".r, byteStream.toString())
-        }        
+        }
 
         "map any other unknown 'opt -> Any to '-opt -> Any.toString()' (without quotes)" in {
              val cmd = new ShellCommand("shcmd")
              cmd('foo -> ("a", "b", "c"))
              checkString("""shcmd\s+-foo \(a,b,c\)""".r, byteStream.toString())
-        }        
-/*
-        "map 'force to -f (i.e., as in \"rm -f\")" in {
-             val cmd = new ShellCommand("shcmd")
-             cmd('force -> "hello world!")
-             checkString("""shcmd\s+-f""".r, byteStream.toString())
         }
-
-        "map 'recursive to -rf (i.e., as in \"rm -rf\")" in {
-             val cmd = new ShellCommand("shcmd")
-             cmd('recursive -> "hello world!")
-             checkString("""shcmd\s+-r""".r, byteStream.toString())
-        }
-*/    }
+    }
     
 }

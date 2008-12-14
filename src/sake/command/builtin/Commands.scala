@@ -1,11 +1,14 @@
 package sake.command.builtin
 
 import sake.command._
+import sake.util._
 
 trait Commands {
 
     var classpath: List[String] = Nil
 
+    val files = new Files()
+    
     val sh = new ShellCommand("")
 
     val echo = new EchoCommand()
