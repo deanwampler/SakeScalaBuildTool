@@ -37,7 +37,7 @@ object RemoveShellCommandSpec extends Specification {
             Log.log.out = newStream
         }
 
-        "maps 'recursive -> Any to '-rf'" in {
+        "maps 'recursive -> true to '-rf'" in {
             val cmd = new RemoveShellCommand("remove", 
                 Map('recursive -> true, 'files -> "foo/bar1/**/*Spec.class")) {
                     override def makeFilesLister = FakeFileForSpecs.oneFakeFile
@@ -47,14 +47,34 @@ object RemoveShellCommandSpec extends Specification {
             checkString(("""remove\s+-rf """+expected).r, byteStream.toString())
         }        
 
-        "maps 'force -> Any to '-f'" in {
-            val cmd = new RemoveShellCommand("force", 
-                Map('recursive -> true, 'files -> "foo/bar1/**/*Spec.class")) {
+        "maps 'recursive -> false to ''" in {
+            val cmd = new RemoveShellCommand("remove", 
+                Map('recursive -> false, 'files -> "foo/bar1/**/*Spec.class")) {
                     override def makeFilesLister = FakeFileForSpecs.oneFakeFile
                 }
             cmd()
             val expected = FakeFileForSpecs.oneFakeFileExpected.reduceLeft(_+" "+_)
-            checkString(("""force\s+-rf """+expected).r, byteStream.toString())
+            checkString(("""remove\s+"""+expected).r, byteStream.toString())
+        }        
+
+        "maps 'force -> true to '-f'" in {
+            val cmd = new RemoveShellCommand("remove", 
+                Map('force -> true, 'files -> "foo/bar1/**/*Spec.class")) {
+                    override def makeFilesLister = FakeFileForSpecs.oneFakeFile
+                }
+            cmd()
+            val expected = FakeFileForSpecs.oneFakeFileExpected.reduceLeft(_+" "+_)
+            checkString(("""remove\s+-f """+expected).r, byteStream.toString())
+        }        
+
+        "maps 'force -> false to ''" in {
+            val cmd = new RemoveShellCommand("remove", 
+                Map('force -> false, 'files -> "foo/bar1/**/*Spec.class")) {
+                    override def makeFilesLister = FakeFileForSpecs.oneFakeFile
+                }
+            cmd()
+            val expected = FakeFileForSpecs.oneFakeFileExpected.reduceLeft(_+" "+_)
+            checkString(("""remove\s+"""+expected).r, byteStream.toString())
         }        
     }
 }

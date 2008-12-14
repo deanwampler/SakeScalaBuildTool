@@ -16,8 +16,14 @@ class RemoveShellCommand(name: String, options: Option[Map[Symbol,Any]]) extends
     // TODO: OS specific defaults for: "recursive" and "force".
     private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
         key match {
-            case 'recursive => Some(List("-rf"))
-            case 'force     => Some(List("-f"))
+            case 'recursive => value match {
+                case true  => Some(List("-rf"))
+                case false => Some(List(""))
+            }
+            case 'force     => value match {
+                case true  => Some(List("-f"))
+                case false => Some(List(""))
+            }
             case _          => None
         }
     

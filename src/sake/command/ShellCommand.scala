@@ -56,7 +56,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     protected def buildCommandOptions(options: Map[Symbol,Any]): List[String] =
         options.foldLeft(List[String]()) { (list, k_v) => 
             evaluateOption(k_v._1, k_v._2) ::: list
-        }.reverse
+        }.filter(_.length > 0).reverse
 
     private def evaluateOption(key: Symbol, value: Any): List[String] = {
         for {
