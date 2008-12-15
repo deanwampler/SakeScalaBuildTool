@@ -30,7 +30,7 @@ class Files() {
                 case "**" => findInCurrentDirRecur(prefix).foldLeft(List[String]()) { (l, s) =>
                     l ::: findFiles(s, tail)
                 }
-                case s    => s.contains("*") match {
+                case s => s.contains("*") match {
                     case true  => findInCurrentDir(prefix, head).foldLeft(List[String]()) { (l, s) =>
                         findFiles(s, tail) ::: l
                     }
@@ -54,21 +54,27 @@ class Files() {
     }
 
     protected def findInCurrentDir(path: String, pattern: String) = {
-        val file = makeFile(path)
-        isDirectory(file) match {
-            case false => Nil  // e.g., "/dir/file/*", which doesn't exist.
-            case true  => file.contentsFilteredBy(pattern).map(path+sep+_)
+        makeFile(path).contentsFilteredBy(pattern) match {
+            case None => Nil
+            case Some(l:List[_]) => l.map(makePath(path, _))
         }
     }
     
     protected def findInCurrentDirRecur(path: String): List[String] = {
         val file = makeFile(path)
-        isDirectory(file) match {
+        val recursiveList = isDirectory(file) match {
             case false => List(path)  // e.g., "/dir/file/**" allowed.
-            case true  => file.contents.foldLeft(List[String]()) { (list, path2) =>
-                val fullpath = makePath(path, path2)
-                findInCurrentDirRecur(fullpath) ::: (fullpath :: path :: list)
+            case true  => file.contents match {
+                case None => Nil
+                case Some(l:List[_]) => l.foldLeft(List[String](path)) { (list, path2) =>
+                    val fullpath = makePath(path, path2)
+                    findInCurrentDirRecur(fullpath) ::: (fullpath :: list)
+                }
             }
+        }
+        recursiveList match {
+            case List("") => Nil
+            case l => l
         }
     }
 
@@ -82,5 +88,8 @@ class Files() {
     protected def isDirectory(file: File) = file.exists && file.isDirectory
     
     // Hook for overriding in tests.
-    protected def makeFile(path: String): File = new JavaFileWrapper(path)
+    protected def makeFile(path: String): File = {
+        val p = if (path.length == 0) "." else path
+        new JavaFileWrapper(p)
+    }
 }

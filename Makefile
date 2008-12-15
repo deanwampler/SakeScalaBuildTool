@@ -11,8 +11,12 @@ test:
 compile: build_dir
 	scalac -d build -cp ${CLASSPATH} -unchecked -deprecation $$(find src spec -name '*.scala')
 
+file:
+	scalac -d build -cp ${CLASSPATH} -unchecked -deprecation src/sake/util/File.scala spec/sake/util/FileSpec.scala
+	scala -cp build:${CLASSPATH} sake.util.FileSpec
+
 files:
-	scalac -d build -cp ${CLASSPATH} -unchecked -deprecation src/sake/util/Files.scala spec/sake/util/FilesSpec.scala spec/sake/util/FakeFile.scala
+	scalac -d build -cp ${CLASSPATH} -unchecked -deprecation src/sake/util/File.scala src/sake/util/Files.scala spec/sake/util/FilesSpec.scala spec/sake/util/FakeFile.scala
 	scala -cp build:${CLASSPATH} sake.util.FilesSpec
 
 clean:

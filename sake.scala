@@ -2,8 +2,8 @@ import sake.Project
 
 object project extends Project {
     
-    val srcDir = "src"
-    val buildDir = "build"
+    val srcDir = "src/"
+    val buildDir = "build/"
 
     environment.dryRun = false
     showStackTraces = false
@@ -22,7 +22,7 @@ object project extends Project {
 
     target('compile -> 'clean) {
         scalac (
-            'files  -> files(srcDir+"/**/*.scala"),
+            'files  -> files(srcDir+"**/*.scala"),
             'classpath -> environment.classpath,
             'd      -> buildDir,
             'opts   -> "-unchecked -deprecation"
@@ -36,7 +36,11 @@ object project extends Project {
     target('files) {
         sh (
             'command -> "ls",
-            'opts    -> files(buildDir+"**/*.class")
+            'opts    -> files(buildDir+"/sake/**/*.class")
+        )
+        sh (
+            'command -> "ls",
+            'opts    -> files(buildDir+"/sake/**/*.class")
         )
     }
     
@@ -47,19 +51,23 @@ object project extends Project {
     target('sh1) {
         sh (
             'command -> "touch",
-            'opts    -> "foobar.txt"
+            'opts    -> List("foobar.txt", "barfoo.txt")
         )
         sh (
             'command -> "ls",
-            'opts    -> "-l"
+            'opts    -> List("-l", "foobar.txt", "barfoo.txt")
         )
         sh ("ls -l bin")
-        remove('files -> "foobar.txt")
+        remove('files ->    "*bar*.txt")
     }
     target('dir) {
         sh (
             'command -> "ls",
             'opts    -> "-l ../.."
+        )
+        sh (
+            'command -> "ls",
+            'opts    -> ("-l" :: files("*"))
         )
     }
 }

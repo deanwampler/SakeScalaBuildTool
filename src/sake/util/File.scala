@@ -7,17 +7,20 @@ import scala.util.matching.Regex
  * A wrapper around Java's file, to better support testing.
  */
 trait File {
+    val path:String
+    if (path.length == 0) throw new BuildError("File path can't be an empty string.")
     def exists: Boolean
     def isDirectory: Boolean
     def isFile: Boolean
-    def contents: List[String]
-    def contentsFilteredBy(nameFilter: String): List[String]
+    def contents: Option[List[String]]
+    def contentsFilteredBy(nameFilter: String): Option[List[String]]
 }
 
 class FileFilter(val nameFilter: String) extends JFilenameFilter {
-     val regex = nameFilter.replaceAll("\\*", ".*").replaceAll("\\?", ".").r
 
-     def accept(dir: JFile, name: String) = acceptName(name, regex)
+     val regex = ("^"+nameFilter.replaceAll("\\*", ".*").replaceAll("\\?", ".")+"$").r
+
+     def accept(dir: JFile, name: String): Boolean = acceptName(name, regex)
 
      protected def acceptName(name: String, filterRegex: Regex) = {
          regex findFirstIn name match {
@@ -27,7 +30,8 @@ class FileFilter(val nameFilter: String) extends JFilenameFilter {
      }
 }
 
-class JavaFileWrapper(val path: String) extends File {
+class JavaFileWrapper(override val path: String) extends File {
+
     val file = new JFile(path)
     
     def exists = file.exists()
@@ -36,8 +40,14 @@ class JavaFileWrapper(val path: String) extends File {
     
     def isFile = file.isFile()
     
-    def contents = file.list().toList
+    def contents = {
+        val ary = file.list()
+        if (ary == null) None else Some(ary.toList)
+    }
     
-    def contentsFilteredBy(nameFilter: String) = file.list(new FileFilter(nameFilter)).toList
+    def contentsFilteredBy(nameFilter: String) = {
+        val ary = file.list(new FileFilter(nameFilter))
+        if (ary == null) None else Some(ary.toList)
+    }
 }
 
