@@ -1,11 +1,13 @@
 import sake.Project
 
+import sake.util._
+
 object project extends Project {
     
     val srcDir = "src/"
     val buildDir = "build/"
 
-    environment.dryRun = false
+    environment.dryRun = true
     showStackTraces = false
     log.threshold = Level.Info
     environment.classpath ::= buildDir
@@ -14,10 +16,13 @@ object project extends Project {
     target('all -> List('clean, 'compile, 'spec))
 
     target('spec) {
-        spec(
-            'specs -> "sake.util.PathSpec",
-            'classpath -> environment.classpath
-        )
+        val specFiles = files(buildDir+"**/*Spec.class").map(ClassUtil.toFullyQualifiedName(_, buildDir))
+        specFiles.foreach { s =>
+            spec(
+                'specs -> s,
+                'classpath -> environment.classpath
+            )
+        }
     }
 
     target('compile -> 'clean) {
