@@ -6,9 +6,12 @@ Dean Wampler dean@polyglotprogramming.com
 
 History:
 
-December 6, 2008: Created Sake project!
-
+December 6, 2008: Created Sake project.
+December 20, 2008: First "bootstrap" build of Sake with itself!
 
 TODO:
 
+* Add jar target.
 * Add test, scalacheck commands.
+* Set environment options through command-line options.
+

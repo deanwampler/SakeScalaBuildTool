@@ -1,6 +1,6 @@
 #!/bin/sh -- 
 
-CLASSPATH=/Library/tools/scala/scala-specs/specs-1.4.1.jar:lib/sake.jar
+CLASSPATH=lib/specs-1.4.1.jar:lib/junit-4.4.jar:lib/sake.jar
 set +x
 file=sake.scala
 args[0]=-cp
