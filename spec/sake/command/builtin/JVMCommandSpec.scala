@@ -6,7 +6,7 @@ import sake.util._
 import sake.environment._
 import java.io.{PrintStream, ByteArrayOutputStream}
 
-object JVMShellCommandSpec extends Specification { 
+object JVMCommandSpec extends Specification { 
     val savedDryRun = Environment.environment.dryRun
     val savedLog    = Log.log
     var byteStream  = new ByteArrayOutputStream()
@@ -30,7 +30,7 @@ object JVMShellCommandSpec extends Specification {
         Log.log = savedLog
     }
 
-    "Running a JVMShellCommand with standard options" should {
+    "Running a JVMCommand with standard options" should {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
@@ -38,19 +38,19 @@ object JVMShellCommandSpec extends Specification {
         }
 
         "maps 'classpath -> List(a,b,c) to '-cp a:b:c'" in {
-             val cmd = new JVMShellCommand("java", Map('classpath -> List("bar1", "bar2", "bar3")))
+             val cmd = new JVMCommand("java", Map('classpath -> List("bar1", "bar2", "bar3")))
              cmd()
              checkString("""java\s+-cp bar1[:;]bar2[:;]bar3""".r, byteStream.toString())
         }        
 
         "maps 'cp -> List(a,b,c) to '-cp a:b:c'" in {
-             val cmd = new JVMShellCommand("java", Map('classpath -> List("bar1", "bar2", "bar3")))
+             val cmd = new JVMCommand("java", Map('classpath -> List("bar1", "bar2", "bar3")))
              cmd()
              checkString("""java\s+-cp bar1[:;]bar2[:;]bar3""".r, byteStream.toString())
         }        
 
         "maps 'class -> name to 'name'" in {
-             val cmd = new JVMShellCommand("java", Map('class -> "foo.bar.Bar"))
+             val cmd = new JVMCommand("java", Map('class -> "foo.bar.Bar"))
              cmd()
              checkString("""java\s+foo.bar.Bar""".r, byteStream.toString())
         }        

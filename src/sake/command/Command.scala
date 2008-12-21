@@ -23,11 +23,10 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
     protected def optionsPostFilter(options: Map[A,B]) = options
 
     /**
-     * This is the method that does the normal work of the command. A subclass override 
-     * can discard the passed in result or return it, if the action does nothing.
-     * Override as needed in subclasses.
+     * This is the method that does the normal work of the command.
+     * @return a Passed on success or Failed, otherwise.
      */
-    protected def action(result: Result, options: Map[A,B]) = result
+    protected def action(options: Map[A,B]):Result = new Passed()
 
     /**
      * Perhaps to recover from an error. Users can post-process the result using the 
@@ -38,11 +37,8 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
 
     def apply(options: (A,B)*): Result = {
         try {
-            val opts = optionsToMap(options)
-            val result = postFilterResult(
-                action(
-                    new Passed(),
-                    filterOptions(opts)))
+            val opts = filterOptions(optionsToMap(options))
+            val result = postFilterResult(action(opts))
             result match {
                 case s:Passed[_] => s.message match {
                     case None =>
@@ -56,19 +52,19 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
             case th:Throwable => Exit.error("command \""+name+"\" failed with exception: "+th,th)
         }
     }
-
+    
     private def optionsToMap(options: Seq[(A,B)]) = {
         defaultOptions match {
             case Some(map) => map ++ options
             case None => Map() ++ options
         }
     }
-
+    
     private def filterOptions(options: Map[A,B]) = {
         checkForMissingRequiredOptions(options)
         optionsPostFilter(options)
     }
-
+    
     private def checkForMissingRequiredOptions(options: Map[A,B]):Unit = {
         val missingOptions = for { 
             key <- requiredOptions
@@ -77,8 +73,5 @@ class Command[A,B](val name: String, val defaultOptions: Option[Map[A,B]]) {
         if (missingOptions.length > 0)
             Exit.error(name+" requires option(s) "+missingOptions)
     }
-
-    private def asString(iter: Iterator[A]) = 
-        iter.map(_.toString()).reduceLeft(_.toString() + ", " + _.toString())
-}    
+}
 

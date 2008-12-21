@@ -2,7 +2,7 @@ package sake.command.builtin
 
 import sake.command.ShellCommand
 
-class JVMShellCommand(name: String, options: Option[Map[Symbol,Any]]) extends ShellCommand(name, options) {
+class JVMCommand(name: String, options: Option[Map[Symbol,Any]]) extends ShellCommand(name, options) {
 
     def this(name:String, defaultOpts: Map[Symbol,Any]) = this(name, Some(defaultOpts))
     
@@ -19,6 +19,6 @@ class JVMShellCommand(name: String, options: Option[Map[Symbol,Any]]) extends Sh
             case _          => None
         }
     
-    optionProcessors ::= optionProcessor _
+    optionsProcessor.addProcessor(optionProcessor _)
 }
 

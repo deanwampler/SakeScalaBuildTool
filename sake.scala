@@ -1,45 +1,35 @@
-import sake.Project
-
+import sake.Project._
 import sake.util._
 
-object project extends Project {
-    
-    val srcDir   = "src/"
-    var specDir  = "spec/"
-    val buildDir = "build/"
+val srcDir   = "src/"
+var specDir  = "spec/"
+val buildDir = "build/"
 
-    environment.dryRun = false
-    showStackTracesOnFailures = false
-    log.threshold = Level.Info
-    environment.classpath ::= buildDir
-    environment.classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar:lib/sake.jar" 
+environment.dryRun = false
+showStackTracesOnFailures = false
+log.threshold = Level.Info
+environment.classpath ::= buildDir
+environment.classpath ::= "lib/specs-1.4.1.jar:lib/junit-4.4.jar:lib/sake.jar" 
 
-    target('all -> List('clean, 'compile, 'spec))
+target('all -> List('clean, 'compile, 'spec))
 
-    target('spec) {
-        val specFiles = files(buildDir+"**/*Spec.class").map(ClassUtil.toFullyQualifiedName(_, buildDir))
-        specFiles.foreach { s =>
-            spec(
-                'specs -> s,
-                'classpath -> environment.classpath
-            )
-        }
-    }
+target('spec) {
+   specs('path -> "spec", 'pattern -> ".*")
+}
 
-    target('compile -> List('clean, 'build_dir)) {
-        scalac (
-            'files  -> files(srcDir+"**/*.scala", specDir+"**/*.scala"),
-            'classpath -> environment.classpath,
-            'd      -> buildDir,
-            'opts   -> "-unchecked -deprecation"
-        )
-    }
+target('compile -> List('clean, 'build_dir)) {
+    scalac (
+        'files     -> files(srcDir+"**/*.scala", specDir+"**/*.scala"),
+        'classpath -> environment.classpath,
+        'd         -> buildDir,
+        'opts      -> "-unchecked -deprecation"
+    )
+}
 
-    target('clean) {
-        remove_recursive('files -> buildDir)
-    }
-    
-    target('build_dir) {
-        mkdir(buildDir)
-    }
+target('clean) {
+    deleteRecursively(buildDir)
+}
+
+target('build_dir) {
+    mkdir(buildDir)
 }

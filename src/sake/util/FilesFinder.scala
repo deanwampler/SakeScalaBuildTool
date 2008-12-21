@@ -2,25 +2,23 @@ package sake.util
 
 import sake.environment._
 
-class Files() {
+class FilesFinder() {
     
     def apply(specifications: String*): List[String] = apply(specifications.toList)
     
     def apply(specifications: List[String]): List[String] = {
         val specs = specifications.filter(_.length() > 0)
         if (specs.size == 0)
-            Exit.error("You must specify at least one non-empty string to Files(...)")
+            Exit.error("You must specify at least one non-empty string to FilesFinder(...)")
         
         specs.foldLeft(List[String]()) { (all, spec) =>
             findFiles(spec) ::: all
         }.removeDuplicates.reverse
     }
     
-    private val sep = Environment.environment.fileSeparator
-    
     protected def findFiles(spec: String):List[String] = {
         validateSpec(spec)
-        findFiles("", spec.split(sep).toList)
+        findFiles("", spec.split(Environment.environment.fileSeparator).toList)
     }
 
     // The lists are constructed to provide a reasonably natural order.
@@ -35,7 +33,7 @@ class Files() {
                         findFiles(s, tail) ::: l
                     }
                     case false => {
-                        val newpath = makePath(prefix, s)
+                        val newpath = File.makePath(prefix, s)
                         exists(newpath) match {
                             case false => Nil
                             case true  => findFiles(newpath, tail)
@@ -56,7 +54,7 @@ class Files() {
     protected def findInCurrentDir(path: String, pattern: String) = {
         makeFile(path).contentsFilteredBy(pattern) match {
             case None => Nil
-            case Some(l:List[_]) => l.map(makePath(path, _))
+            case Some(l:List[_]) => l.map(File.makePath(path, _))
         }
     }
     
@@ -67,7 +65,7 @@ class Files() {
             case true  => file.contents match {
                 case None => Nil
                 case Some(l:List[_]) => l.foldLeft(List[String](path)) { (list, path2) =>
-                    val fullpath = makePath(path, path2)
+                    val fullpath = File.makePath(path, path2)
                     findInCurrentDirRecur(fullpath) ::: (fullpath :: list)
                 }
             }
@@ -78,11 +76,6 @@ class Files() {
         }
     }
 
-    protected def makePath(prefix: String, elem: String) = prefix match {
-        case "" => elem
-        case _  => prefix + sep + elem
-    }
-    
     protected def exists(path: String) = makeFile(path).exists
     
     protected def isDirectory(file: File) = file.exists && file.isDirectory

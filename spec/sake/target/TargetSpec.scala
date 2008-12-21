@@ -66,7 +66,7 @@ object TargetSpec extends Specification {
         "throw a BuildError" in {
             val t = Target('t, List('d1), { 
                 val c = new Command[Symbol,String]("failure") {
-                    override def action(r: Result, o: Map[Symbol,String]) = new Failed()
+                    override def action(o: Map[Symbol,String]) = new Failed()
                 }
                 c()
              })

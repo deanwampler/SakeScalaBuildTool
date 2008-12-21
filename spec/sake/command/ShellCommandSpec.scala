@@ -90,7 +90,7 @@ object ShellCommandSpec extends Specification {
     "Running a ShellCommand with a string" should {
         "convert the string to 'command -> first_word and 'opts -> rest_of_string" in {
             val c = new ShellCommand("withString", Map('opts -> "boo", 'cp -> "a:b")) {
-                override def action(result: Result, opts: Map[Symbol,Any]) = {
+                override def action(opts: Map[Symbol,Any]) = {
                     opts.keys.foreach { key => 
                         key match {
                             case 'command => opts(key) must be_==("echo")
@@ -99,7 +99,7 @@ object ShellCommandSpec extends Specification {
                             case _ => fail(key.toString())
                         }
                     }
-                    result
+                    new Passed()
                 }
             }
             c("echo hello world")            
@@ -143,7 +143,7 @@ object ShellCommandSpec extends Specification {
 
         "map 'files -> file_spec to the list of files matching the spec." in {
             val cmd = new ShellCommand("shcmd") {
-                override def makeFilesLister = FakeFileForSpecs.fakeFiles
+                override def makeFilesLister = FakeFileForSpecs.fakeFilesFinder
             }
             cmd('files -> "foo/**/*Spec.class")
             val actual = byteStream.toString()
@@ -159,25 +159,25 @@ object ShellCommandSpec extends Specification {
 
         "map 'opts -> string to a string with each word (split on whitespace)" in {
              val cmd = new ShellCommand("shcmd")
-             cmd('opts -> "-x foo:bar -Dx=y -d -g:1 -x'y z'")
+             cmd('command -> "shcmd", 'opts -> "-x foo:bar -Dx=y -d -g:1 -x'y z'")
              checkString("""shcmd\s+-x foo:bar -Dx=y -d -g:1 -x'y z'\s*""".r, byteStream.toString())
         }
 
         "map 'opts -> List[String] to a string with each element of the list" in {
              val cmd = new ShellCommand("shcmd")
-             cmd('opts -> List("-x", "foo:bar", "-Dx=y", "-d", "-g:1", "-x'y z'"))
+             cmd('command -> "shcmd", 'opts -> List("-x", "foo:bar", "-Dx=y", "-d", "-g:1", "-x'y z'"))
              checkString("""shcmd\s+-x foo:bar -Dx=y -d -g:1 -x'y z'\s*""".r, byteStream.toString())
         }
 
         "map any other unknown 'opt -> List(a,b,c) to a path-like '-opt -> a:b:c'" in {
              val cmd = new ShellCommand("shcmd")
-             cmd('foo -> List("a", "b", "c"))
+             cmd('command -> "shcmd", 'foo -> List("a", "b", "c"))
              checkString("""shcmd\s+-foo a[:;]b[:;]c""".r, byteStream.toString())
         }
 
         "map any other unknown 'opt -> Any to '-opt -> Any.toString()' (without quotes)" in {
              val cmd = new ShellCommand("shcmd")
-             cmd('foo -> ("a", "b", "c"))
+             cmd('command -> "shcmd", 'foo -> ("a", "b", "c"))
              checkString("""shcmd\s+-foo \(a,b,c\)""".r, byteStream.toString())
         }
     }

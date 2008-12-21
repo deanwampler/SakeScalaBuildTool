@@ -163,12 +163,96 @@ object FileSpec extends Specification {
     }
     
     "File.mkdirs" should {
-        "success for a non-existent directory" in {
+        "succeed for a non-existent directory" in {
             val d = new JavaFileWrapper("./foobar")
             d.mkdirs must be_==(true)
             d.exists must be_==(true)
             d.delete
             d.exists must be_==(false)
+        }
+    }
+    
+    "File.delete" should {
+        "fail for a non-existent file or directory" in {
+            val d = new JavaFileWrapper("./foobar")
+            d.exists must be_==(false)
+            d.delete must be_==(false)
+        }
+    }
+    
+    "File.delete" should {
+        "succeed for a file that exists" in {
+            val f = new JavaFileWrapper("./foobar")
+            f.createNewFile
+            f.exists must be_==(true)
+            f.delete must be_==(true)
+            f.exists must be_==(false)
+        }
+    }
+    
+    "File.delete" should {
+        "succeed for a directory that exists and is empty" in {
+            val d = new JavaFileWrapper("./tossdir")
+            d.mkdirs
+            d.exists must be_==(true)
+            d.delete must be_==(true)
+            d.exists must be_==(false)
+        }
+    }
+    
+    "File.delete" should {
+        "fail for a directory that exists and is not empty" in {
+            val d = new JavaFileWrapper("./tossdir")
+            d.mkdirs
+            d.exists must be_==(true)
+            val f = new JavaFileWrapper("./tossdir/foobar")
+            f.createNewFile
+            f.exists must be_==(true)
+            d.delete must be_==(false)
+            // cleanup
+            f.delete must be_==(true)
+            d.delete must be_==(true)
+            d.exists must be_==(false)
+        }
+    }
+    
+    "File.deleteRecursively" should {
+        "fail for a non-existent file or directory" in {
+            val d = new JavaFileWrapper("./foobar")
+            d.exists must be_==(false)
+            d.deleteRecursively must be_==(false)
+        }
+    }
+    
+    "File.deleteRecursively" should {
+        "succeed for a file that exists" in {
+            val f = new JavaFileWrapper("./foobar")
+            f.createNewFile
+            f.exists must be_==(true)
+            f.deleteRecursively must be_==(true)
+            f.exists must be_==(false)
+        }
+    }
+    
+    "File.deleteRecursively" should {
+        "succeed for a directory that exists and is empty" in {
+            val d = new JavaFileWrapper("./tossdir")
+            d.mkdirs
+            d.exists must be_==(true)
+            d.deleteRecursively must be_==(true)
+            d.exists must be_==(false)
+        }
+    }
+    
+    "File.deleteRecursively" should {
+        "succeed for a directory that exists and is not empty" in {
+            val d = new JavaFileWrapper("./tossdir")
+            d.mkdirs
+            d.exists must be_==(true)
+            val f = new JavaFileWrapper("./tossdir/foobar")
+            f.createNewFile
+            f.exists must be_==(true)
+            d.deleteRecursively must be_==(true)
         }
     }
     

@@ -7,7 +7,12 @@ import sake.target._
 import sake.util._
 
 
-class Project extends Commands {
+/**
+ * The ProjectDriver class is extended by the Project object.
+ * The latter is used in actual build scripts, while the former is most
+ * useful for testing.
+ */
+class ProjectDriver extends Commands {
     
     val environment = Environment.environment
     var log = Log.log
@@ -28,6 +33,8 @@ class Project extends Commands {
     }
     
     def build(targs: String):Unit = build(targs.split(" ").map(Symbol(_)).toList)
+    
+    def build(targs: Array[String]):Unit = build(targs.map(Symbol(_)).toList)
     
     def build(targs: List[Symbol]):Unit =
         determineTargets(targs).foreach { t => doBuild(t) }
@@ -95,3 +102,5 @@ class Project extends Commands {
         System.exit(1)
     }
 }
+
+object Project extends ProjectDriver

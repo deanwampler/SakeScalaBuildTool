@@ -17,7 +17,7 @@ class EchoCommand(val defaultLevel: Level.Value) extends Command[Symbol,Any]("ec
         apply('words -> str.split(" ").toList)
     }
 
-    override def action(result: Result, options: Map[Symbol,Any]) = {
+    override def action(options: Map[Symbol,Any]) = {
         val words = options.get('words) match {
             case None => ""
             case Some(x) => x match {
@@ -29,11 +29,11 @@ class EchoCommand(val defaultLevel: Level.Value) extends Command[Symbol,Any]("ec
             case None => defaultLevel
             case Some(l) => l match {
                 case lev:Level.Value => lev
-                case _ => Exit.error("Involid value for level ("+l+"). Must be a Log Level.")
+                case _ => Exit.error("Invalid value for level ("+l+"). Must be a Log Level.")
             }
         }
         Log.log(level, words) 
-        result
+        new Passed()
     }
     
     override val requiredOptions: List[Symbol] = List('words)

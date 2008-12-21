@@ -75,9 +75,9 @@ object CommandSpec extends Specification {
         "invoke the action of the command" in {
             var invoked = false
             val c = new Command("command", Map('x -> "x")) {
-                override def action(result: Result, options: Map[Symbol, String]) = {
+                override def action(options: Map[Symbol, String]) = {
                     invoked = true
-                    result
+                    new Passed()
                 }
             }
             c()
@@ -86,14 +86,14 @@ object CommandSpec extends Specification {
         
         "throw a BuildError if the command fails" in {
             val c = new Command[Symbol,String]("fail") {
-                override def action(r: Result, o: Map[Symbol,String]) = new Failed()
+                override def action(o: Map[Symbol,String]) = new Failed()
             }
             c() must throwA[BuildError]
         }
         
         "not throw a BuildError if the command's postFilterResult restores the status to passed" in {
             val c = new Command[Symbol,String]("fail") {
-                override def action(r: Result, o: Map[Symbol,String]) = new Failed()
+                override def action(o: Map[Symbol,String]) = new Failed()
                 override def postFilterResult(r: Result) = new Passed()
             }
             c() must not(throwA[BuildError])
@@ -102,9 +102,9 @@ object CommandSpec extends Specification {
         "invoke a user-specified 'and' block after the action of the command" in {
             var invoked = List[Int]()
             val c = new Command("command", Map('x -> "x")) {
-                override def action(result: Result, options: Map[Symbol,String]) = {
+                override def action(options: Map[Symbol,String]) = {
                     invoked ::= 1
-                    result
+                    new Passed()
                 }
             }
             c() and { result => 
@@ -120,7 +120,7 @@ object CommandSpec extends Specification {
         "allow a user-specified 'and' block to process a successful result" in {
             var result:Result = new Passed(Some(1))
             val c = new Command[Symbol,String]("fail") {
-                override def action(r: Result, o: Map[Symbol,String]) = result
+                override def action(o: Map[Symbol,String]) = result
             }
             (c() and { r => result = new Passed(Some(2)); result }) must not(throwA[BuildError])
             result match {
@@ -133,7 +133,7 @@ object CommandSpec extends Specification {
             var result:Result = new Failed()
             val expected = result
             val c = new Command[Symbol,String]("fail") {
-                override def action(r: Result, o: Map[Symbol,String]) = result
+                override def action(o: Map[Symbol,String]) = result
             }
             (c() and { r => result = new Passed(Some(2)); result }) must throwA[BuildError]
             (result eq expected) must be_==(true)
@@ -156,9 +156,9 @@ object CommandSpec extends Specification {
         "be able to define the command's action'" in {
             var invoked = false
             val c = new Command[Symbol,String]("command") {
-                override def action(result: Result, options: Map[Symbol, String]) = {
+                override def action(options: Map[Symbol, String]) = {
                     invoked = true
-                    result
+                    new Passed()
                 }
             }
             c('x -> "x2")
@@ -170,7 +170,7 @@ object CommandSpec extends Specification {
             val c = new Command[Symbol,String]("command") {
                 override def postFilterResult(result: Result) = {
                     invoked = true
-                    result
+                    new Passed()
                 }
             }
             c('x -> "x2")

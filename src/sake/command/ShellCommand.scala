@@ -18,57 +18,49 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     
     def this(name:String) = this(name, None)
 
+    protected val optionsProcessor = new OptionsProcessor[Symbol,Any]().addProcessor(optionProcessor _)
+    
+    /**
+     * Shell command specified as a string. Note that the string will be split on
+     * whitespace into tokens. Use {@link Command.apply(options: (A,B)*)} if some of 
+     * the "words" contain whitespace.
+     */
     def apply[Symbol,Any](str: String): Result = {
         val list = str.split(" ").toList
-        apply('command -> list.head, 'opts -> toStringListFromList(list.tail))
+        apply('command -> list.head, 'opts -> list.tail)
     }
 
-    override def action(result: Result, options: Map[Symbol,Any]) = {
+    override def action(options: Map[Symbol,Any]) = {
         val command = determineCommandName(options)
-        val opts = buildCommandOptions(options)
-        Log.log(Level.Notice, "shell: " + toCommandString(command, opts))
+        val commandOpts = buildCommandOptionsList(options)
+        Log.log(Level.Notice, "shell: "+toCommandString(command, commandOpts))
         if (Environment.environment.dryRun == true)
-            result
+            new Passed()
         else
-            new CommandRunner(command, opts).run()
+            new CommandRunner(command, commandOpts).run()
     }
     
     private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
         key match {
-            case 'command => None  // already handled.
-            case 'opts    => Some(toStringList(value))
-            case 'files   => value match {
-                case f:Files   => Some(f())
+            case 'files => value match {
+                case f:FilesFinder => Some(f())
                 case l:List[_] => Some(makeFilesLister()(l.map(_.toString())))
-                case x         => Some(makeFilesLister()(List(x.toString())))
+                case x => Some(makeFilesLister()(List(x.toString())))
             }
-            case other    => Some(List("-"+stringize(other), pathToString(value)))
+            case 'command => None  // ignore; handled by determineCommandName
+            case 'opts => Some(toStringList(value))
+            case other => Some(List("-"+stringize(other), pathToString(value)))
         }
+
+   protected def determineCommandName(options: Map[Symbol, Any]) = 
+        options.getOrElse('command, name).toString()
+
+    protected def buildCommandOptionsList(options: Map[Symbol, Any]) = 
+        optionsProcessor.processOptionsToList(options).map(_.toString()).filter(_.length > 0)
     
-    protected var optionProcessors: List[(Symbol, Any) => Option[List[String]]] = List(optionProcessor _)
+    // hook for test overrides.
+    protected def makeFilesLister() = new FilesFinder()
 
-    protected def determineCommandName(options: Map[Symbol,Any]) = options.get('command) match {
-        case None => name
-        case Some(x) => stringize(x)
-    }
-
-    // Builds up the list in reverse order (due to list semantics), then reverses.
-    protected def buildCommandOptions(options: Map[Symbol,Any]): List[String] =
-        options.foldLeft(List[String]()) { (list, k_v) => 
-            evaluateOption(k_v._1, k_v._2) ::: list
-        }.filter(_.length > 0).reverse
-
-    private def evaluateOption(key: Symbol, value: Any): List[String] = {
-        for {
-            f <- optionProcessors
-            list = f(key, value)
-        } list match {
-            case Some(s) => return s.reverse
-            case None =>
-        }
-        Nil
-    }
-    
     protected def pathToString(value: Any) = value match {
         case seq:Seq[_] => Path(seq)
         case _ => value.toString()
@@ -93,9 +85,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
         case s:Symbol => s.name // not toString()
         case _  => item.toString()
     }
-    
+
     protected def toCommandString(command: String, list: List[String]) = 
         list.foldLeft(command)(_ + " " + _ )
-        
-    protected def makeFilesLister() = new Files()
 }

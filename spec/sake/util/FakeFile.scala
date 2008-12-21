@@ -11,17 +11,12 @@ class FakeFile(val path: String, exists2: Boolean,
     def contents = Some(contents2)
     def contentsFilteredBy(nameFilter: String) = contents
     
-    private var createNewFileResult = false
-    def createNewFileResultShouldSucceed(b: Boolean) = createNewFileResult = b
-    def createNewFile = createNewFileResult
-    
-    private var mkdirsResult = isDirectory
-    def mkdirsShouldSucceed(b: Boolean) = mkdirsResult = b
-    def mkdirs = mkdirsResult
+    def createNewFile = false
+    def mkdirs = isDirectory
+    def delete = true
 
-    private var deleteResult = false
-    def deleteShouldSucceed(b: Boolean) = deleteResult = b
-    def delete = deleteResult
+    override def makeFile(path: String) = new FakeFile(path)
+    override def makeFile(parent: String, child: String) = new FakeFile(File.makePath(parent, child))
 }
 
 class FakeFileForSpecs(path: String, exists: Boolean, 
@@ -34,10 +29,13 @@ class FakeFileForSpecs(path: String, exists: Boolean,
         val unused = new java.io.File(".")
         Some(contents2.filter(filter.accept(unused, _)))
     }
+
+    override def makeFile(path: String) = new FakeFileForSpecs(path)
+    override def makeFile(parent: String, child: String) = new FakeFileForSpecs(File.makePath(parent, child))
 }
 
 object FakeFileForSpecs {
-    val oneFakeFile = new Files() {
+    val oneFakeFile = new FilesFinder() {
         override def makeFile(path: String) = path match {
             case "." => new FakeFileForSpecs(path, true, true, List("foo"))
             case "foo" => new FakeFileForSpecs(path, true, true, List("bar1"))
@@ -46,7 +44,7 @@ object FakeFileForSpecs {
         }
     }
         
-    val fakeFiles = new Files() {
+    val fakeFilesFinder = new FilesFinder() {
         override def makeFile(path: String) = path match {
             case "." => new FakeFileForSpecs(path, true, true, List("foo"))
             case "foo" => new FakeFileForSpecs(path, true, true, List("bar1", "bar2"))

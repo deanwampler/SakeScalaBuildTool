@@ -7,32 +7,36 @@ trait Commands {
 
     var classpath: List[String] = Nil
 
-    val files = new Files()
+    val files = new FilesFinder()
 
     def mkdirs(paths: String*): Unit = paths.foreach { path => 
         val dir = File(path)
-        if (! dir.exists) {
-            dir.mkdirs match {
-                case true =>
-                case false => Exit.error("Could not create directory \""+path+"\".")
-            }
-        }
+        if (dir.exists == false)
+            if (dir.mkdirs == false)
+                Exit.error("Could not create directory \""+path+"\".")
     }
     
     def mkdir(path: String) = mkdirs(path)
 
+    def delete(paths: String*): Unit = paths.foreach { path =>
+        if (File(path).delete == false)
+            Exit.error("Could not delete \""+path+"\".")
+    }  
+
+    def deleteRecursively(paths: String*): Unit = paths.foreach { path =>
+        if (File(path).deleteRecursively == false)
+            Exit.error("Could not delete \""+path+"\" recursively.")
+    }  
+    
     val sh = new ShellCommand("")
 
     val echo = new EchoCommand()
+
+    val specs = new SpecCommand()
     
-    // TODO: OS specific default: "rm".
-    val remove           = new RemoveShellCommand("rm")
-    val remove_force     = new RemoveShellCommand("rm", 'force -> true)
-    val remove_recursive = new RemoveShellCommand("rm", 'recursive -> true)
-    
-    val scala  = new JVMShellCommand("scala")
-    val scalac = new JVMShellCommand("scalac", 'files -> ".")
-    val spec   = new JVMShellCommand("scala") {
+    val scala  = new JVMCommand("scala")
+    val scalac = new JVMCommand("scalac", 'files -> ".")
+    val specJVM = new JVMCommand("scala") {
         private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
             key match {
                 case 'specs => {
@@ -44,9 +48,9 @@ trait Commands {
                 case _ => None
             }
         
-        optionProcessors ::= optionProcessor _
+        optionsProcessor.addProcessor(optionProcessor _)
     }
 
-    val java   = new JVMShellCommand("java")
-    val javac  = new JVMShellCommand("javac", 'files -> ".")
+    val java   = new JVMCommand("java")
+    val javac  = new JVMCommand("javac", 'files -> ".")
 }

@@ -4,6 +4,8 @@ import java.io._
 
 class CommandRunner(val command: String, val options: List[String]) {
 
+    def this(commandLine: List[String]) = this(commandLine.head, commandLine.tail)
+    
     def run() = {
         val pb = new ProcessBuilder()
         pb.redirectErrorStream(true)

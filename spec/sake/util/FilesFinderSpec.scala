@@ -2,35 +2,35 @@ package sake.util
 
 import org.specs._ 
 
-object FilesSpec extends Specification { 
+object FilesFinderSpec extends Specification { 
 
     import sake.environment._
     
-    "Using a Files object" should {
+    "Using a FilesFinder object" should {
         
         "throw a BuildError if all specified strings are empty" in {
-            (new Files()("")) must throwA[BuildError]
-            (new Files()("", "")) must throwA[BuildError]
-            (new Files()(List("",""))) must throwA[BuildError]
+            (new FilesFinder()("")) must throwA[BuildError]
+            (new FilesFinder()("", "")) must throwA[BuildError]
+            (new FilesFinder()(List("",""))) must throwA[BuildError]
         }
         
         "throw a BuildError if empty lists of strings are specified" in {
-            (new Files()(List())) must throwA[BuildError]
-            (new Files()(Nil)) must throwA[BuildError]
+            (new FilesFinder()(List())) must throwA[BuildError]
+            (new FilesFinder()(Nil)) must throwA[BuildError]
         }
 
         "ignore empty input strings" in {
-            new Files()("", ".", "") must be_==(List("."))
+            new FilesFinder()("", ".", "") must be_==(List("."))
         }
     
         "return List('.') for specification '.'" in {
-            new Files()(".") must be_==(List("."))
+            new FilesFinder()(".") must be_==(List("."))
         }
         "return List('..') for specification '..'" in {
-            new Files()("..") must be_==(List(".."))
+            new FilesFinder()("..") must be_==(List(".."))
         }
         "return List('foo/bar/baz') for specification 'foo/bar/baz' if it exists" in {
-            val f = new Files() {
+            val f = new FilesFinder() {
                 override def makeFile(path: String) = {
                     val p = if (path.length == 0) "." else path
                     p match {
@@ -44,7 +44,7 @@ object FilesSpec extends Specification {
             f("foo/bar/baz") must be_==(List("foo/bar/baz"))
         }
         "return Nil for specification 'foo/bar/baz' if it does not exists" in {
-            val f = new Files() {
+            val f = new FilesFinder() {
                 override def makeFile(path: String) = {
                     val p = if (path.length == 0) "." else path
                     p match {
@@ -58,7 +58,7 @@ object FilesSpec extends Specification {
             f("foo/bar/baz") must be_==(Nil)
         }
         
-        val fFooBar12Baz = new Files() {
+        val fFooBar12Baz = new FilesFinder() {
             override def makeFile(path: String) = {
                 val p = if (path.length == 0) "." else path
                 p match {
@@ -86,7 +86,7 @@ object FilesSpec extends Specification {
         }
 
         "return Nil for specification 'foo/*/baz' if neither 'foo/bar1' nor 'foo/bar2' has a 'baz'" in {
-            val f = new Files() {
+            val f = new FilesFinder() {
                 override def makeFile(path: String) = {
                     val p = if (path.length == 0) "." else path
                     p match {
@@ -104,7 +104,7 @@ object FilesSpec extends Specification {
         }
 
         "return Nil for specification '*' if the current directory is empty" in {
-            val f = new Files() {
+            val f = new FilesFinder() {
                 override def makeFile(path: String) = {
                     val p = if (path.length == 0) "." else path
                     p match {
@@ -115,7 +115,7 @@ object FilesSpec extends Specification {
             f("*") must be_==(Nil)
         }
 
-        val fFooBar12BazMore = new Files() {
+        val fFooBar12BazMore = new FilesFinder() {
             override def makeFile(path: String) = {
                 val p = if (path.length == 0) "." else path
                 p match {
@@ -153,11 +153,11 @@ object FilesSpec extends Specification {
         
 
         "return List('foo/bar1/*Spec.class', ...) for specification 'foo/**/*Spec.class' if they exist..." in {
-            FakeFileForSpecs.fakeFiles("foo/**/*Spec.class") must be_==(FakeFileForSpecs.fakeFilesExpected)
+            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class") must be_==(FakeFileForSpecs.fakeFilesExpected)
         }
 
         "return Nil for specification 'foo/**/baz' if neither 'foo/bar1' nor 'foo/bar2' has a 'baz'" in {
-            val f = new Files() {
+            val f = new FilesFinder() {
                 override def makeFile(path: String) = {
                     val p = if (path.length == 0) "." else path
                     p match {
@@ -178,7 +178,7 @@ object FilesSpec extends Specification {
         }
 
         "return Nil for specification '**' if the current directory is empty" in {
-            val f = new Files() {
+            val f = new FilesFinder() {
                 override def makeFile(path: String) = {
                     val p = if (path.length == 0) "." else path
                     p match {
@@ -200,22 +200,22 @@ object FilesSpec extends Specification {
     
     "When the specification has elements that don't overlap, apply()" should {
         "return the sum of the lists" in {
-            FakeFileForSpecs.fakeFiles("foo/bar1/**/*Spec.class", "foo/bar2/**/*Spec.class") must 
+            FakeFileForSpecs.fakeFilesFinder("foo/bar1/**/*Spec.class", "foo/bar2/**/*Spec.class") must 
                 be_==(FakeFileForSpecs.fakeFilesExpected)
         }
     }
     
     "When the specification has elements that overlap, apply()" should {
         "returns the union of the lists (i.e., with duplicates removed)" in {
-            FakeFileForSpecs.fakeFiles("foo/**/*Spec.class", "foo/bar2/**/*Spec.class") must 
+            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class", "foo/bar2/**/*Spec.class") must 
                 be_==(FakeFileForSpecs.fakeFilesExpected)
         }
     }
     
     "When one specification is subtracted from another spec., apply()" should {
         "return the first list minus the second" in {
-            (FakeFileForSpecs.fakeFiles("foo/**/*Spec.class") --
-             FakeFileForSpecs.fakeFiles("foo/bar1/**")).sort(_.length < _.length) must 
+            (FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class") --
+             FakeFileForSpecs.fakeFilesFinder("foo/bar1/**")).sort(_.length < _.length) must 
                 be_==(FakeFileForSpecs.fakeFilesExpectedBar2a)
         }
     }
