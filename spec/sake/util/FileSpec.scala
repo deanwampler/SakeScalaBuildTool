@@ -143,4 +143,33 @@ object FileSpec extends Specification {
             }
         }
     }
+    
+    "File.mkdirs" should {
+        "fail for files" in {
+            val f = new JavaFileWrapper("./foobar")
+            f.createNewFile
+            f.mkdirs must be_==(false)
+            f.delete
+            f.exists must be_==(false)
+        }
+    }
+    
+    "File.mkdirs" should {
+        "fail for a directory that already exists" in {
+            val d = new JavaFileWrapper(".")
+            d.mkdirs must be_==(false)
+            d.exists must be_==(true)
+        }
+    }
+    
+    "File.mkdirs" should {
+        "success for a non-existent directory" in {
+            val d = new JavaFileWrapper("./foobar")
+            d.mkdirs must be_==(true)
+            d.exists must be_==(true)
+            d.delete
+            d.exists must be_==(false)
+        }
+    }
+    
 }

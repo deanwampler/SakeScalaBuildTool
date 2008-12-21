@@ -8,7 +8,21 @@ trait Commands {
     var classpath: List[String] = Nil
 
     val files = new Files()
+
+    def mkdirs(paths: String*): Unit = {
+        paths.foreach { path => 
+            val dir = new File(path)
+            if (! dir.exists)
+                dir.mkdirs match {
+                    case true =>
+                    case false => throw new BuildError("Could not create directory \""+path"\".")
+                }
+            }
+        }
+    }
     
+    def mkdir(path: String) = mkdirs(path)
+
     val sh = new ShellCommand("")
 
     val echo = new EchoCommand()

@@ -1,7 +1,7 @@
 package sake.util
 
 class FakeFile(val path: String, exists2: Boolean, 
-               val isDirectory2: Boolean, val contents2: List[String]) extends File {
+        val isDirectory2: Boolean, val contents2: List[String]) extends File {
 
     def this (path: String) = this(path, false, false, Nil)
 
@@ -10,18 +10,26 @@ class FakeFile(val path: String, exists2: Boolean,
     def isFile = !isDirectory2
     def contents = Some(contents2)
     def contentsFilteredBy(nameFilter: String) = contents
+    
+    private var createNewFileResult = false
+    def createNewFileResultShouldSucceed(b: Boolean) = createNewFileResult = b
+    def createNewFile = createNewFileResult
+    
+    private var mkdirsResult = isDirectory
+    def mkdirsShouldSucceed(b: Boolean) = mkdirsResult = b
+    def mkdirs = mkdirsResult
+
+    private var deleteResult = false
+    def deleteShouldSucceed(b: Boolean) = deleteResult = b
+    def delete = deleteResult
 }
 
-class FakeFileForSpecs(val path: String, exists2: Boolean, 
-               val isDirectory2: Boolean, val contents2: List[String]) extends File {
+class FakeFileForSpecs(path: String, exists: Boolean, 
+       isDirectory: Boolean, contents: List[String]) extends FakeFile(path, exists, isDirectory, contents) {
 
     def this (path: String) = this(path, false, false, Nil)
 
-    def exists = exists2
-    def isDirectory = isDirectory2
-    def isFile = !isDirectory2
-    def contents = Some(contents2)
-    def contentsFilteredBy(nameFilter: String) = {
+    override def contentsFilteredBy(nameFilter: String) = {
         val filter = new FileFilter(nameFilter)
         val unused = new java.io.File(".")
         Some(contents2.filter(filter.accept(unused, _)))

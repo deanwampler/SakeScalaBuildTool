@@ -39,10 +39,6 @@ object project extends Project {
     }
     
     target('build_dir) {
-        //val cmdStr = "mkdir -p "+buildDir
-      //  sh (cmdStr)
-    }
-    target('foo) {
-        sh("ls -l")
+        mkdir(buildDir)
     }
 }

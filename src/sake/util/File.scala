@@ -4,7 +4,7 @@ import java.io.{File => JFile, FilenameFilter => JFilenameFilter}
 import scala.util.matching.Regex
 
 /** 
- * A wrapper around Java's file, to better support testing.
+ * A wrapper around Java's file, to better support mocking.
  */
 trait File {
     val path:String
@@ -14,6 +14,11 @@ trait File {
     def isFile: Boolean
     def contents: Option[List[String]]
     def contentsFilteredBy(nameFilter: String): Option[List[String]]
+    
+    def createNewFile: Boolean
+    
+    def mkdirs: Boolean
+    def delete: Boolean
 }
 
 class FileFilter(val nameFilter: String) extends JFilenameFilter {
@@ -49,5 +54,10 @@ class JavaFileWrapper(override val path: String) extends File {
         val ary = file.list(new FileFilter(nameFilter))
         if (ary == null) None else Some(ary.toList)
     }
+    
+    def createNewFile = file.createNewFile()
+
+    def mkdirs = file.mkdirs()
+    def delete = file.delete()
 }
 
