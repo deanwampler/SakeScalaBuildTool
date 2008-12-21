@@ -7,8 +7,8 @@ object project extends Project {
     val srcDir = "src/"
     val buildDir = "build/"
 
-    environment.dryRun = true
-    showStackTraces = false
+    environment.dryRun = false
+    showStackTracesOnFailures = false
     log.threshold = Level.Info
     environment.classpath ::= buildDir
     environment.classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar" 
@@ -25,7 +25,7 @@ object project extends Project {
         }
     }
 
-    target('compile -> 'clean) {
+    target('compile -> List('clean, 'build_dir)) {
         scalac (
             'files  -> files(srcDir+"**/*.scala"),
             'classpath -> environment.classpath,
@@ -38,41 +38,11 @@ object project extends Project {
         remove_recursive('files -> buildDir)
     }
     
-    target('files) {
-        sh (
-            'command -> "ls",
-            'opts    -> files(buildDir+"/sake/**/*.class")
-        )
-        sh (
-            'command -> "ls",
-            'opts    -> files(buildDir+"/sake/**/*.class")
-        )
+    target('build_dir) {
+        //val cmdStr = "mkdir -p "+buildDir
+      //  sh (cmdStr)
     }
-    
-    target('echo) {
-        echo("hello world!")
-    }
-
-    target('sh1) {
-        sh (
-            'command -> "touch",
-            'opts    -> List("foobar.txt", "barfoo.txt")
-        )
-        sh (
-            'command -> "ls",
-            'opts    -> List("-l", "foobar.txt", "barfoo.txt")
-        )
-        sh ("ls -l bin")
-        remove('files ->    "*bar*.txt")
-    }
-    target('dir) {
-        sh (
-            'command -> "ls",
-            'opts    -> "-l ../.."
-        )
-        sh (
-            'command -> "ls",
-            'opts    -> ("-l" :: files("*"))
-        )
+    target('foo) {
+        sh("ls -l")
     }
 }

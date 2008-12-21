@@ -13,7 +13,7 @@ class Project extends Commands {
     var log = Log.log
     val Level = sake.util.Level
     
-    var showStackTraces = true
+    var showStackTracesOnFailures = true
     
     private var allTargetGrps: List[TargetGroup] = Nil
     
@@ -89,7 +89,7 @@ class Project extends Commands {
     }
     
     private def handleBuildError(msg: String, th: Throwable) {
-        if (showStackTraces && th != null) {
+        if (showStackTracesOnFailures && th != null) {
             th.printStackTrace(log.out)
         }
         System.exit(1)
