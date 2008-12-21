@@ -4,14 +4,15 @@ import sake.util._
 
 object project extends Project {
     
-    val srcDir = "src/"
+    val srcDir   = "src/"
+    var specDir  = "spec/"
     val buildDir = "build/"
 
     environment.dryRun = false
     showStackTracesOnFailures = false
     log.threshold = Level.Info
     environment.classpath ::= buildDir
-    environment.classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar" 
+    environment.classpath ::= "/Library/tools/scala/scala-specs/specs-1.4.1.jar:lib/sake.jar" 
 
     target('all -> List('clean, 'compile, 'spec))
 
@@ -27,7 +28,7 @@ object project extends Project {
 
     target('compile -> List('clean, 'build_dir)) {
         scalac (
-            'files  -> files(srcDir+"**/*.scala"),
+            'files  -> files(srcDir+"**/*.scala", specDir+"**/*.scala"),
             'classpath -> environment.classpath,
             'd      -> buildDir,
             'opts   -> "-unchecked -deprecation"

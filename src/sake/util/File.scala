@@ -21,6 +21,10 @@ trait File {
     def delete: Boolean
 }
 
+object File {
+    def apply(path: String) = new JavaFileWrapper(path)
+}
+
 class FileFilter(val nameFilter: String) extends JFilenameFilter {
 
      val regex = ("^"+nameFilter.replaceAll("\\*", ".*").replaceAll("\\?", ".")+"$").r

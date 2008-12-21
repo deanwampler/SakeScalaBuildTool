@@ -3,6 +3,11 @@ package sake.command.builtin
 import sake.command.Command
 import sake.util._
 
+/**
+ * Log a string at the specified level.
+ * You can also use "println". use EchoCommand if you want the output to be logged consistently
+ * with the rest of the build output.
+ */
 class EchoCommand(val defaultLevel: Level.Value) extends Command[Symbol,Any]("echo") {
     
     def this() = this(Level.Notice)

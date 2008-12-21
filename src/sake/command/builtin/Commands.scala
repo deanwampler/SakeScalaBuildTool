@@ -9,14 +9,12 @@ trait Commands {
 
     val files = new Files()
 
-    def mkdirs(paths: String*): Unit = {
-        paths.foreach { path => 
-            val dir = new File(path)
-            if (! dir.exists)
-                dir.mkdirs match {
-                    case true =>
-                    case false => throw new BuildError("Could not create directory \""+path"\".")
-                }
+    def mkdirs(paths: String*): Unit = paths.foreach { path => 
+        val dir = File(path)
+        if (! dir.exists) {
+            dir.mkdirs match {
+                case true =>
+                case false => Exit.error("Could not create directory \""+path+"\".")
             }
         }
     }
@@ -37,8 +35,13 @@ trait Commands {
     val spec   = new JVMShellCommand("scala") {
         private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
             key match {
-                case 'specs => Some(List(stringize(value)))
-                case _      => None
+                case 'specs => {
+                    val specsToRun = List(stringize(value))
+                    if (specsToRun.length == 0)
+                        Exit.error("spec: No specification files were given!")
+                    Some(specsToRun)
+                }
+                case _ => None
             }
         
         optionProcessors ::= optionProcessor _
