@@ -19,16 +19,6 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
 
     protected val optionsProcessor = new OptionsProcessor[Symbol,Any]().addProcessor(optionProcessor _)
     
-    /**
-     * Shell command specified as a string. Note that the string will be split on
-     * whitespace into tokens. Use {@link Command.apply(options: (A,B)*)} if some of 
-     * the "words" contain whitespace.
-     */
-    def apply[Symbol,Any](str: String): Result = {
-        val list = str.split(" ").toList
-        apply('command -> list.head, 'opts -> list.tail)
-    }
-
     override def action(options: Map[Symbol,Any]) = {
         val command = determineCommandName(options)
         val commandOpts = buildCommandOptionsList(options)
@@ -87,4 +77,16 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
 
     protected def toCommandString(command: String, list: List[String]) = 
         list.foldLeft(command)(_ + " " + _ )
+}
+
+object ShellCommand {
+    /**
+     * Shell command specified as a string. Note that the string will be split on
+     * whitespace into tokens. Use {@link Command.apply(options: (A,B)*)} if some of 
+     * the "words" contain whitespace.
+     */
+    def apply[Symbol,Any](str: String): Result = {
+        val list = str.split(" ").toList
+        new ShellCommand(list.head).apply('command -> list.head, 'opts -> list.tail)
+    }
 }

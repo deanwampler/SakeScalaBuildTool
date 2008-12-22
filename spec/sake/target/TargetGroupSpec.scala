@@ -69,7 +69,7 @@ object TargetGroupSpec extends Specification {
             val tg1 = new TargetGroup(List(t1,t2,t3))
             val tg1Targets = tg1.targets
             val tg2 = tg1 {println("hello!")}
-            tg2.targets.foreach { t2 =>
+            tg2.targets foreach { t2 =>
                 tg1Targets.find(t => t.name == t2.name) match {
                     case None => fail(t2.name.toString())
                     case Some(t1) => (t1 eq t2) must be_==(false)

@@ -10,7 +10,7 @@ compile: build_dir
 	scalac -d build -cp ${CLASSPATH} -unchecked -deprecation $$(find src spec -name '*.scala')
 
 test:
-	scala -cp ${CLASSPATH}:build bin/specrunner.scala
+	scala -cp build:${CLASSPATH} bin/specrunner.scala
 
 jar: lib_dir remove_jar
 	cd build; \

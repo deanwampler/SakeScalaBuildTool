@@ -37,7 +37,7 @@ class ProjectDriver extends Commands {
     def build(targs: Array[String]):Unit = build(targs.map(Symbol(_)).toList)
     
     def build(targs: List[Symbol]):Unit =
-        determineTargets(targs).foreach { t => doBuild(t) }
+        determineTargets(targs) foreach { t => doBuild(t) }
         
     // removeDuplicates removes from left, but we need it to remove from the right.
     protected def determineTargets(targs: List[Symbol]):List[Target] = 

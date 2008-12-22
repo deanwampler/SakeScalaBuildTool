@@ -9,7 +9,7 @@ trait Commands {
 
     val files = new FilesFinder()
 
-    def mkdirs(paths: String*): Unit = paths.foreach { path => 
+    def mkdirs(paths: String*): Unit = paths foreach { path => 
         val dir = File(path)
         if (dir.exists == false)
             if (dir.mkdirs == false)
@@ -18,17 +18,25 @@ trait Commands {
     
     def mkdir(path: String) = mkdirs(path)
 
-    def delete(paths: String*): Unit = paths.foreach { path =>
+    def delete(paths: String*): Unit = paths foreach { path =>
         if (File(path).delete == false)
             Exit.error("Could not delete \""+path+"\".")
     }  
 
-    def deleteRecursively(paths: String*): Unit = paths.foreach { path =>
+    def deleteRecursively(paths: String*): Unit = paths foreach { path =>
         if (File(path).deleteRecursively == false)
             Exit.error("Could not delete \""+path+"\" recursively.")
     }  
     
-    val sh = new ShellCommand("shell")
+    /**
+     * Use "sh" for invoking a shell command with a command string.
+     */
+    def sh(command: String) = ShellCommand(command)
+
+    /**
+     * Use "shell" for invoking a shell command with key-value pairs.
+     */
+    val shell = new ShellCommand("shell", Map('command -> "shell", 'opts -> ""))
 
     val echo = new EchoCommand()
 

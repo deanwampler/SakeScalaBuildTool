@@ -70,32 +70,3 @@ class FileFilter(val nameFilter: String) extends JFilenameFilter {
          }
      }
 }
-
-class JavaFileWrapper(override val path: String) extends File {
-
-    def this(parent: String, child: String) = this(File.makePath(parent, child))
-    
-    val file = new JFile(path)
-    
-    def exists = file.exists()
-    
-    def isDirectory = file.isDirectory()
-    
-    def isFile = file.isFile()
-    
-    def contents = {
-        val ary = file.list()
-        if (ary == null) None else Some(ary.toList)
-    }
-    
-    def contentsFilteredBy(nameFilter: String) = {
-        val ary = file.list(new FileFilter(nameFilter))
-        if (ary == null) None else Some(ary.toList)
-    }
-    
-    def createNewFile = file.createNewFile()
-
-    def mkdirs = file.mkdirs()
-    def delete = file.delete()
-}
-

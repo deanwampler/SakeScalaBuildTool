@@ -43,7 +43,7 @@ object ProjectSpec extends Specification {
             val group = new ProjectDriver().target('targetName1, "targetName2", "targetName3", 'targetName4)
             group.targets.length must be_==(4)
             val t = group.targets.head
-            List('targetName1, 'targetName2, 'targetName3, 'targetName4).foreach { n =>
+            List('targetName1, 'targetName2, 'targetName3, 'targetName4) foreach { n =>
                 group.targets.find(t => t.name == n) match {
                     case None => fail(n.toString())
                     case Some(t) => verifyDeps(t, Nil)
@@ -61,7 +61,7 @@ object ProjectSpec extends Specification {
             val targs = List('targetName1, "targetName2", "targetName3", 'targetName4)
             val group = new ProjectDriver().target(targs)
             group.targets.length must be_==(4)
-            List('targetName1, 'targetName2, 'targetName3, 'targetName4).foreach { n =>
+            List('targetName1, 'targetName2, 'targetName3, 'targetName4) foreach { n =>
                 group.targets.find(t => t.name == n) match {
                     case None => fail(n.toString())
                     case Some(t) => verifyDeps(t, Nil)
@@ -72,7 +72,7 @@ object ProjectSpec extends Specification {
         "accept a single dependent after each name (and convert it to a List)" in {
             val group = new ProjectDriver().target('targetName1 -> 'dep11, "targetName2" -> "dep21")
             group.targets.length must be_==(2)
-            Map('targetName1 -> List('dep11), 'targetName2 -> List('dep21)).foreach { n_d => 
+            Map('targetName1 -> List('dep11), 'targetName2 -> List('dep21)) foreach { n_d => 
                 group.targets.find(t => t.name == n_d._1) match {
                     case None => fail(n_d._1.toString())
                     case Some(t) => verifyDeps(t, n_d._2)
@@ -83,7 +83,7 @@ object ProjectSpec extends Specification {
         "accept a List of dependents after each name" in {
             val group = new ProjectDriver().target('targetName1 -> List('dep11, "dep12"), "targetName2" -> ("dep21" :: 'dep22 :: Nil))
             group.targets.length must be_==(2)
-            Map('targetName1 -> List('dep11, 'dep12), 'targetName2 -> List('dep21, 'dep22)).foreach { n_d => 
+            Map('targetName1 -> List('dep11, 'dep12), 'targetName2 -> List('dep21, 'dep22)) foreach { n_d => 
                 group.targets.find(t => t.name == n_d._1) match {
                     case None => fail(n_d._1.toString())
                     case Some(t) => verifyDeps(t, n_d._2)
@@ -95,7 +95,7 @@ object ProjectSpec extends Specification {
         "accept a List of dependents after a list of name, where each target gets the same list of dependencies" in {
             val group = new ProjectDriver().target(List('targetName1, "targetName2") -> List('depa, "depb", 'depc))
             group.targets.length must be_==(2)
-            List('targetName1, 'targetName2).foreach { n =>
+            List('targetName1, 'targetName2) foreach { n =>
                 group.targets.find(t => t.name == n) match {
                     case None => fail(n.toString())
                     case Some(t) => verifyDeps(t, List('depa, 'depb, 'depc))
@@ -152,7 +152,7 @@ object ProjectSpec extends Specification {
             project.target('t1, 't2)
             project.target('t2, 't3, 't4)
             project.allTargets.size must be_==(4) 
-            List('t1, 't2, 't3, 't4).foreach { t =>
+            List('t1, 't2, 't3, 't4) foreach { t =>
                 project.allTargets.contains(t) must be_==(true)
             }
         }

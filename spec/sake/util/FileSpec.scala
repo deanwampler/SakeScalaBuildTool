@@ -7,6 +7,19 @@ import scala.util.matching.Regex
 
 object FileSpec extends Specification { 
 
+    doBeforeSpec {
+        val d = new JavaFileWrapper("toss")
+        d.mkdirs must be_==(true)
+        d.exists must be_==(true)
+    }
+
+    doAfterSpec {
+        val d = new JavaFileWrapper("toss")
+        d.deleteRecursively must be_==(true)
+        d.exists must be_==(false)
+        new JavaFileWrapper("toss").exists must be_==(false)
+    }
+
     import sake.environment._
     
     val cwd = Environment.environment.currentWorkingDirectory
@@ -14,16 +27,16 @@ object FileSpec extends Specification {
     "A FileFilter object" should {
         
         "ignore the directory java.io.File argument" in {
-            val ff = new FileFilter("foobar")
+            val ff = new FileFilter("f1")
             val dir = new JFile("nonexistent")
-            ff.accept(dir, "foobar.txt") must be_==(false)
+            ff.accept(dir, "f1.txt") must be_==(false)
         }
         
         "return true only for exact matches if the filter string has no wildcards" in {
-            val ff = new FileFilter("foobar")
+            val ff = new FileFilter("f1")
             val dir = new JFile("nonexistent")
-            ff.accept(dir, "foobar.txt") must be_==(false)
-            ff.accept(dir, "foobar") must be_==(true)
+            ff.accept(dir, "f1.txt") must be_==(false)
+            ff.accept(dir, "f1") must be_==(true)
         }
         
         "return true for matches if the filter string has wildcards" in {
@@ -33,7 +46,7 @@ object FileSpec extends Specification {
             ff.accept(dir, "fooXbar1")   must be_==(true)
             ff.accept(dir, "fooXYZbar1") must be_==(true)
             ff.accept(dir, "1foobar2")   must be_==(false)
-            ff.accept(dir, "foobar12")   must be_==(false)
+            ff.accept(dir, "ffoobar2")   must be_==(false)
             ff.accept(dir, "foobar1")    must be_==(true)
             ff.accept(dir, "foobar2")    must be_==(true)
         }
@@ -61,9 +74,9 @@ object FileSpec extends Specification {
         }
     }
     
-    "File.file" should {
+    "File.javaFile" should {
         "return the underlying java.io.File" in {
-            new JavaFileWrapper(cwd).file.isInstanceOf[JFile] must be_==(true)
+            new JavaFileWrapper(cwd).javaFile.isInstanceOf[JFile] must be_==(true)
         }
     }
 
@@ -146,35 +159,29 @@ object FileSpec extends Specification {
     
     "File.mkdirs" should {
         "fail for files" in {
-            val f = new JavaFileWrapper("./foobar")
+            val f = new JavaFileWrapper("toss/f1")
             f.createNewFile
             f.mkdirs must be_==(false)
-            f.delete
+            f.delete must be_==(true)
             f.exists must be_==(false)
         }
-    }
     
-    "File.mkdirs" should {
         "fail for a directory that already exists" in {
-            val d = new JavaFileWrapper(".")
+            val d = new JavaFileWrapper("toss")
             d.mkdirs must be_==(false)
             d.exists must be_==(true)
         }
-    }
     
-    "File.mkdirs" should {
         "succeed for a non-existent directory" in {
-            val d = new JavaFileWrapper("./foobar")
+            val d = new JavaFileWrapper("toss/f1")
             d.mkdirs must be_==(true)
             d.exists must be_==(true)
-            d.delete
+            d.delete must be_==(true)
             d.exists must be_==(false)
         }
-    }
     
-    "File.delete" should {
         "fail for a non-existent file or directory" in {
-            val d = new JavaFileWrapper("./foobar")
+            val d = new JavaFileWrapper("toss/f1")
             d.exists must be_==(false)
             d.delete must be_==(false)
         }
@@ -182,7 +189,7 @@ object FileSpec extends Specification {
     
     "File.delete" should {
         "succeed for a file that exists" in {
-            val f = new JavaFileWrapper("./foobar")
+            val f = new JavaFileWrapper("toss/f1")
             f.createNewFile
             f.exists must be_==(true)
             f.delete must be_==(true)
@@ -192,33 +199,36 @@ object FileSpec extends Specification {
     
     "File.delete" should {
         "succeed for a directory that exists and is empty" in {
-            val d = new JavaFileWrapper("./tossdir")
-            d.mkdirs
+            val d = new JavaFileWrapper("toss/d1")
+            d.mkdirs must be_==(true)
             d.exists must be_==(true)
             d.delete must be_==(true)
             d.exists must be_==(false)
+            new JavaFileWrapper("toss/d1").exists must be_==(false)
         }
     }
     
     "File.delete" should {
         "fail for a directory that exists and is not empty" in {
-            val d = new JavaFileWrapper("./tossdir")
-            d.mkdirs
+            val d = new JavaFileWrapper("toss/d1")
+            d.mkdirs must be_==(true)
             d.exists must be_==(true)
-            val f = new JavaFileWrapper("./tossdir/foobar")
+            val f = new JavaFileWrapper("toss/d1/f1")
             f.createNewFile
             f.exists must be_==(true)
             d.delete must be_==(false)
             // cleanup
             f.delete must be_==(true)
+            f.exists must be_==(false)
             d.delete must be_==(true)
             d.exists must be_==(false)
+            new JavaFileWrapper("toss/d1").exists must be_==(false)
         }
     }
     
     "File.deleteRecursively" should {
         "fail for a non-existent file or directory" in {
-            val d = new JavaFileWrapper("./foobar")
+            val d = new JavaFileWrapper("toss/f1")
             d.exists must be_==(false)
             d.deleteRecursively must be_==(false)
         }
@@ -226,7 +236,7 @@ object FileSpec extends Specification {
     
     "File.deleteRecursively" should {
         "succeed for a file that exists" in {
-            val f = new JavaFileWrapper("./foobar")
+            val f = new JavaFileWrapper("toss/f1")
             f.createNewFile
             f.exists must be_==(true)
             f.deleteRecursively must be_==(true)
@@ -236,8 +246,8 @@ object FileSpec extends Specification {
     
     "File.deleteRecursively" should {
         "succeed for a directory that exists and is empty" in {
-            val d = new JavaFileWrapper("./tossdir")
-            d.mkdirs
+            val d = new JavaFileWrapper("toss/d1")
+            d.mkdirs must be_==(true)
             d.exists must be_==(true)
             d.deleteRecursively must be_==(true)
             d.exists must be_==(false)
@@ -246,14 +256,16 @@ object FileSpec extends Specification {
     
     "File.deleteRecursively" should {
         "succeed for a directory that exists and is not empty" in {
-            val d = new JavaFileWrapper("./tossdir")
-            d.mkdirs
+            val d = new JavaFileWrapper("toss/d1")
+            d.mkdirs must be_==(true)
             d.exists must be_==(true)
-            val f = new JavaFileWrapper("./tossdir/foobar")
-            f.createNewFile
+            val f = new JavaFileWrapper("toss/d1/f1")
+            f.createNewFile must be_==(true)                
             f.exists must be_==(true)
             d.deleteRecursively must be_==(true)
+            f.exists must be_==(false)
+            d.exists must be_==(false)
+            new JavaFileWrapper("toss/d1").exists must be_==(false)
         }
     }
-    
 }

@@ -1,5 +1,8 @@
 package sake.command.builtin
 
+import sake.environment._
+import sake.util._
+
 /**
  * Run all the specs in a path, filtered by a name pattern.
  * The default options are
@@ -9,38 +12,56 @@ package sake.command.builtin
  *  <li><em>'pattern</em> => spec class or object name filter regex. Defaults to ".*".</li>
  * </ol>
  */
-class SpecCommand(defaultOptions: Option[Map[Symbol, String]]) 
-    extends Command[Symbol, String]("spec", defaultOptions){
+class SpecCommand(defaultOptions: Option[Map[Symbol, Any]]) 
+    extends Command[Symbol, Any]("spec", defaultOptions){
 
-    def this(defaultOpts: Map[Symbol,String]) = this(Some(defaultOpts))
+    def this(defaultOpts: Map[Symbol, Any]) = this(Some(defaultOpts))
 
-    def this(defaultOpt0: (Symbol,String), defaultOpts: (Symbol,String)*) = 
-        this(Map[Symbol,String](defaultOpt0)++defaultOpts)
+    def this(defaultOpt0: (Symbol, Any), defaultOpts: (Symbol, Any)*) = 
+        this(Map[Symbol, Any](defaultOpt0)++defaultOpts)
 
     def this() = this(None)
 
-    private def optionProcessor(key: Symbol, value: String): Option[List[String]] = 
+    private def optionProcessor(key: Symbol, value: Any): Option[List[Any]] = 
         key match {
             case 'path    => Some(List(value.toString()))
             case 'pattern => Some(List(value.toString()))
+            case 'report  => Some(List(toBoolean(value)))
             case _  => None
         }
 
-    protected val optionsProcessor = new OptionsProcessor[Symbol,String]().addProcessor(optionProcessor _)
+    protected val optionsProcessor = new OptionsProcessor[Symbol, Any]().addProcessor(optionProcessor _)
     
-    override def action(options: Map[Symbol, String]):Result = {
-        val path    = options.getOrElse('path,    "spec")
-        val pattern = options.getOrElse('pattern, ".*")
+    override def action(options: Map[Symbol, Any]): Result = {
+        val path     = options.getOrElse('path,    "spec").toString()
+        val pattern  = options.getOrElse('pattern, ".*").toString()
+        val doReport = toBoolean(options.getOrElse('report,  true))
         
-        makeSpecsFileRunner(path, pattern).specs.foreach { spec => 
-            runSpec(spec)
+        if (Environment.environment.dryRun == true)
+            return new Passed()
+        runSpecs(makeSpecsFileRunner(path, pattern), doReport)
+    }
+    
+    import org.specs._
+    import org.specs.runner._
+    
+    protected def makeSpecsFileRunner(path: String, pattern: String) = 
+        new SpecsFileRunner(path, pattern)
+        
+    protected def runSpecs(runner: SpecsFileRunner, outputReport: Boolean): Result = {
+        if (outputReport)
+            runner.report(runner.specs)
+        runner.specs foreach { spec => 
+            if (spec.isFailing)
+                return new Failed()
         }
         new Passed()
     }
     
-    protected def makeSpecsFileRunner(path: String, pattern: String) = 
-        new org.specs.runner.SpecsFileRunner(path, pattern)
-        
-    protected def runSpec(spec: org.specs.Specification) = spec.main(Array[String]())
+    private def toBoolean(value: Any): Boolean = value match {
+        case b:Boolean => b
+        case _ => Exit.error("Must specify true or false for the 'report option.")
+    }
+    
 }
 

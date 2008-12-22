@@ -4,6 +4,7 @@ import sake.Project._
 val srcDir   = "src/"
 var specDir  = "spec/"
 val buildDir = "build/"
+val libDir   = "lib/"
 
 // If true, don't actually run any commands.
 environment.dryRun = false
@@ -16,21 +17,22 @@ log.threshold = Level.Info
 
 // Add to the classpath using list semantics.
 environment.classpath ::= buildDir
-environment.classpath ::= "lib/specs-1.4.1.jar:lib/junit-4.4.jar:lib/sake.jar" 
+files(libDir+"*.jar") foreach { lib => environment.classpath ::= lib }
 
 target('all -> List('clean, 'compile, 'spec, 'jar))
 
 target('jar) {
-    sh('command -> "jar", 'opts -> ("cf "+buildDir+"/sake.jar -C "+buildDir+" sake"))
+    sh("jar cf "+buildDir+"/sake.jar -C "+buildDir+" sake")
+    sh("cp "+buildDir+"/sake.jar "+libDir)
 }
-
-protected def toCommandString(command: String, list: List[String]) = 
-    list.foldLeft(command)(_ + " " + _ )
 
 target('spec) {
    specs('path -> "spec", 'pattern -> ".*")
 }
 
+target('foo) {
+    sh("ls build lib")
+}
 target('compile -> List('clean, 'build_dir)) {
     scalac(
         'files     -> files(srcDir+"**/*.scala", specDir+"**/*.scala"),
