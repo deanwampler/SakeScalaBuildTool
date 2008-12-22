@@ -6,7 +6,6 @@ import sake.environment._
 
 /**
  * Defining and running arbitrary shell commands. 
- * TODO Assumes a *nix-like OS.
  */
 class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]]) 
     extends Command[Symbol,Any](name, defaultOptions) {

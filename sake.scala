@@ -18,14 +18,21 @@ log.threshold = Level.Info
 environment.classpath ::= buildDir
 environment.classpath ::= "lib/specs-1.4.1.jar:lib/junit-4.4.jar:lib/sake.jar" 
 
-target('all -> List('clean, 'compile, 'spec))
+target('all -> List('clean, 'compile, 'spec, 'jar))
+
+target('jar) {
+    sh("jar cf sake.jar -C build sake")
+    sh("jar cf sake.jar -C build sake")
+}
+protected def toCommandString(command: String, list: List[String]) = 
+    list.foldLeft(command)(_ + " " + _ )
 
 target('spec) {
    specs('path -> "spec", 'pattern -> ".*")
 }
 
 target('compile -> List('clean, 'build_dir)) {
-    scalac (
+    scalac(
         'files     -> files(srcDir+"**/*.scala", specDir+"**/*.scala"),
         'classpath -> environment.classpath,
         'd         -> buildDir,

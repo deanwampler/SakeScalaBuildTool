@@ -28,7 +28,7 @@ trait Commands {
             Exit.error("Could not delete \""+path+"\" recursively.")
     }  
     
-    val sh = new ShellCommand("")
+    val sh = new ShellCommand("shell")
 
     val echo = new EchoCommand()
 
@@ -36,6 +36,7 @@ trait Commands {
     
     val scala  = new JVMCommand("scala")
     val scalac = new JVMCommand("scalac", 'files -> ".")
+    // Old:
     val specJVM = new JVMCommand("scala") {
         private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
             key match {
