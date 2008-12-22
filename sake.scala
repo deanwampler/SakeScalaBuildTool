@@ -21,9 +21,9 @@ environment.classpath ::= "lib/specs-1.4.1.jar:lib/junit-4.4.jar:lib/sake.jar"
 target('all -> List('clean, 'compile, 'spec, 'jar))
 
 target('jar) {
-    sh("jar cf sake.jar -C build sake")
-    sh("jar cf sake.jar -C build sake")
+    sh('command -> "jar", 'opts -> ("cf "+buildDir+"/sake.jar -C "+buildDir+" sake"))
 }
+
 protected def toCommandString(command: String, list: List[String]) = 
     list.foldLeft(command)(_ + " " + _ )
 
