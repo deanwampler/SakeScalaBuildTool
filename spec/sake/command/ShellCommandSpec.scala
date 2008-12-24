@@ -155,6 +155,44 @@ object ShellCommandSpec extends Specification {
              checkString("""shcmd\s+-x foo:bar -Dx=y -d -g:1 -x'y z'\s*""".r, byteStream.toString())
         }
 
+        "map 'directory -> String to the working directory the shell command should use" in {
+             val cmd = new ShellCommand("shcmd") {
+                 override def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
+                     val runner = super.makeCommandRunner(command, args, options)
+                     runner.processBuilder.directory().getName() must be_==("lib")
+                     runner
+                 }
+             }
+             cmd('command -> "pwd", 'directory -> "lib")
+        }
+
+        "map 'D -> key=value to an environment variable named 'key' with value 'value'" in {
+             val cmd = new ShellCommand("shcmd") {
+                 override def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
+                     val runner = super.makeCommandRunner(command, args, options)
+                     runner.processBuilder.environment().get("key1") must be_==("value1")
+                     runner
+                 }
+             }
+             cmd('command -> "pwd", 'D -> "key1=value1")
+        }
+
+        "map 'D -> key to an environment variable named 'key' and an empty 'value'" in {
+             val cmd = new ShellCommand("shcmd") {
+                 override def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
+                     val runner = super.makeCommandRunner(command, args, options)
+                     runner.processBuilder.environment().get("key1") must be_==("")
+                     runner
+                 }
+             }
+             cmd('command -> "pwd", 'D -> "key1")
+        }
+
+        "throw a BuildError if 'D -> =value is given" in {
+             val cmd = new ShellCommand("shcmd")
+             cmd('command -> "pwd", 'D -> "=value1") must throwA[BuildError]
+        }
+
         "map any other unknown 'opt -> List(a,b,c) to a path-like '-opt -> a:b:c'" in {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "shcmd", 'foo -> List("a", "b", "c"))

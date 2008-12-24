@@ -51,6 +51,8 @@ object File {
     def apply(path: String) = new JavaFileWrapper(path)
     def apply(parent: String, child: String) = new JavaFileWrapper(parent, child)
     
+    implicit def toJavaFile(jfw: JavaFileWrapper): JFile = jfw.javaFile
+    
     def makePath(prefix: String, elem: String) = prefix match {
         case "" => elem
         case _  => prefix + Environment.environment.fileSeparator + elem

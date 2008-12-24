@@ -1,16 +1,23 @@
 package sake.command
 
 import java.io._
+import sake.util.Exit
 
-class CommandRunner(val command: String, val options: List[String]) {
+class CommandRunner(val command: String, val arguments: List[String], val environment: Option[Map[Any, Any]]) {
 
-    def this(commandLine: List[String]) = this(commandLine.head, commandLine.tail)
+    def this(command: String, arguments: List[String]) = this(command, arguments, None)
+    def this(command: String) = this(command, Nil)
     
+    val processBuilder = new ProcessBuilder()
+    processEnvironment(processBuilder)
+
+    if (command.length == 0)
+        Exit.error("Must specify a non-empty command name")
+        
     def run() = {
-        val pb = new ProcessBuilder()
-        pb.redirectErrorStream(true)
-        pb.command(toJavaList(command :: options))
-        val process = pb.start()
+        processBuilder.redirectErrorStream(true)
+        processBuilder.command(toJavaList(command :: arguments))
+        val process = processBuilder.start()
         val out = new BufferedReader(new InputStreamReader(process.getInputStream()))
         processCommandOutput(out)
         getStatus(process)
@@ -29,6 +36,20 @@ class CommandRunner(val command: String, val options: List[String]) {
         }
     }
 
+    protected def processEnvironment(pb: ProcessBuilder): ProcessBuilder = {
+        var env = pb.environment()
+        environment match {
+            case None =>
+            case Some(m:Map[_,_]) => m.foreach { key_value =>
+                key_value._1 match {
+                    case 'directory => pb.directory(new File(key_value._2.toString()))
+                    case key => env.put(key.toString(), key_value._2.toString())
+                }
+            }
+        }
+        pb
+    }
+    
     private def toJavaList(list: List[_]) =
         list.foldLeft(new java.util.ArrayList[String]()) { (l, s) => l.add(s.toString()); l }
 

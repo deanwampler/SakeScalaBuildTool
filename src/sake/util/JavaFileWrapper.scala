@@ -29,4 +29,3 @@ class JavaFileWrapper(override val path: String) extends File {
     def mkdirs = javaFile.mkdirs()
     def delete = javaFile.delete()
 }
-

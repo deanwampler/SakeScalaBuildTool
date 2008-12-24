@@ -21,12 +21,14 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     
     override def action(options: Map[Symbol,Any]) = {
         val command = determineCommandName(options)
-        val commandOpts = buildCommandOptionsList(options)
-        Log.log(Level.Notice, "shell: "+toCommandString(command, commandOpts))
+        val commandArgs = buildCommandArgsList(options)
+        val commandEnv = buildCommandEnvMap(options)
+        Log.log(Level.Notice, "shell: "+toCommandString(command, commandArgs, commandEnv))
+        val commandRunner = makeCommandRunner(command, commandArgs, commandEnv)
         if (Environment.environment.dryRun == true)
             new Passed()
         else
-            new CommandRunner(command, commandOpts).run()
+            commandRunner.run()
     }
     
     private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
@@ -36,7 +38,9 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
                 case l:List[_] => Some(makeFilesLister()(l.map(_.toString())))
                 case x => Some(makeFilesLister()(List(x.toString())))
             }
-            case 'command => None  // ignore; handled by determineCommandName
+            case 'command => None    // ignore; handled by determineCommandName
+            case 'directory => None  // ignore; handled by buildCommandOptionsMap
+            case 'D => None          // ignore; handled by buildCommandOptionsMap
             case 'opts => Some(toStringList(value))
             case other => Some(List("-"+stringize(other), pathToString(value)))
         }
@@ -44,9 +48,25 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
    protected def determineCommandName(options: Map[Symbol, Any]) = 
         options.getOrElse('command, name).toString()
 
-    protected def buildCommandOptionsList(options: Map[Symbol, Any]) = 
+    protected def buildCommandArgsList(options: Map[Symbol, Any]) = 
         optionsProcessor.processOptionsToList(options).map(_.toString()).filter(_.length > 0)
-    
+
+    protected def buildCommandEnvMap(options: Map[Symbol, Any]) = {
+        var envMap = Map[Any, Any]()
+        options.foreach { key_value => 
+            key_value._1 match {
+                case 'directory => envMap += (key_value._1 -> key_value._2)
+                case 'D => envMap += envVar(key_value._2.toString())
+                case _ => // ignore
+            }
+        }
+        if (envMap.isEmpty) None else Some(envMap)
+    }
+
+    protected def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
+        new CommandRunner(command, args, options)
+    }
+
     // hook for test overrides.
     protected def makeFilesLister() = new FilesFinder()
 
@@ -75,8 +95,24 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
         case _  => item.toString()
     }
 
-    protected def toCommandString(command: String, list: List[String]) = 
-        list.foldLeft(command)(_ + " " + _ )
+    protected def toCommandString(command: String, list: List[String], env: Option[Map[Any, Any]]) = {
+        val cstr = list.foldLeft(command)(_ + " " + _ ) 
+        env match {
+            case None => cstr
+            case Some(e) => cstr + " (environment: " + e.toString() + ")"
+        }
+    }
+        
+    protected def envVar(str: String): (String,String) = {
+        val keyEqValue = """([^=]+)(=(.*))?""".r
+        try {
+            val keyEqValue(key, ignore, value) = str
+            val v = if (value == null) "" else value
+            (key, v)
+        } catch {
+            case me:MatchError => Exit.error("invalid -D key=value expression given. (The \"=value\" part is optional.) Was: \"-D "+str+"\".")
+        }
+    }
 }
 
 object ShellCommand {
