@@ -20,14 +20,14 @@ object FilesFinderSpec extends Specification {
         }
 
         "ignore empty input strings" in {
-            new FilesFinder()("", ".", "") must be_==(List("."))
+            new FilesFinder()("", ".", "") mustEqual List(".")
         }
     
         "return List('.') for specification '.'" in {
-            new FilesFinder()(".") must be_==(List("."))
+            new FilesFinder()(".") mustEqual List(".")
         }
         "return List('..') for specification '..'" in {
-            new FilesFinder()("..") must be_==(List(".."))
+            new FilesFinder()("..") mustEqual List("..")
         }
         "return List('foo/bar/baz') for specification 'foo/bar/baz' if it exists" in {
             val f = new FilesFinder() {
@@ -41,7 +41,7 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("foo/bar/baz") must be_==(List("foo/bar/baz"))
+            f("foo/bar/baz") mustEqual List("foo/bar/baz")
         }
         "return Nil for specification 'foo/bar/baz' if it does not exists" in {
             val f = new FilesFinder() {
@@ -55,7 +55,7 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("foo/bar/baz") must be_==(Nil)
+            f("foo/bar/baz") mustEqual Nil
         }
         
         val fFooBar12Baz = new FilesFinder() {
@@ -74,15 +74,15 @@ object FilesFinderSpec extends Specification {
         }
 
         "return List('foo/bar1/baz', 'foo/bar2/baz') for specification 'foo/*/baz' if they exist..." in {
-            fFooBar12Baz("foo/*/baz") must be_==(List("foo/bar1/baz", "foo/bar2/baz"))
+            fFooBar12Baz("foo/*/baz") mustEqual List("foo/bar1/baz", "foo/bar2/baz")
         }
         
         "return List('foo') for specification '*' if it is the only item in '.'" in {
-            fFooBar12Baz("*") must be_==(List("foo"))
+            fFooBar12Baz("*") mustEqual List("foo")
         }
 
         "return List('foo/bar1') for specification '*/bar1' 'bar1' is the only item in 'foo'" in {
-            fFooBar12Baz("*/bar1") must be_==(List("foo/bar1"))
+            fFooBar12Baz("*/bar1") mustEqual List("foo/bar1")
         }
 
         "return Nil for specification 'foo/*/baz' if neither 'foo/bar1' nor 'foo/bar2' has a 'baz'" in {
@@ -100,7 +100,7 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("foo/bar/baz") must be_==(Nil)
+            f("foo/bar/baz") mustEqual Nil
         }
 
         "return Nil for specification '*' if the current directory is empty" in {
@@ -112,7 +112,7 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("*") must be_==(Nil)
+            f("*") mustEqual Nil
         }
 
         val fFooBar12BazMore = new FilesFinder() {
@@ -136,24 +136,24 @@ object FilesFinderSpec extends Specification {
         }
 
         "return List('foo/bar1/baz', ...) for specification 'foo/**/baz' if they exist" in {
-            fFooBar12BazMore("foo/**/baz") must be_==(List(
+            fFooBar12BazMore("foo/**/baz") mustEqual List(
                 "foo/bar1/baz",
                 "foo/bar2/baz",
                 "foo/bar2/a/baz",
-                "foo/bar2/a/b/baz"))
+                "foo/bar2/a/b/baz")
         }
         
         "return List('foo/bar1/baz', ...) for specification '**/baz' if they exist" in {
-            fFooBar12BazMore("**/baz") must be_==(List(
+            fFooBar12BazMore("**/baz") mustEqual List(
                 "foo/bar1/baz",
                 "foo/bar2/baz",
                 "foo/bar2/a/baz",
-                "foo/bar2/a/b/baz"))
+                "foo/bar2/a/b/baz")
         }
         
 
         "return List('foo/bar1/*Spec.class', ...) for specification 'foo/**/*Spec.class' if they exist..." in {
-            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class") must be_==(FakeFileForSpecs.fakeFilesExpected)
+            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class") mustEqual FakeFileForSpecs.fakeFilesExpected
         }
 
         "return Nil for specification 'foo/**/baz' if neither 'foo/bar1' nor 'foo/bar2' has a 'baz'" in {
@@ -174,7 +174,7 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("foo/**/baz") must be_==(Nil)
+            f("foo/**/baz") mustEqual Nil
         }
 
         "return Nil for specification '**' if the current directory is empty" in {
@@ -186,37 +186,34 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("**") must be_==(Nil)
+            f("**") mustEqual Nil
         }
 
     }
     
     "A specification like foo/bar1/**/*.class should match foo/bar1/Foo.scala, e.g., ** maps zero or more subpaths" should {
         "be fixed" in {
-            FakeFileForSpecs.oneFakeFile("foo/bar1/**/*.class") must be_==(FakeFileForSpecs.oneFakeFileExpected)
+            FakeFileForSpecs.oneFakeFile("foo/bar1/**/*.class") mustEqual FakeFileForSpecs.oneFakeFileExpected
         }        
         
     }
     
     "When the specification has elements that don't overlap, apply()" should {
         "return the sum of the lists" in {
-            FakeFileForSpecs.fakeFilesFinder("foo/bar1/**/*Spec.class", "foo/bar2/**/*Spec.class") must 
-                be_==(FakeFileForSpecs.fakeFilesExpected)
+            FakeFileForSpecs.fakeFilesFinder("foo/bar1/**/*Spec.class", "foo/bar2/**/*Spec.class") mustEqual FakeFileForSpecs.fakeFilesExpected
         }
     }
     
     "When the specification has elements that overlap, apply()" should {
         "returns the union of the lists (i.e., with duplicates removed)" in {
-            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class", "foo/bar2/**/*Spec.class") must 
-                be_==(FakeFileForSpecs.fakeFilesExpected)
+            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class", "foo/bar2/**/*Spec.class") mustEqual FakeFileForSpecs.fakeFilesExpected
         }
     }
     
     "When one specification is subtracted from another spec., apply()" should {
         "return the first list minus the second" in {
             (FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class") --
-             FakeFileForSpecs.fakeFilesFinder("foo/bar1/**")).sort(_.length < _.length) must 
-                be_==(FakeFileForSpecs.fakeFilesExpectedBar2a)
+             FakeFileForSpecs.fakeFilesFinder("foo/bar1/**")).sort(_.length < _.length) mustEqual FakeFileForSpecs.fakeFilesExpectedBar2a
         }
     }
 }

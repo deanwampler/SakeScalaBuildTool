@@ -7,25 +7,25 @@ import sake.command._
 object OptionsProcessorSpec extends Specification {
     "OptionsProcessor" should {
         "have no processor functions by default" in {
-            new OptionsProcessor[String,String]().processors.length must be_==(0)
+            new OptionsProcessor[String,String]().processors.length mustEqual 0
         }
     }
     
     "addProcessor" should {
         "should increment the number of processors" in {
             val op = new OptionsProcessor[String,String]()
-            op.processors.length must be_==(0)
+            op.processors.length mustEqual 0
             op.addProcessor((key, value) => Some(List(value)))
-            op.processors.length must be_==(1)
+            op.processors.length mustEqual 1
         }
         
         "should give the last-added processor the highest priority" in {
             val op = new OptionsProcessor[String,String]()
-            op.processors.length must be_==(0)
+            op.processors.length mustEqual 0
             op.addProcessor((key, value) => Some(List("1")))
             op.addProcessor((key, value) => Some(List("2")))
-            op.processors.length must be_==(2)
-            op.processOptionsToList(Map("a" -> "A", "b" -> "B")) must be_==(List("2", "2"))
+            op.processors.length mustEqual 2
+            op.processOptionsToList(Map("a" -> "A", "b" -> "B")) mustEqual List("2", "2")
         }
     }
 
@@ -33,7 +33,7 @@ object OptionsProcessorSpec extends Specification {
         "return Nil for unhandled options" in {
             val op = new OptionsProcessor[String,String]()
             op.addProcessor((key, value) => None)
-            op.processOptionsToList(Map("a" -> "A", "b" -> "B")) must be_==(Nil)
+            op.processOptionsToList(Map("a" -> "A", "b" -> "B")) mustEqual Nil
         }
 
         "return a non-empty list for handled options" in {
@@ -43,7 +43,7 @@ object OptionsProcessorSpec extends Specification {
                 case "b" => Some(List(value, value))
                 case _ => None
             })
-            op.processOptionsToList(Map("a" -> "A", "b" -> "B")) must be_==(List("A", "B", "B"))
+            op.processOptionsToList(Map("a" -> "A", "b" -> "B")) mustEqual List("A", "B", "B")
         }
     }
     

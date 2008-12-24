@@ -9,9 +9,9 @@ object SpecCommandSpec extends Specification {
                 val path    = options.getOrElse('path,    "spec").toString()
                 val pattern = options.getOrElse('pattern, ".*").toString()
                 val report  = options.getOrElse('report,  true)
-                path    must be_==(expectedPath)
-                pattern must be_==(expectedPattern)
-                report  must be_==(expectedReportFlag)
+                path    mustEqual expectedPath
+                pattern mustEqual expectedPattern
+                report  mustEqual expectedReportFlag
                 new Passed()
             } 
         }

@@ -14,7 +14,7 @@ object CommandSpec extends Specification {
     
     "Constructing a Command with just a name" should {
         "set the name" in {
-            (new Command("command")).name must be_==("command")
+            (new Command("command")).name mustEqual "command"
         }
         "have no default options" in {
             (new Command("command")).defaultOptions match {
@@ -26,13 +26,13 @@ object CommandSpec extends Specification {
     
     "Constructing a Command with a name and default options map" should {
         "set the name" in {
-            (new Command("command", Map[Symbol,String]('x -> "x", 'y -> "y"))).name must be_==("command")
+            (new Command("command", Map[Symbol,String]('x -> "x", 'y -> "y"))).name mustEqual "command"
         }
         "set the default options" in {
             (new Command("command", Map[Symbol,String]('x -> "x", 'y -> "y"))).defaultOptions match {
                 case None => fail ()
                 case Some(opts) => {
-                    opts.size must be_==(2)
+                    opts.size mustEqual 2
                     checkOption(opts, 'x, "x")
                     checkOption(opts, 'y, "y")
                 }
@@ -45,7 +45,7 @@ object CommandSpec extends Specification {
             (new Command("command", 'x -> "x", 'y -> "y")).defaultOptions match {
                 case None => fail ()
                 case Some(opts) => {
-                    opts.size must be_==(2)
+                    opts.size mustEqual 2
                     checkOption(opts, 'x, "x")
                     checkOption(opts, 'y, "y")
                 }
@@ -81,7 +81,7 @@ object CommandSpec extends Specification {
                 }
             }
             c()
-            invoked must be_==(true)
+            invoked mustEqual true
         }
         
         "throw a BuildError if the command fails" in {
@@ -124,7 +124,7 @@ object CommandSpec extends Specification {
             }
             (c() and { r => result = new Passed(Some(2)); result }) must not(throwA[BuildError])
             result match {
-                case Passed(r,msg) => r must be_==(Some(2))
+                case Passed(r,msg) => r mustEqual Some(2)
                 case Failed(r,msg) => fail()
             }
         }
@@ -136,7 +136,7 @@ object CommandSpec extends Specification {
                 override def action(o: Map[Symbol,String]) = result
             }
             (c() and { r => result = new Passed(Some(2)); result }) must throwA[BuildError]
-            (result eq expected) must be_==(true)
+            (result eq expected) mustEqual true
         }
     }
     
@@ -150,7 +150,7 @@ object CommandSpec extends Specification {
                 }
             }
             c('x -> "x2")
-            invoked must be_==(true)
+            invoked mustEqual true
         }
 
         "be able to define the command's action'" in {
@@ -162,7 +162,7 @@ object CommandSpec extends Specification {
                 }
             }
             c('x -> "x2")
-            invoked must be_==(true)
+            invoked mustEqual true
         }
 
         "be able to filter the result to be returned by 'action'" in {
@@ -174,7 +174,7 @@ object CommandSpec extends Specification {
                 }
             }
             c('x -> "x2")
-            invoked must be_==(true)
+            invoked mustEqual true
         }
     }
 }

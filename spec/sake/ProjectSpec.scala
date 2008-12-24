@@ -8,40 +8,40 @@ object ProjectSpec extends Specification {
     import sake.util._
     
     def verifyDeps(t: Target, deps: List[Symbol]) = {
-        t.dependencies.size must be_==(deps.size)
+        t.dependencies.size mustEqual deps.size
         for (i <- 0 to (deps.size - 1)) {
-            t.dependencies.contains(deps(i)) must be_==(true)
+            t.dependencies.contains(deps(i)) mustEqual true
         }
     }
     
     "The target method" should {
         "accept a symbol as its name as the first parameter" in {
             val group = new ProjectDriver().target('targetName)
-            group.targets.length must be_==(1)
+            group.targets.length mustEqual 1
             val t = group.targets.head
-            t.name must be_==('targetName)
+            t.name mustEqual 'targetName
             verifyDeps(t, Nil)
         }
 
         "accept a string as its name as the first parameter" in {
             val group = new ProjectDriver().target("targetName")
-            group.targets.length must be_==(1)
+            group.targets.length mustEqual 1
             val t = group.targets.head
-            t.name must be_==('targetName)
+            t.name mustEqual 'targetName
             verifyDeps(t, Nil)
         }
 
         "convert an input string name to a symbol" in {
             val group = new ProjectDriver().target("targetName")
-            group.targets.length must be_==(1)
+            group.targets.length mustEqual 1
             val t = group.targets.head
-            t.name must be_==('targetName)
+            t.name mustEqual 'targetName
             verifyDeps(t, Nil)
         }
         
         "accept more than one symbol and/or string as the names of new targets, as the first parameter" in {
             val group = new ProjectDriver().target('targetName1, "targetName2", "targetName3", 'targetName4)
-            group.targets.length must be_==(4)
+            group.targets.length mustEqual 4
             val t = group.targets.head
             List('targetName1, 'targetName2, 'targetName3, 'targetName4) foreach { n =>
                 group.targets.find(t => t.name == n) match {
@@ -53,14 +53,14 @@ object ProjectSpec extends Specification {
 
         "accept a Nil list of names and create no new targets" in {
             val group = new ProjectDriver().target(Nil)
-            group.targets.length must be_==(0)
+            group.targets.length mustEqual 0
         } 
 
         """accept a list of one or more symbols and/or strings as the names of new targets, 
             as the first parameter""" in {
             val targs = List('targetName1, "targetName2", "targetName3", 'targetName4)
             val group = new ProjectDriver().target(targs)
-            group.targets.length must be_==(4)
+            group.targets.length mustEqual 4
             List('targetName1, 'targetName2, 'targetName3, 'targetName4) foreach { n =>
                 group.targets.find(t => t.name == n) match {
                     case None => fail(n.toString())
@@ -71,7 +71,7 @@ object ProjectSpec extends Specification {
 
         "accept a single dependent after each name (and convert it to a List)" in {
             val group = new ProjectDriver().target('targetName1 -> 'dep11, "targetName2" -> "dep21")
-            group.targets.length must be_==(2)
+            group.targets.length mustEqual 2
             Map('targetName1 -> List('dep11), 'targetName2 -> List('dep21)) foreach { n_d => 
                 group.targets.find(t => t.name == n_d._1) match {
                     case None => fail(n_d._1.toString())
@@ -82,7 +82,7 @@ object ProjectSpec extends Specification {
 
         "accept a List of dependents after each name" in {
             val group = new ProjectDriver().target('targetName1 -> List('dep11, "dep12"), "targetName2" -> ("dep21" :: 'dep22 :: Nil))
-            group.targets.length must be_==(2)
+            group.targets.length mustEqual 2
             Map('targetName1 -> List('dep11, 'dep12), 'targetName2 -> List('dep21, 'dep22)) foreach { n_d => 
                 group.targets.find(t => t.name == n_d._1) match {
                     case None => fail(n_d._1.toString())
@@ -94,7 +94,7 @@ object ProjectSpec extends Specification {
 
         "accept a List of dependents after a list of name, where each target gets the same list of dependencies" in {
             val group = new ProjectDriver().target(List('targetName1, "targetName2") -> List('depa, "depb", 'depc))
-            group.targets.length must be_==(2)
+            group.targets.length mustEqual 2
             List('targetName1, 'targetName2) foreach { n =>
                 group.targets.find(t => t.name == n) match {
                     case None => fail(n.toString())
@@ -113,7 +113,7 @@ object ProjectSpec extends Specification {
             val t = group.targets.head
             t.build()
             t.build()
-            invoked must be_==(2)
+            invoked mustEqual 2
         }
 
         "include the target name in the exception message if the build fails" in {
@@ -125,7 +125,7 @@ object ProjectSpec extends Specification {
             try {
                 t.build()
             } catch {
-                case BuildError(m, th) => m.contains("FailedTarget") must be_==(true)
+                case BuildError(m, th) => m.contains("FailedTarget") mustEqual true
                 case _ => fail()
             }
         }
@@ -151,9 +151,9 @@ object ProjectSpec extends Specification {
             val project = new ProjectDriver()
             project.target('t1, 't2)
             project.target('t2, 't3, 't4)
-            project.allTargets.size must be_==(4) 
+            project.allTargets.size mustEqual 4
             List('t1, 't2, 't3, 't4) foreach { t =>
-                project.allTargets.contains(t) must be_==(true)
+                project.allTargets.contains(t) mustEqual true
             }
         }
 
@@ -161,14 +161,14 @@ object ProjectSpec extends Specification {
             val project = new ProjectDriver()
             project.target(List('t1, 't2, 't3) -> List('d1, 'd2, 'd3))
             project.target(List('t2, 't4) -> List('d2, 'd4)) {}
-            project.allTargets.size must be_==(4) 
+            project.allTargets.size mustEqual 4
 
             def checkTarget(project:ProjectDriver, name:Symbol, expectedDeps:List[Symbol]) = {
                 project.allTargets.get(name) match {
                     case None => fail(name.toString())
                     case Some(t) => {
-                        t.name must be_==(name)
-                        t.dependencies must be_==(expectedDeps)
+                        t.name mustEqual name
+                        t.dependencies mustEqual expectedDeps
                     }
                 }
             }
@@ -184,7 +184,7 @@ object ProjectSpec extends Specification {
             val project = new ProjectDriver() {
                 override def determineTargets(targs: List[Symbol]):List[Target] = {
                     val list = super.determineTargets(targs)
-                    list.map(_.name) must be_==(List('t3, 't4, 't2, 't1, 't5))
+                    list.map(_.name) mustEqual List('t3, 't4, 't2, 't1, 't5)
                     list
                 }
             }

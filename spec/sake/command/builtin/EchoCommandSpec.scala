@@ -53,7 +53,7 @@ object EchoCommandSpec extends Specification {
              val cmd = new EchoCommand(Level.Info)
              cmd("now is the time")
              checkString("", byteStream.toString())
-             byteStream.toString() must be_==("")
+             byteStream.toString() mustEqual ""
         }        
 
         "overrides the default log level if 'level => level is specified" in {

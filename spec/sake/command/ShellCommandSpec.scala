@@ -33,22 +33,22 @@ object ShellCommandSpec extends Specification {
     "A new ShellCommand created with just a name" should {
         "have the same name as the shell command invoked." in {
              val cmd = new ShellCommand("shcmd")
-             cmd.name must be_==("shcmd")
-             cmd.defaultOptions must be_==(None)
+             cmd.name mustEqual "shcmd"
+             cmd.defaultOptions mustEqual None
         }        
     }
     
     "A new ShellCommand created with a name and one (A,B) option" should {
         "have the same name as the shell command invoked." in {
              val cmd = new ShellCommand("shcmd", 'foo -> "foo")
-             cmd.name must be_==("shcmd")
+             cmd.name mustEqual "shcmd"
         }        
 
         "have the specified options in the default options map." in {
              val cmd = new ShellCommand("shcmd", 'foo -> "foo")
              cmd.defaultOptions match {
                  case None => fail()
-                 case Some(map) => map must be_==(Map('foo -> "foo"))
+                 case Some(map) => map mustEqual Map('foo -> "foo")
              } 
         }        
     }
@@ -56,14 +56,14 @@ object ShellCommandSpec extends Specification {
     "A new ShellCommand created with a name and multiple (A,B) options" should {
         "have the same name as the shell command invoked." in {
              val cmd = new ShellCommand("shcmd", 'foo -> "foo", 'bar -> "bar")
-             cmd.name must be_==("shcmd")
+             cmd.name mustEqual "shcmd"
         }        
 
         "have the specified options in the default options map." in {
              val cmd = new ShellCommand("shcmd", 'foo -> "foo", 'bar -> "bar")
              cmd.defaultOptions match {
                  case None => fail()
-                 case Some(map) => map must be_==(Map('foo -> "foo", 'bar -> "bar"))
+                 case Some(map) => map mustEqual Map('foo -> "foo", 'bar -> "bar")
              }
         }
     }
@@ -71,10 +71,10 @@ object ShellCommandSpec extends Specification {
     "A new ShellCommand created with a name and a Map of (A,B) options" should {
         "have the same name as the shell command invoked." in {
              val cmd = new ShellCommand("shcmd", Map('foo -> "foo", 'bar -> "bar"))
-             cmd.name must be_==("shcmd")
+             cmd.name mustEqual "shcmd"
              cmd.defaultOptions match {
                  case None => fail()
-                 case Some(map) => map must be_==(Map('foo -> "foo", 'bar -> "bar"))
+                 case Some(map) => map mustEqual Map('foo -> "foo", 'bar -> "bar")
              } 
         }        
 
@@ -82,7 +82,7 @@ object ShellCommandSpec extends Specification {
              val cmd = new ShellCommand("shcmd", Map('foo -> "foo", 'bar -> "bar"))
              cmd.defaultOptions match {
                  case None => fail()
-                 case Some(map) => map must be_==(Map('foo -> "foo", 'bar -> "bar"))
+                 case Some(map) => map mustEqual Map('foo -> "foo", 'bar -> "bar")
              } 
         }        
     }
@@ -171,7 +171,7 @@ object ShellCommandSpec extends Specification {
              val cmd = new ShellCommand("shcmd") {
                  override def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
                      val runner = super.makeCommandRunner(command, args, options)
-                     runner.processBuilder.directory().getName() must be_==("lib")
+                     runner.processBuilder.directory().getName() mustEqual "lib"
                      runner
                  }
              }
@@ -182,7 +182,7 @@ object ShellCommandSpec extends Specification {
              val cmd = new ShellCommand("shcmd") {
                  override def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
                      val runner = super.makeCommandRunner(command, args, options)
-                     runner.processBuilder.environment().get("key1") must be_==("value1")
+                     runner.processBuilder.environment().get("key1") mustEqual "value1"
                      runner
                  }
              }
@@ -193,7 +193,7 @@ object ShellCommandSpec extends Specification {
              val cmd = new ShellCommand("shcmd") {
                  override def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
                      val runner = super.makeCommandRunner(command, args, options)
-                     runner.processBuilder.environment().get("key1") must be_==("")
+                     runner.processBuilder.environment().get("key1") mustEqual ""
                      runner
                  }
              }
@@ -211,7 +211,7 @@ object ShellCommandSpec extends Specification {
                      val runner = super.makeCommandRunner(command, args, options)
                      runner.processInput match {
                          case None => fail()
-                         case Some(s) => s must be_==("hello world!")
+                         case Some(s) => s mustEqual "hello world!"
                      }
                      runner
                  }

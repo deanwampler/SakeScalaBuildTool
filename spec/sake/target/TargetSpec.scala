@@ -9,12 +9,12 @@ object TargetSpec extends Specification {
     import sake.command._
     
     def checkDependencies(t: Target, expected: List[Symbol]) =
-            t.dependencies must be_==(expected)
+            t.dependencies mustEqual expected
 
 
     "A new Target created with just a name" should {
         "have the same name" in {
-            (Target('t)).name must be_==('t)
+            (Target('t)).name mustEqual 't
         }
 
         "have no dependencies" in {
@@ -24,7 +24,7 @@ object TargetSpec extends Specification {
     
     "A new Target created with a name and a list of dependencies" should {
         "have the same name" in {
-            (Target('t, Nil)).name must be_==('t)
+            (Target('t, Nil)).name mustEqual 't
         }
 
         "have the same dependency list" in {
@@ -36,7 +36,7 @@ object TargetSpec extends Specification {
     
     "A new Target created with a name, a list of dependencies, and an action" should {
         "have the same name" in {
-            (Target('t, Nil, {})).name must be_==('t)
+            (Target('t, Nil, {})).name mustEqual 't
         }
 
         "have the same dependency list" in {
@@ -49,7 +49,7 @@ object TargetSpec extends Specification {
             var success = false
             val t = Target('t, List('d1), { success = true })
             t.build()
-            success must be_==(true)
+            success mustEqual true
         }
     }
     
@@ -58,7 +58,7 @@ object TargetSpec extends Specification {
             var success = false
             val t = Target('t, List('d1), { success = true })
             t.build()
-            success must be_==(true)
+            success mustEqual true
         }
     }
     
@@ -85,24 +85,24 @@ object TargetSpec extends Specification {
             "when neither has dependencies" in {
                 "return a target with the same name" in {
                     val t = Target.merge(Target('t1), Target('t1))
-                    t.name must be_==('t1)
-                    t.dependencies.size must be_==(0)
+                    t.name mustEqual 't1
+                    t.dependencies.size mustEqual 0
                 }
             }
 
             "when the first has dependencies" in {
                 "return a target with the dependencies from the first" in {
                     val t = Target.merge(Target('t1, List('d1, 'd2)), Target('t1))
-                    t.name must be_==('t1)
-                    t.dependencies must be_==(List('d1, 'd2))
+                    t.name mustEqual 't1
+                    t.dependencies mustEqual List('d1, 'd2)
                 }
             }
 
             "when the second has dependencies" in {
                 "return a target with the dependencies from the second" in {
                     val t = Target.merge(Target('t1), Target('t1, List('d1, 'd2)))
-                    t.name must be_==('t1)
-                    t.dependencies must be_==(List('d1, 'd2))
+                    t.name mustEqual 't1
+                    t.dependencies mustEqual List('d1, 'd2)
                 }
             }
 
@@ -110,8 +110,8 @@ object TargetSpec extends Specification {
                 "return a target with the merged dependencies with duplicates removed" in {
                     val t = Target.merge(Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5)), 
                                          Target('t1, List('d2, 'd4, 'd6)))
-                    t.name must be_==('t1)
-                    t.dependencies must be_==(List('d1, 'd2, 'd3, 'd4, 'd5, 'd6))
+                    t.name mustEqual 't1
+                    t.dependencies mustEqual List('d1, 'd2, 'd3, 'd4, 'd5, 'd6)
                 }
             }
         }
@@ -120,11 +120,11 @@ object TargetSpec extends Specification {
             "return the first target with the same name" in {
                 val t1 = Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5), {})
                 val t2 = Target('t1, List('d2, 'd4, 'd6))
-                t1.isInstanceOf[TargetWithAction] must be_==(true)
+                t1.isInstanceOf[TargetWithAction] mustEqual true
                 val t  = Target.merge(t1, t2)
-                (t eq t1) must be_==(true)
-                (t eq t2) must be_==(false)
-                t.name must be_==('t1)
+                (t eq t1) mustEqual true
+                (t eq t2) mustEqual false
+                t.name mustEqual 't1
             }
             
             """return the first target with the merged dependencies with duplicates removed, 
@@ -132,10 +132,10 @@ object TargetSpec extends Specification {
                 val t1 = Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5), {})
                 val t2 = Target('t1, List('d2, 'd4, 'd6))
                 val t  = Target.merge(t1, t2)
-                (t eq t1) must be_==(true)
-                (t eq t2) must be_==(false)
-                t.name must be_==('t1)
-                t.dependencies must be_==(List('d1, 'd2, 'd3, 'd4, 'd5, 'd6))
+                (t eq t1) mustEqual true
+                (t eq t2) mustEqual false
+                t.name mustEqual 't1
+                t.dependencies mustEqual List('d1, 'd2, 'd3, 'd4, 'd5, 'd6)
             }
         }
         
@@ -144,9 +144,9 @@ object TargetSpec extends Specification {
                 val t1 = Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5))
                 val t2 = Target('t1, List('d2, 'd4, 'd6), {})
                 val t  = Target.merge(t1, t2)
-                (t eq t1) must be_==(false)
-                (t eq t2) must be_==(true)
-                t.name must be_==('t1)
+                (t eq t1) mustEqual false
+                (t eq t2) mustEqual true
+                t.name mustEqual 't1
             }
             
             """return the second target with the merged dependencies with duplicates removed, 
@@ -154,9 +154,9 @@ object TargetSpec extends Specification {
                 val t1 = Target('t1, List('d1, 'd2, 'd3, 'd4, 'd5))
                 val t2 = Target('t1, List('d2, 'd4, 'd6), {})
                 val t  = Target.merge(t1, t2)
-                (t eq t1) must be_==(false)
-                (t eq t2) must be_==(true)
-                t.dependencies must be_==(List('d1, 'd2, 'd3, 'd4, 'd5, 'd6))
+                (t eq t1) mustEqual false
+                (t eq t2) mustEqual true
+                t.dependencies mustEqual List('d1, 'd2, 'd3, 'd4, 'd5, 'd6)
             }
         }
         

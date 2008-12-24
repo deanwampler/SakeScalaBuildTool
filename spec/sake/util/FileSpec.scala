@@ -9,15 +9,15 @@ object FileSpec extends Specification {
 
     doBeforeSpec {
         val d = new JavaFileWrapper("toss")
-        d.mkdirs must be_==(true)
-        d.exists must be_==(true)
+        d.mkdirs mustEqual true
+        d.exists mustEqual true
     }
 
     doAfterSpec {
         val d = new JavaFileWrapper("toss")
-        d.deleteRecursively must be_==(true)
-        d.exists must be_==(false)
-        new JavaFileWrapper("toss").exists must be_==(false)
+        d.deleteRecursively mustEqual true
+        d.exists mustEqual false
+        new JavaFileWrapper("toss").exists mustEqual false
     }
 
     import sake.environment._
@@ -29,26 +29,26 @@ object FileSpec extends Specification {
         "ignore the directory java.io.File argument" in {
             val ff = new FileFilter("f1")
             val dir = new JFile("nonexistent")
-            ff.accept(dir, "f1.txt") must be_==(false)
+            ff.accept(dir, "f1.txt") mustEqual false
         }
         
         "return true only for exact matches if the filter string has no wildcards" in {
             val ff = new FileFilter("f1")
             val dir = new JFile("nonexistent")
-            ff.accept(dir, "f1.txt") must be_==(false)
-            ff.accept(dir, "f1") must be_==(true)
+            ff.accept(dir, "f1.txt") mustEqual false
+            ff.accept(dir, "f1") mustEqual true
         }
         
         "return true for matches if the filter string has wildcards" in {
             val ff = new FileFilter("foo*bar?")
             val dir = new JFile("nonexistent")
-            ff.accept(dir, "foobar1")    must be_==(true)
-            ff.accept(dir, "fooXbar1")   must be_==(true)
-            ff.accept(dir, "fooXYZbar1") must be_==(true)
-            ff.accept(dir, "1foobar2")   must be_==(false)
-            ff.accept(dir, "ffoobar2")   must be_==(false)
-            ff.accept(dir, "foobar1")    must be_==(true)
-            ff.accept(dir, "foobar2")    must be_==(true)
+            ff.accept(dir, "foobar1")    mustEqual true
+            ff.accept(dir, "fooXbar1")   mustEqual true
+            ff.accept(dir, "fooXYZbar1") mustEqual true
+            ff.accept(dir, "1foobar2")   mustEqual false
+            ff.accept(dir, "ffoobar2")   mustEqual false
+            ff.accept(dir, "foobar1")    mustEqual true
+            ff.accept(dir, "foobar2")    mustEqual true
         }
     }
     
@@ -60,37 +60,37 @@ object FileSpec extends Specification {
     
     "File.exists" should {
         "return true if the corresponding file exists" in {
-            new JavaFileWrapper(cwd).exists must be_==(true)
+            new JavaFileWrapper(cwd).exists mustEqual true
         }
         
         "return false if the corresponding file does not exist" in {
-            new JavaFileWrapper("nonexistent").exists must be_==(false)
+            new JavaFileWrapper("nonexistent").exists mustEqual false
         }
     }
     
     "File.path" should {
         "return the input path" in {
-            new JavaFileWrapper(cwd).path must be_==(cwd)
+            new JavaFileWrapper(cwd).path mustEqual cwd
         }
     }
     
     "File.javaFile" should {
         "return the underlying java.io.File" in {
-            new JavaFileWrapper(cwd).javaFile.isInstanceOf[JFile] must be_==(true)
+            new JavaFileWrapper(cwd).javaFile.isInstanceOf[JFile] mustEqual true
         }
     }
 
     "File.isDirectory" should {
         "return true if the corresponding object is a directory" in {
-            new JavaFileWrapper(cwd).isDirectory must be_==(true)
+            new JavaFileWrapper(cwd).isDirectory mustEqual true
         }
         
         "return false if the corresponding object is not a directory" in {
             new JavaFileWrapper("..").contents.get.foreach{ fileName =>
                 val f = new JavaFileWrapper("../"+fileName)
                 f.contents match {
-                    case None    => f.isDirectory must be_==(false)
-                    case Some(x) => f.isDirectory must be_==(true)
+                    case None    => f.isDirectory mustEqual false
+                    case Some(x) => f.isDirectory mustEqual true
                 }
             }
         }
@@ -101,14 +101,14 @@ object FileSpec extends Specification {
             new JavaFileWrapper("..").contents.get.foreach{ fileName =>
                 val f = new JavaFileWrapper("../"+fileName)
                 f.contents match {
-                    case None    => f.isFile must be_==(true)
-                    case Some(x) => f.isFile must be_==(false)
+                    case None    => f.isFile mustEqual true
+                    case Some(x) => f.isFile mustEqual false
                 }
             }
         }
         
         "return false if the corresponding object is not a file" in {
-            new JavaFileWrapper(cwd).isFile must be_==(false)
+            new JavaFileWrapper(cwd).isFile mustEqual false
         }
     }
     
@@ -123,7 +123,7 @@ object FileSpec extends Specification {
         "return the contents of the directory in the Some(List[String]) if the corresponding object is a directory" in {
             new JavaFileWrapper(cwd).contents match {
                 case None => fail()
-                case Some(l:List[_]) => (l.length > 0) must be_==(true)
+                case Some(l:List[_]) => (l.length > 0) mustEqual true
             } 
         }
         
@@ -131,8 +131,8 @@ object FileSpec extends Specification {
             new JavaFileWrapper("..").contents.get.foreach{ fileName =>
                 val f = new JavaFileWrapper("../"+fileName)
                 f.contents match {
-                    case None    => f.isFile must be_==(true)
-                    case Some(x) => f.isFile must be_==(false)
+                    case None    => f.isFile mustEqual true
+                    case Some(x) => f.isFile mustEqual false
                 }
             }
         }
@@ -150,8 +150,8 @@ object FileSpec extends Specification {
             new JavaFileWrapper("..").contents.get.foreach{ fileName =>
                 val f = new JavaFileWrapper("../"+fileName)
                 f.contentsFilteredBy("*") match {
-                    case None    => f.isFile must be_==(true)
-                    case Some(x) => f.isFile must be_==(false)
+                    case None    => f.isFile mustEqual true
+                    case Some(x) => f.isFile mustEqual false
                 }
             }
         }
@@ -161,29 +161,29 @@ object FileSpec extends Specification {
         "fail for files" in {
             val f = new JavaFileWrapper("toss/f1")
             f.createNewFile
-            f.mkdirs must be_==(false)
-            f.delete must be_==(true)
-            f.exists must be_==(false)
+            f.mkdirs mustEqual false
+            f.delete mustEqual true
+            f.exists mustEqual false
         }
     
         "fail for a directory that already exists" in {
             val d = new JavaFileWrapper("toss")
-            d.mkdirs must be_==(false)
-            d.exists must be_==(true)
+            d.mkdirs mustEqual false
+            d.exists mustEqual true
         }
     
         "succeed for a non-existent directory" in {
             val d = new JavaFileWrapper("toss/f1")
-            d.mkdirs must be_==(true)
-            d.exists must be_==(true)
-            d.delete must be_==(true)
-            d.exists must be_==(false)
+            d.mkdirs mustEqual true
+            d.exists mustEqual true
+            d.delete mustEqual true
+            d.exists mustEqual false
         }
     
         "fail for a non-existent file or directory" in {
             val d = new JavaFileWrapper("toss/f1")
-            d.exists must be_==(false)
-            d.delete must be_==(false)
+            d.exists mustEqual false
+            d.delete mustEqual false
         }
     }
     
@@ -191,46 +191,46 @@ object FileSpec extends Specification {
         "succeed for a file that exists" in {
             val f = new JavaFileWrapper("toss/f1")
             f.createNewFile
-            f.exists must be_==(true)
-            f.delete must be_==(true)
-            f.exists must be_==(false)
+            f.exists mustEqual true
+            f.delete mustEqual true
+            f.exists mustEqual false
         }
     }
     
     "File.delete" should {
         "succeed for a directory that exists and is empty" in {
             val d = new JavaFileWrapper("toss/d1")
-            d.mkdirs must be_==(true)
-            d.exists must be_==(true)
-            d.delete must be_==(true)
-            d.exists must be_==(false)
-            new JavaFileWrapper("toss/d1").exists must be_==(false)
+            d.mkdirs mustEqual true
+            d.exists mustEqual true
+            d.delete mustEqual true
+            d.exists mustEqual false
+            new JavaFileWrapper("toss/d1").exists mustEqual false
         }
     }
     
     "File.delete" should {
         "fail for a directory that exists and is not empty" in {
             val d = new JavaFileWrapper("toss/d1")
-            d.mkdirs must be_==(true)
-            d.exists must be_==(true)
+            d.mkdirs mustEqual true
+            d.exists mustEqual true
             val f = new JavaFileWrapper("toss/d1/f1")
             f.createNewFile
-            f.exists must be_==(true)
-            d.delete must be_==(false)
+            f.exists mustEqual true
+            d.delete mustEqual false
             // cleanup
-            f.delete must be_==(true)
-            f.exists must be_==(false)
-            d.delete must be_==(true)
-            d.exists must be_==(false)
-            new JavaFileWrapper("toss/d1").exists must be_==(false)
+            f.delete mustEqual true
+            f.exists mustEqual false
+            d.delete mustEqual true
+            d.exists mustEqual false
+            new JavaFileWrapper("toss/d1").exists mustEqual false
         }
     }
     
     "File.deleteRecursively" should {
         "fail for a non-existent file or directory" in {
             val d = new JavaFileWrapper("toss/f1")
-            d.exists must be_==(false)
-            d.deleteRecursively must be_==(false)
+            d.exists mustEqual false
+            d.deleteRecursively mustEqual false
         }
     }
     
@@ -238,34 +238,34 @@ object FileSpec extends Specification {
         "succeed for a file that exists" in {
             val f = new JavaFileWrapper("toss/f1")
             f.createNewFile
-            f.exists must be_==(true)
-            f.deleteRecursively must be_==(true)
-            f.exists must be_==(false)
+            f.exists mustEqual true
+            f.deleteRecursively mustEqual true
+            f.exists mustEqual false
         }
     }
     
     "File.deleteRecursively" should {
         "succeed for a directory that exists and is empty" in {
             val d = new JavaFileWrapper("toss/d1")
-            d.mkdirs must be_==(true)
-            d.exists must be_==(true)
-            d.deleteRecursively must be_==(true)
-            d.exists must be_==(false)
+            d.mkdirs mustEqual true
+            d.exists mustEqual true
+            d.deleteRecursively mustEqual true
+            d.exists mustEqual false
         }
     }
     
     "File.deleteRecursively" should {
         "succeed for a directory that exists and is not empty" in {
             val d = new JavaFileWrapper("toss/d1")
-            d.mkdirs must be_==(true)
-            d.exists must be_==(true)
+            d.mkdirs mustEqual true
+            d.exists mustEqual true
             val f = new JavaFileWrapper("toss/d1/f1")
-            f.createNewFile must be_==(true)                
-            f.exists must be_==(true)
-            d.deleteRecursively must be_==(true)
-            f.exists must be_==(false)
-            d.exists must be_==(false)
-            new JavaFileWrapper("toss/d1").exists must be_==(false)
+            f.createNewFile mustEqual true                
+            f.exists mustEqual true
+            d.deleteRecursively mustEqual true
+            f.exists mustEqual false
+            d.exists mustEqual false
+            new JavaFileWrapper("toss/d1").exists mustEqual false
         }
     }
 }

@@ -13,15 +13,15 @@ object CommandRunnerSpec extends Specification {
         "accept a list of command argumets" in {
             val args = List("-e", "println(List(1,2.0,\"three\"))")
             val runner = new CommandRunner("scala", args)
-            runner.arguments must be_==(args)
+            runner.arguments mustEqual args
         }
 
         "accept an option map of environment/configuration values" in {
             val runner = new CommandRunner("scala", Nil, None)
-            runner.arguments must be_==(Nil)
+            runner.arguments mustEqual Nil
             val environment = Some(Map[Any, Any]('directory -> "lib"))
             val runner2 = new CommandRunner("scala", Nil, environment)
-            runner2.environment must be_==(environment)
+            runner2.environment mustEqual environment
             
         }
         
@@ -33,7 +33,7 @@ object CommandRunnerSpec extends Specification {
             val environment = Some(Map[Any, Any]('input -> """Hello
                 World"""))
             val runner = new CommandRunner("cat", Nil, environment)
-            runner.environment must be_==(environment)
+            runner.environment mustEqual environment
             var byteStream  = new ByteArrayOutputStream()
             var newStream   = new PrintStream(byteStream)
             runner.outputPrintStream = newStream
@@ -48,8 +48,8 @@ object CommandRunnerSpec extends Specification {
         "treat any other environment option as an environment variable to set" in {
             val environment = Some(Map[Any, Any]('directory -> "lib", "FOO_BAR" -> "foobar"))
             val runner = new CommandRunner("pwd", Nil, environment)
-            runner.environment must be_==(environment)
-            runner.processBuilder.environment.get("FOO_BAR") must be_==("foobar")
+            runner.environment mustEqual environment
+            runner.processBuilder.environment.get("FOO_BAR") mustEqual "foobar"
         }
 
         "run an external program and process its output" in {
@@ -61,7 +61,7 @@ object CommandRunnerSpec extends Specification {
     protected def runLsJarsCommand = {
         val environment = Some(Map[Any, Any]('directory -> "lib"))
         val runner = new CommandRunner("pwd", Nil, environment)
-        runner.environment must be_==(environment)
+        runner.environment mustEqual environment
         var byteStream  = new ByteArrayOutputStream()
         var newStream   = new PrintStream(byteStream)
         runner.outputPrintStream = newStream

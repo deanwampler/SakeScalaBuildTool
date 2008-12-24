@@ -9,7 +9,7 @@ object PathSpec extends Specification {
     "The Path delim" should {
         
         "equal the system path separator" in {
-             sake.util.Path.delim must be_==(new Environment().pathSeparator)
+             sake.util.Path.delim mustEqual (new Environment().pathSeparator)
         }        
     }
     

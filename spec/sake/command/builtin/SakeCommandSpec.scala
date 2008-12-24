@@ -8,7 +8,7 @@ object SakeCommandSpec extends Specification {
             override def action(options: Map[Symbol, Any]):Result = {
                 val command = options.getOrElse('command, "").toString()
                 val input   = options.getOrElse('input, "").toString()
-                command must be_==("scala")
+                command mustEqual "scala"
                 (":load "+expectedFile+"\\s*[\\n\\r]+\\s*build\\(\""+expectedTargets+"\"\\)").r findFirstIn input match {
                     case None => fail(input)
                     case Some(_) => 

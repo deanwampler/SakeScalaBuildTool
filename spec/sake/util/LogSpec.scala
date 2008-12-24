@@ -9,8 +9,8 @@ object LogSpec extends Specification {
         l.threshold = Level.Warn
         l.out = Console.out
         val s = new Log().messageFormatter(Level.Info, "This is a message")
-        s.contains("Info") must be_==(true)
-        s.contains("This is a message") must be_==(true)
+        s.contains("Info") mustEqual true
+        s.contains("This is a message") mustEqual true
     }
     
     "Constructing a Log" should {
@@ -20,23 +20,23 @@ object LogSpec extends Specification {
         }
         
         "accept a threshold only" in {
-            new Log(Level.Fatal).threshold must be_==(Level.Fatal)
+            new Log(Level.Fatal).threshold mustEqual Level.Fatal
         }
 
         "accept a threshold and output stream" in {
             val newStream = new PrintStream(new ByteArrayOutputStream())
             val l = new Log(Level.Fatal, newStream)
-            l.threshold must be_==(Level.Fatal)
-            (l.out eq newStream) must be_==(true)
+            l.threshold mustEqual Level.Fatal
+            (l.out eq newStream) mustEqual true
         }
 
         "accept a threshold, output stream, and message formatter" in {
             val newStream = new PrintStream(new ByteArrayOutputStream())
             val messageFormatter = (l:Level.Value, m:String) => String.format("%s : %s : %s", m, l, m)
             val l = new Log(Level.Fatal, newStream, messageFormatter)
-            l.threshold must be_==(Level.Fatal)
-            (l.out eq newStream) must be_==(true)
-            l.messageFormatter(Level.Notice, "msg") must be_==("msg : Notice : msg")
+            l.threshold mustEqual Level.Fatal
+            (l.out eq newStream) mustEqual true
+            l.messageFormatter(Level.Notice, "msg") mustEqual "msg : Notice : msg"
         }
     }
 
@@ -49,7 +49,7 @@ object LogSpec extends Specification {
         "be changeable to another Level" in {
             val l = new Log()
             l.threshold = Level.Fatal
-            l.threshold must be_==(Level.Fatal)
+            l.threshold mustEqual Level.Fatal
         }
     }
     
@@ -63,7 +63,7 @@ object LogSpec extends Specification {
             val l = new Log()
             val newStream = new PrintStream(new ByteArrayOutputStream())
             l.out = newStream
-            (l.out eq newStream) must be_==(true)
+            (l.out eq newStream) mustEqual true
         }
     }
     
@@ -76,7 +76,7 @@ object LogSpec extends Specification {
         "be changeable to a new formatter function taking the level and the message as parameters" in {
             val l = new Log()
             l.messageFormatter = (l, m) => String.format("%s : %s : %s", m, l, m)
-            l.messageFormatter(Level.Notice, "msg") must be_==("msg : Notice : msg")
+            l.messageFormatter(Level.Notice, "msg") mustEqual "msg : Notice : msg"
         }
     }
     
@@ -90,7 +90,7 @@ object LogSpec extends Specification {
             for (level <- Level) {
                 called = false
                 l(level, "")
-                called must be_==(level >= Level.Warn)
+                called mustEqual level >= Level.Warn
             }
         }
     }
