@@ -124,7 +124,10 @@ object ShellCommand {
      * the "words" contain whitespace.
      */
     def apply[Symbol,Any](str: String): Result = {
-        val list = str.split(" ").toList
+        val list = tokenizeCommandString(str)
         new ShellCommand(list.head).apply('command -> list.head, 'opts -> list.tail)
     }
+
+    def tokenizeCommandString(str: String) =
+         str.replaceAll("[\\n\\r]+", " ").split("\\s+").toList.filter(_.length > 0)
 }

@@ -88,10 +88,22 @@ object ShellCommandSpec extends Specification {
     }
     "Running a ShellCommand with a string" should {
         "convert the string to 'command -> first_word and 'opts -> rest_of_string" in {
-            // TODO: Hard to confirm, since we use the ShellCommand object for string commands.
-            ShellCommand("echo hello world")            
+            ShellCommand.tokenizeCommandString("echo hello world") match {
+                case "echo" :: List("hello", "world") =>
+                case list => fail(list.toString())
+            }
+        }
+        
+        "remove embedded \n and/or \r and other white space when tokenizing the command string" in {
+            ShellCommand.tokenizeCommandString("""echo 
+                    hello world""") match {
+                case "echo" :: List("hello", "world") =>
+                case list => fail(list.toString())
+            }
+            
         }
     }
+    
     "Running a ShellCommand without additional options" should {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
