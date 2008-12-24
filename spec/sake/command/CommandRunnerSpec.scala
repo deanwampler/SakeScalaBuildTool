@@ -25,8 +25,24 @@ object CommandRunnerSpec extends Specification {
             
         }
         
-        "accept an environment option to specify the directory to use as the working directory" in {
+        "accept an environment option 'directory to specify the directory to use as the working directory" in {
             runLsJarsCommand
+        }
+
+        "accept an environment option 'input to specify the input to the subprocess, as a string" in {
+            val environment = Some(Map[Any, Any]('input -> """Hello
+                World"""))
+            val runner = new CommandRunner("cat", Nil, environment)
+            runner.environment must be_==(environment)
+            var byteStream  = new ByteArrayOutputStream()
+            var newStream   = new PrintStream(byteStream)
+            runner.outputPrintStream = newStream
+            runner.run()
+            val result = byteStream.toString()
+            """cat:\s*Hello[\r\n]+cat:\s*World""".r findFirstIn result match {
+                case None => fail(result)
+                case Some(_) =>
+            }
         }
 
         "treat any other environment option as an environment variable to set" in {

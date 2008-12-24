@@ -1,6 +1,21 @@
 #!/bin/sh -- 
+#===================================================================
+# sake - driver command for "sake" build tool.
+# Run "sake -h" for help.
+#===================================================================
 
-CLASSPATH=lib/specs-1.4.1.jar:lib/junit-4.4.jar:lib/sake.jar
+if [ "$SAKE_HOME" = "" ] ; then
+    SAKE_HOME=${0%bin/sake}
+    if [ "$SAKE_HOME" = "" ] ; then
+        SAKE_HOME="."
+    elif [ "$SAKE_HOME" = "./sake" ] ; then
+        # Actually running in sake's bin directory!
+        SAKE_HOME=".."
+    fi
+    export SAKE_HOME=$(cd $SAKE_HOME; pwd)  # resolve to absolute...
+fi
+CLASSPATH=${SAKE_HOME}/lib/specs-1.4.1.jar:${SAKE_HOME}/lib/junit-4.4.jar:${SAKE_HOME}/lib/sake.jar:$CLASSPATH
+
 set +x
 file=sake.scala
 args[0]=-cp
@@ -10,11 +25,10 @@ function showhelp {
     cat <<-EOF
 usage: sake [-h] [-f sake.scala] [scala_opts] [targets]
 where:
-    -h              => this help message
+    -h              => this help message (also "--h", "-help", and "--help" allowed)
     -f sake.scala   => "sake.scala" is the default build file name.
     scala_opts      => any other options are passed to the "scala" command.
-                       Note that -cp and -classpath items will be prepended to the default:
-                         $CLASSPATH
+                       Note that -cp and -classpath items will be prepended to the CLASSPATH.
     targets         => what to build; defaults to "all"
 EOF
 }

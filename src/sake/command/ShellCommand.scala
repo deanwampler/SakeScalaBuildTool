@@ -39,8 +39,9 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
                 case x => Some(makeFilesLister()(List(x.toString())))
             }
             case 'command => None    // ignore; handled by determineCommandName
-            case 'directory => None  // ignore; handled by buildCommandOptionsMap
-            case 'D => None          // ignore; handled by buildCommandOptionsMap
+            case 'directory => None  // ignore; handled by buildCommandEnvMap
+            case 'D => None          // ignore; handled by buildCommandEnvMap
+            case 'input => None      // ignore; handled by buildCommandEnvMap
             case 'opts => Some(toStringList(value))
             case other => Some(List("-"+stringize(other), pathToString(value)))
         }
@@ -57,6 +58,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
             key_value._1 match {
                 case 'directory => envMap += (key_value._1 -> key_value._2)
                 case 'D => envMap += envVar(key_value._2.toString())
+                case 'input => envMap += (key_value._1 -> key_value._2)
                 case _ => // ignore
             }
         }

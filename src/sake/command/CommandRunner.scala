@@ -8,6 +8,8 @@ class CommandRunner(val command: String, val arguments: List[String], val enviro
     def this(command: String, arguments: List[String]) = this(command, arguments, None)
     def this(command: String) = this(command, Nil)
     
+    var processInput: Option[String] = None
+    
     val processBuilder = new ProcessBuilder()
     processEnvironment(processBuilder)
 
@@ -18,6 +20,16 @@ class CommandRunner(val command: String, val arguments: List[String], val enviro
         processBuilder.redirectErrorStream(true)
         processBuilder.command(toJavaList(command :: arguments))
         val process = processBuilder.start()
+        processInput match {
+            case None =>
+            case Some(s) => {
+                val in = process.getOutputStream()
+                println("s: "+s)
+                in.write(s.getBytes())
+                in.flush()
+                in.close()
+            }
+        }
         val out = new BufferedReader(new InputStreamReader(process.getInputStream()))
         processCommandOutput(out)
         getStatus(process)
@@ -43,6 +55,7 @@ class CommandRunner(val command: String, val arguments: List[String], val enviro
             case Some(m:Map[_,_]) => m.foreach { key_value =>
                 key_value._1 match {
                     case 'directory => pb.directory(new File(key_value._2.toString()))
+                    case 'input => processInput = Some(key_value._2.toString())
                     case key => env.put(key.toString(), key_value._2.toString())
                 }
             }

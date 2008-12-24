@@ -19,14 +19,21 @@ trait Commands {
     def mkdir(path: String) = mkdirs(path)
 
     def delete(paths: String*): Unit = paths foreach { path =>
-        if (File(path).delete == false)
+        val file = File(path)
+        if (file.exists && file.delete == false)
             Exit.error("Could not delete \""+path+"\".")
     }  
 
     def deleteRecursively(paths: String*): Unit = paths foreach { path =>
-        if (File(path).deleteRecursively == false)
+        val file = File(path)
+        if (file.exists && file.deleteRecursively == false)
             Exit.error("Could not delete \""+path+"\" recursively.")
     }  
+    
+    /**
+     * Command for recursive invocations of sake (as a new process), usually in a different directory.
+     */
+    val sakecmd = new SakeCommand()
     
     /**
      * Use "sh" for invoking a shell command with a command string.

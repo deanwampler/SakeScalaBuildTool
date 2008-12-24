@@ -193,6 +193,20 @@ object ShellCommandSpec extends Specification {
              cmd('command -> "pwd", 'D -> "=value1") must throwA[BuildError]
         }
 
+        "map 'input -> String to the input written to the subprocess" in {
+             val cmd = new ShellCommand("shcmd") {
+                 override def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
+                     val runner = super.makeCommandRunner(command, args, options)
+                     runner.processInput match {
+                         case None => fail()
+                         case Some(s) => s must be_==("hello world!")
+                     }
+                     runner
+                 }
+             }
+             cmd('command -> "pwd", 'input -> "hello world!")
+        }
+
         "map any other unknown 'opt -> List(a,b,c) to a path-like '-opt -> a:b:c'" in {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "shcmd", 'foo -> List("a", "b", "c"))
