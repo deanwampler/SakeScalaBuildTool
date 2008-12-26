@@ -9,7 +9,9 @@ trait Commands {
 
     val files = new FilesFinder()
 
-    def mkdirs(paths: String*): Unit = paths foreach { path => 
+    def mkdirs(paths: String*): Unit = mkdirs(paths.toList)
+    
+    def mkdirs(paths: List[String]): Unit = paths foreach { path => 
         val dir = makeFile(path)
         if (dir.exists == false)
             if (dir.mkdirs == false)
@@ -18,17 +20,25 @@ trait Commands {
     
     def mkdir(path: String) = mkdirs(path)
 
-    def delete(paths: String*): Unit = paths foreach { path =>
+    def delete(paths: String*): Unit = delete(paths.toList)
+
+    def delete(paths: List[String]): Unit = paths foreach { path =>
         val file = makeFile(path)
         if (file.exists && file.delete == false)
             Exit.error("Could not delete \""+path+"\".")
     }  
 
-    def deleteRecursively(paths: String*): Unit = paths foreach { path =>
+    def deleteRecursively(paths: String*): Unit = deleteRecursively(paths.toList)
+
+    def deleteRecursively(paths: List[String]): Unit = paths foreach { path =>
         val file = makeFile(path)
         if (file.exists && file.deleteRecursively == false)
             Exit.error("Could not delete \""+path+"\" recursively.")
-    }  
+    }
+    
+    def fail(): Unit = fail("Build failed!")
+
+    def fail(message: String): Unit = Exit.error(message)
     
     protected def makeFile(path: String) = File(path)
     

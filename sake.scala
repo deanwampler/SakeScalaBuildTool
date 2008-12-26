@@ -30,9 +30,6 @@ target('spec) {
    specs('path -> "spec", 'pattern -> ".*")
 }
 
-target('foo) {
-    sh("ls build lib")
-}
 target('compile -> List('clean, 'build_dir)) {
     scalac(
         'files     -> files(srcDir+"**/*.scala", specDir+"**/*.scala"),
@@ -40,6 +37,10 @@ target('compile -> List('clean, 'build_dir)) {
         'd         -> buildDir,
         'opts      -> "-unchecked -deprecation"
     )
+}
+
+target('fail) {
+    fail("boo!")
 }
 
 target('clean) {

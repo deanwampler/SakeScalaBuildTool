@@ -14,17 +14,17 @@ class Environment {
     /**
      * For convenience the path separator is exposed explicitly, read only.
      */
-    val pathSeparator = Environment.systemProperty("path.separator")
+    val pathSeparator = Environment.getSystemProperty("path.separator")
     
     /**
      * For convenience the file separator is exposed explicitly, read only.
      */
-    val fileSeparator = Environment.systemProperty("file.separator")
+    val fileSeparator = Environment.getSystemProperty("file.separator")
     
     /**
      * For convenience the current working directory is exposed explicitly, read only.
      */
-    val currentWorkingDirectory = Environment.systemProperty("user.dir")
+    val currentWorkingDirectory = Environment.getSystemProperty("user.dir")
     
     /**
      * For convenience the "classpath" is exposed explicitly as a List.
@@ -33,7 +33,7 @@ class Environment {
      */
     var classpath:List[String] = {
         val seq = for {
-            s <- Environment.systemProperty("java.class.path").split(pathSeparator)
+            s <- Environment.getSystemProperty("java.class.path").split(pathSeparator)
         } yield s
         seq.foldLeft[List[String]](Nil) {(cp, elem) => elem :: cp }
     }
@@ -47,10 +47,10 @@ object Environment {
      * Returns a system property or "" if not defined. If you would prefer null for
      * not defined, use System.getProperty() directory.
      */
-    def systemProperty(key:String) = System.getProperty(key) match {
+    def getSystemProperty(key:String) = System.getProperty(key) match {
         case null => ""
         case s    => s
     }
 
-    def systemProperty(key:String, value:String):Unit = System.setProperty(key, value)
+    def setSystemProperty(key:String, value:String):Unit = System.setProperty(key, value)
 }

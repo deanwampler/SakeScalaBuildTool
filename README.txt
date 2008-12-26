@@ -16,10 +16,17 @@ TODO:
 * Add test, scalacheck commands.
 * Set environment options through command-line options.
 * Provide a way for the user to define the default target.
+* Interactive Mode:
+** Run targets, if specified, after loading file.
+** If a target fails, don't exit!
+* Use implicits to convert from strings to symbols where "useful". Same for A* vs. List[A] ??
+* Support using tuples when defining dependencies, where lists are now required.
+
 
 BUGS:
 
-None known at this time.
+* Specs target broken because it uses the current path, before specs compiled?!
+
 
 IMPLEMENTATION NOTES:
 

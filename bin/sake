@@ -14,7 +14,7 @@ if [ "$SAKE_HOME" = "" ] ; then
         # Actually running in sake's bin directory!
         SAKE_HOME=".."
     fi
-    export SAKE_HOME=$(cd $SAKE_HOME; pwd)  # resolve to absolute...
+    export SAKE_HOME=$(cd $SAKE_HOME; pwd)  # resolve to absolute... (TODO: a better way?)
 fi
 CLASSPATH=${SAKE_HOME}/lib/specs-1.4.1.jar:${SAKE_HOME}/lib/junit-4.4.jar:${SAKE_HOME}/lib/sake.jar:$CLASSPATH
 
