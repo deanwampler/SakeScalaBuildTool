@@ -19,6 +19,9 @@ TODO:
 
 BUGS:
 
-Running full spec suite, FileSpec passes, yet leaves the temporary foobar and tossdir stuff around. Yet, if you
-run the spec separately, it doesn't happen!
+None known at this time.
+
+IMPLEMENTATION NOTES:
+
+1) You'll notice that a lot of types have small, protected methods that are often one liners for creating Files, etc. They could be easily inlined. Usually, they are there to facilitate testing. A spec can subclass the type under test (TUT) and override the method to return a test double, etc.
 

@@ -32,8 +32,10 @@ class ProjectDriver extends Commands {
         allTargs        
     }
     
-    def build(targs: String):Unit = build(targs.split(" ").map(Symbol(_)).toList)
+    def build(targs: Symbol):Unit = build(List(targs))
     
+    def build(targs: String):Unit = build(targs.split(" ").map(Symbol(_)).toList)
+
     def build(targs: Array[String]):Unit = build(targs.map(Symbol(_)).toList)
     
     def build(targs: List[Symbol]):Unit =

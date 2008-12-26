@@ -10,7 +10,7 @@ trait Commands {
     val files = new FilesFinder()
 
     def mkdirs(paths: String*): Unit = paths foreach { path => 
-        val dir = File(path)
+        val dir = makeFile(path)
         if (dir.exists == false)
             if (dir.mkdirs == false)
                 Exit.error("Could not create directory \""+path+"\".")
@@ -19,16 +19,18 @@ trait Commands {
     def mkdir(path: String) = mkdirs(path)
 
     def delete(paths: String*): Unit = paths foreach { path =>
-        val file = File(path)
+        val file = makeFile(path)
         if (file.exists && file.delete == false)
             Exit.error("Could not delete \""+path+"\".")
     }  
 
     def deleteRecursively(paths: String*): Unit = paths foreach { path =>
-        val file = File(path)
+        val file = makeFile(path)
         if (file.exists && file.deleteRecursively == false)
             Exit.error("Could not delete \""+path+"\" recursively.")
     }  
+    
+    protected def makeFile(path: String) = File(path)
     
     /**
      * Command for recursive invocations of sake (as a new process), usually in a different directory.

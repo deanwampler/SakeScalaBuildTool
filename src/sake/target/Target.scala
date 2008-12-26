@@ -35,7 +35,7 @@ object Target {
     def apply(name:Symbol, dependencies:List[Symbol], action: => Unit) = 
         new TargetWithAction(name, dependencies, action)
 
-    def merge(t1: Target, t2: Target) = {
+    def merge(t1: Target, t2: Target): Target = {
         validateMerge(t1, t2)
         doMerge(t1, t2)
     }
