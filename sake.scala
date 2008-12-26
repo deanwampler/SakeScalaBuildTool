@@ -19,11 +19,17 @@ log.threshold = Level.Info
 environment.classpath ::= buildDir
 files(libDir+"*.jar") foreach { lib => environment.classpath ::= lib }
 
-target('all -> List('clean, 'compile, 'spec, 'jar))
+target('all -> List('clean, 'compile, 'spec, 'jars))
+
+target('jars -> List('jar, 'srcjar))
 
 target('jar) {
     sh("jar cf "+buildDir+"/sake.jar -C "+buildDir+" sake")
     sh("cp "+buildDir+"/sake.jar "+libDir)
+}
+
+target('srcjar) {
+    sh("jar cf "+buildDir+"/sake-src.jar src spec")
 }
 
 target('spec) {
