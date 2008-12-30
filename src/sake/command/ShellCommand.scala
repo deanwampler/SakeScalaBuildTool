@@ -41,7 +41,9 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
             case 'command => None    // ignore; handled by determineCommandName
             case 'directory => None  // ignore; handled by buildCommandEnvMap
             case 'D => None          // ignore; handled by buildCommandEnvMap
-            case 'input => None      // ignore; handled by buildCommandEnvMap
+            case 'inputText => None  // ignore; handled by buildCommandEnvMap
+            case 'inputFile => None  // ignore; handled by buildCommandEnvMap
+            case 'outputFile => None // ignore; handled by buildCommandEnvMap
             case 'opts => Some(toStringList(value))
             case other => Some(List("-"+stringize(other), pathToString(value)))
         }
@@ -58,15 +60,17 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
             key_value._1 match {
                 case 'directory => envMap += (key_value._1 -> key_value._2)
                 case 'D => envMap += envVar(key_value._2.toString())
-                case 'input => envMap += (key_value._1 -> key_value._2)
+                case 'inputText  => envMap += (key_value._1 -> key_value._2)
+                case 'inputFile  => envMap += (key_value._1 -> key_value._2)
+                case 'outputFile => envMap += (key_value._1 -> key_value._2)
                 case _ => // ignore
             }
         }
         if (envMap.isEmpty) None else Some(envMap)
     }
 
-    protected def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
-        new CommandRunner(command, args, options)
+    protected def makeCommandRunner(command: String, args: List[String], env: Option[Map[Any,Any]]) = {
+        new CommandRunner(command, args, env)
     }
 
     // hook for test overrides.

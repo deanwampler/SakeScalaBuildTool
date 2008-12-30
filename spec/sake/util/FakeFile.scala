@@ -1,5 +1,7 @@
 package sake.util
 
+import java.io.{StringReader => JStringReader, StringWriter => JStringWriter}
+
 class FakeFile(val path: String, exists2: Boolean, 
         val isDirectory2: Boolean, val contents2: List[String]) extends File {
 
@@ -15,8 +17,18 @@ class FakeFile(val path: String, exists2: Boolean,
     def mkdirs = isDirectory
     def delete = true
 
+    val stringWriter = new JStringWriter()
+    def writer = stringWriter
+
+    def stringForReading = stringWriter.getBuffer().toString()
+    def reader = new JStringReader(stringForReading)
+
     override def makeFile(path: String) = new FakeFile(path)
     override def makeFile(parent: String, child: String) = new FakeFile(File.makePath(parent, child))
+    
+    override def toString() = {
+        "FakeFile: exists: "+exists+", isDirectory? "+isDirectory+", isFile? "+isFile+", stringForReading: \""+stringForReading+"\"."
+    }
 }
 
 class FakeFileForSpecs(path: String, exists: Boolean, 

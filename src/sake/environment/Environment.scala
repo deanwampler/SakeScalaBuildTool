@@ -12,22 +12,27 @@ class Environment {
     var dryRun = false
     
     /**
-     * For convenience the path separator is exposed explicitly, read only.
+     * For convenience, the path separator is exposed explicitly, read only.
      */
     val pathSeparator = Environment.getSystemProperty("path.separator")
     
     /**
-     * For convenience the file separator is exposed explicitly, read only.
+     * For convenience, the file separator is exposed explicitly, read only.
      */
     val fileSeparator = Environment.getSystemProperty("file.separator")
     
     /**
-     * For convenience the current working directory is exposed explicitly, read only.
+     * For convenience, the line separator is exposed explicitly, read only.
+     */
+    val lineSeparator = Environment.getSystemProperty("line.separator")
+    
+    /**
+     * For convenience, the current working directory is exposed explicitly, read only.
      */
     val currentWorkingDirectory = Environment.getSystemProperty("user.dir")
     
     /**
-     * For convenience the "classpath" is exposed explicitly as a List.
+     * For convenience, the "classpath" is exposed explicitly as a List.
      * Use standard list operations to change it. Note that doing so WON'T affect
      * the System classpath value.
      */

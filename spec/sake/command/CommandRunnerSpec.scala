@@ -2,7 +2,8 @@ package sake.command
 
 import org.specs._
 import sake.util._
-import java.io.{PrintStream, ByteArrayOutputStream}
+import sake.environment._
+import java.io.{PrintStream, ByteArrayOutputStream, BufferedReader}
 
 object CommandRunnerSpec extends Specification { 
     "A CommandRunner" should {
@@ -29,20 +30,81 @@ object CommandRunnerSpec extends Specification {
             runLsJarsCommand
         }
 
-        "accept an environment option 'input to specify the input to the subprocess, as a string" in {
-            val environment = Some(Map[Any, Any]('input -> """Hello
-                World"""))
+        def doInputTextOutputFile(outputFile: File) {
+            val environment = Some(Map[Any, Any]('inputText -> """Hello
+                World""", 'outputFile -> outputFile))
             val runner = new CommandRunner("cat", Nil, environment)
             runner.environment mustEqual environment
-            var byteStream  = new ByteArrayOutputStream()
-            var newStream   = new PrintStream(byteStream)
-            runner.outputPrintStream = newStream
             runner.run()
-            val result = byteStream.toString()
-            """cat:\s*Hello[\r\n]+cat:\s*World""".r findFirstIn result match {
-                case None => fail(result)
+            testOutput(outputFile)
+        }
+
+        def testOutput(outputFile: File) = {
+            val actual = outputFile match {
+                case ff:FakeFile => ff.stringForReading
+                case _ => readFileContents(outputFile)
+            }
+            """Hello[\r\n]+\s*World""".r findFirstIn actual match {
+                case None => fail("actual: "+actual)
                 case Some(_) =>
             }
+        }
+        
+        def readFileContents(file: File): String = {
+            val sb = new StringBuffer()
+            val reader = new BufferedReader(file.reader)
+            while(true) {
+                reader.readLine() match {
+                    case null => return sb.toString()
+                    case line => sb.append(line+Environment.environment.lineSeparator)
+                }
+            }
+            sb.toString()
+        }
+        
+        "accept an environment option 'inputText to specify a string of input for the subprocess" in {
+            doInputTextOutputFile(new FakeFile("toss.out"))
+        }
+        
+        def makeTempFileWithContent(tempFile: File) = {
+            val writer = tempFile.writer
+            writer.write("""Hello
+                World""")
+            writer.flush()
+            writer.close()
+            tempFile
+        }
+        
+        "accept an environment option 'inputFile to specify a file for input to the subprocess" in {
+            val tempFile = makeTempFileWithContent(new FakeFile("tossInput.txt"))
+            val outputFile = new FakeFile("toss.out")
+            val environment = Some(Map[Any, Any]('inputFile -> tempFile, 'outputFile -> outputFile))
+            val runner = new CommandRunner("cat", Nil, environment)
+            runner.environment mustEqual environment
+            runner.run()
+            testOutput(outputFile)
+        }
+
+        "accept an environment option 'inputFile to specify the name of a file for input to the subprocess" in {
+            val inFile = File("tossInput.txt")
+            val tempFile = makeTempFileWithContent(inFile)
+            val outputFile = new FakeFile("toss.out")
+            val environment = Some(Map[Any, Any]('inputFile -> tempFile, 'outputFile -> outputFile))
+            val runner = new CommandRunner("cat", Nil, environment)
+            runner.environment mustEqual environment
+            runner.run()
+            testOutput(outputFile)
+            inFile.delete mustEqual true
+        }
+
+        "accept an environment option 'outputFile to specify where to write the output from the subprocess, as a string" in {
+            doInputTextOutputFile(new FakeFile("toss.out"))
+        }
+
+        "accept an environment option 'outputFile to specify the name of a file to write the output from the subprocess, as a string" in {
+            val outFile = File("toss.out")
+            doInputTextOutputFile(outFile)
+            outFile.delete mustEqual true
         }
 
         "treat any other environment option as an environment variable to set" in {
@@ -59,14 +121,12 @@ object CommandRunnerSpec extends Specification {
     }
     
     protected def runLsJarsCommand = {
-        val environment = Some(Map[Any, Any]('directory -> "lib"))
+        val outputFile = new FakeFile("toss.out")
+        val environment = Some(Map[Any, Any]('directory -> "lib", 'outputFile -> outputFile))
         val runner = new CommandRunner("pwd", Nil, environment)
         runner.environment mustEqual environment
-        var byteStream  = new ByteArrayOutputStream()
-        var newStream   = new PrintStream(byteStream)
-        runner.outputPrintStream = newStream
         runner.run()
-        val result = byteStream.toString()
+        val result = outputFile.writer.toString()
         """sake/lib$""".r findFirstIn result match {
             case None => fail(result)
             case Some(_) =>

@@ -17,8 +17,8 @@ class SakeCommand() extends JVMCommand("sake", Some(Map[Symbol,Any]())) {
             case "" => "all"
             case s => s
         }
-        options - ('command, 'input, 'f, 'file, 'targets) + 
-            ('command -> "scala", 'input -> (":load " + sakefile + "\nbuild(\"" + targets + "\")\n"))
+        options - ('command, 'inputText, 'f, 'file, 'targets) + 
+            ('command -> "scala", 'inputText -> (":load " + sakefile + "\nbuild(\"" + targets + "\")\n"))
     }
 } 
     

@@ -2,7 +2,7 @@ package sake.util
 
 import org.specs._ 
 
-import java.io.{File => JFile, FilenameFilter => JFilenameFilter}
+import java.io.{File => JFile, FilenameFilter => JFilenameFilter, BufferedReader => JBufferedReader}
 import scala.util.matching.Regex
 
 object FileSpec extends Specification { 
@@ -268,4 +268,26 @@ object FileSpec extends Specification {
             new JavaFileWrapper("toss/d1").exists mustEqual false
         }
     }
+
+    def readwrite = {
+        val f = new JavaFileWrapper("toss.txt")
+        f.createNewFile mustEqual true
+        val writer = f.writer
+        writer.write("hello world!")
+        writer.flush()
+        writer.close()
+        val f2 = new JavaFileWrapper("toss.txt")
+        val reader = new JBufferedReader(f2.reader)
+        reader.readLine() mustEqual "hello world!"
+        f2.delete
+    }
+    
+    "File.writer" should {
+        "return a writer for writing output to the fail." in { readwrite }
+    }
+    
+    "File.reader" should {
+        "return a reader for reading content from the file." in { readwrite }
+    }
+    
 }

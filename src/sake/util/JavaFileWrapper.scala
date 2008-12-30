@@ -1,6 +1,8 @@
 package sake.util
 
-import java.io.{File => JFile, FilenameFilter => JFilenameFilter}
+import java.io.{File => JFile, FilenameFilter => JFilenameFilter, 
+    InputStreamReader  => JInputStreamReader,  FileInputStream  => JFileInputStream,
+    OutputStreamWriter => JOutputStreamWriter, FileOutputStream => JFileOutputStream }
 
 class JavaFileWrapper(override val path: String) extends File {
 
@@ -25,6 +27,10 @@ class JavaFileWrapper(override val path: String) extends File {
     }
     
     def createNewFile = javaFile.createNewFile()
+    
+    def writer = new JOutputStreamWriter(new JFileOutputStream(path))
+    
+    def reader = new JInputStreamReader(new JFileInputStream(path))
 
     def mkdirs = javaFile.mkdirs()
     def delete = javaFile.delete()

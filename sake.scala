@@ -45,10 +45,6 @@ target('compile -> List('clean, 'build_dir)) {
     )
 }
 
-target('fail) {
-    fail("boo!")
-}
-
 target('clean) {
     deleteRecursively(buildDir)
 }
@@ -56,3 +52,15 @@ target('clean) {
 target('build_dir) {
     mkdir(buildDir)
 }
+
+target('fail) {
+    fail("boo!")
+}
+import sake.util._
+target('ls) {
+    shell('command -> "ls", 'opts -> ".", 'outputFile -> File("foo.txt"))
+}
+target('cat ) {
+    shell('command -> "cat", 'inputFile -> File("foo.txt"), 'outputFile -> File("foo.txt2"))
+}
+

@@ -38,6 +38,12 @@ object EnvironmentSpec extends Specification {
         }
     }
     
+    "The lineSeparator" should {
+        "be the platform's line separator" in {
+            new Environment().lineSeparator mustEqual System.getProperty("line.separator")
+        }
+    }
+    
     "The currentWorkingDirectory" should {
         "be the user's current directory" in {
             new Environment().currentWorkingDirectory mustEqual System.getProperty("user.dir")

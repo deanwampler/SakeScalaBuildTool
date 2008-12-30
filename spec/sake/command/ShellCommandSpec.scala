@@ -21,12 +21,10 @@ object ShellCommandSpec extends Specification {
     }
     
     doBeforeSpec {
-        Environment.environment.dryRun = true
         Log.log = new Log(Level.Info, newStream)
     }
     
     doAfterSpec {
-        Environment.environment.dryRun = savedDryRun
         Log.log = savedLog
     }
 
@@ -109,6 +107,10 @@ object ShellCommandSpec extends Specification {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
             Log.log.out = newStream
+            Environment.environment.dryRun = true
+        }
+        doAfter {
+            Environment.environment.dryRun = savedDryRun
         }
         
         "compose the default options into a command string, starting with the command name." in {
@@ -123,12 +125,16 @@ object ShellCommandSpec extends Specification {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
             Log.log.out = newStream
+            Environment.environment.dryRun = true
+        }
+        doAfter {
+            Environment.environment.dryRun = savedDryRun
         }
 
         "compose the additional and default options, overwriting the later into a command string, starting with the command name." in {
-             val cmd = new ShellCommand("shcmd", Map('foo -> "foo", 'bar -> List("bar1", "bar2")))
+             val cmd = new ShellCommand("ls", Map('foo -> "foo", 'bar -> List("bar1", "bar2")))
              cmd('foo -> "foobar", 'baz -> ("a", "b"))
-             checkString("""shcmd\s+-foo foobar -bar bar1[:;]bar2 -baz \(a,b\)""".r, byteStream.toString())
+             checkString("""ls\s+-foo foobar -bar bar1[:;]bar2 -baz \(a,b\)""".r, byteStream.toString())
         }        
     }
     
@@ -137,8 +143,12 @@ object ShellCommandSpec extends Specification {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
             Log.log.out = newStream
+            Environment.environment.dryRun = true
         }
-
+        doAfter {
+            Environment.environment.dryRun = savedDryRun
+        }
+        
         "map 'files -> file_spec to the list of files matching the spec." in {
             val cmd = new ShellCommand("shcmd") {
                 override def makeFilesLister = FakeFileForSpecs.fakeFilesFinder
@@ -205,20 +215,6 @@ object ShellCommandSpec extends Specification {
              cmd('command -> "pwd", 'D -> "=value1") must throwA[BuildError]
         }
 
-        "map 'input -> String to the input written to the subprocess" in {
-             val cmd = new ShellCommand("shcmd") {
-                 override def makeCommandRunner(command: String, args: List[String], options: Option[Map[Any,Any]]) = {
-                     val runner = super.makeCommandRunner(command, args, options)
-                     runner.processInput match {
-                         case None => fail()
-                         case Some(s) => s mustEqual "hello world!"
-                     }
-                     runner
-                 }
-             }
-             cmd('command -> "pwd", 'input -> "hello world!")
-        }
-
         "map any other unknown 'opt -> List(a,b,c) to a path-like '-opt -> a:b:c'" in {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "shcmd", 'foo -> List("a", "b", "c"))
@@ -229,6 +225,50 @@ object ShellCommandSpec extends Specification {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "shcmd", 'foo -> ("a", "b", "c"))
              checkString("""shcmd\s+-foo \(a,b,c\)""".r, byteStream.toString())
+        }
+    }
+    
+    "Running a ShellCommand with standard file I/O options" should {
+        doBefore {
+            Environment.environment.dryRun = false
+        }
+        doAfter {
+            Environment.environment.dryRun = savedDryRun
+        }
+    
+        def doInputTextOutputFile {
+            Environment.environment.dryRun = false
+            val outputFile = new FakeFile("toss.out")
+            val cmd = new ShellCommand("shcmd")
+            cmd('command -> "cat", 'inputText -> "hello world!", 'outputFile -> outputFile)
+            outputFile.stringForReading mustEqual "hello world!\n"
+        }
+
+        "map 'inputText -> String to the input written to the subprocess" in {
+             doInputTextOutputFile
+        }
+
+        def makeTempFileWithContent = {
+            val tempFile = new FakeFile("tossInput.txt")
+            tempFile.createNewFile
+            val writer = tempFile.writer
+            writer.write("hello world!")
+            writer.flush()
+            writer.close()
+            tempFile
+        }
+        
+        "map 'inputFile -> sake.util.File to the source of input written to the subprocess" in {
+            Environment.environment.dryRun = false
+            val tempFile = makeTempFileWithContent
+            val outputFile = new FakeFile("toss.out")
+            val cmd = new ShellCommand("shcmd")
+            cmd('command -> "cat", 'inputFile -> tempFile, 'outputFile -> outputFile)
+            outputFile.stringForReading mustEqual "hello world!\n"
+        }
+
+        "map 'outputFile -> sake.util.File to the sink for output written from the subprocess" in {
+            doInputTextOutputFile
         }
     }
     
