@@ -103,3 +103,4 @@ if [ $interactive = "true" ]; then
 else
     stdinput | scala ${args[@]}
 fi
+echo ""
