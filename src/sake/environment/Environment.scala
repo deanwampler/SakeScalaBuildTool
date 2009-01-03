@@ -32,15 +32,23 @@ class Environment {
     val currentWorkingDirectory = Environment.getSystemProperty("user.dir")
     
     /**
-     * For convenience, the "classpath" is exposed explicitly as a List.
-     * Use standard list operations to change it. Note that doing so WON'T affect
-     * the System classpath value.
+     * For convenience and to keep the system classpath consistent with any user changes,
+     * the "classpath" is exposed explicitly as a List that is kept synchronized with the
+     * system's value. Use standard list operations to change it. 
      */
-    var classpath:List[String] = {
+    def classpath: List[String] = {
         val seq = for {
             s <- Environment.getSystemProperty("java.class.path").split(pathSeparator)
         } yield s
-        seq.foldLeft[List[String]](Nil) {(cp, elem) => elem :: cp }
+        seq.foldLeft[List[String]](Nil) {(cp, elem) => elem :: cp }.reverse
+    }
+
+    /**
+     * Set the system classpath.
+     */
+    def classpath_=(newPath: List[String]) = {
+        val newPathString = newPath.reduceLeft { _ + pathSeparator + _ }
+        Environment.setSystemProperty("java.class.path", newPathString)
     }
 }
 

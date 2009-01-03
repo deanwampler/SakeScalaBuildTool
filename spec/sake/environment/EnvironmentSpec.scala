@@ -8,21 +8,30 @@ object EnvironmentSpec extends Specification {
         val seq = for {
             s <- System.getProperty("java.class.path").split(System.getProperty("path.separator"))
         } yield s
-        seq.foldLeft[List[String]](Nil) {(cp, elem) => elem :: cp }
+        seq.foldLeft[List[String]](Nil) {(cp, elem) => elem :: cp }.reverse
     }
     
     "The classpath" should {
+        val beforeCP = sysClassPath
         
-        "default to the system classpath converted to a List" in {
+        doAfter {
+            Environment.environment.classpath = beforeCP  // reset
+        }
+        
+        "return to the system classpath converted to a List" in {
             new Environment().classpath mustEqual sysClassPath
         }        
         
-        "be user changable, without affecting the system path. to the system classpath converted to a List" in {
-            val beforeCP = sysClassPath
+        "return to list with the elements in the same order as the original path" in {
+            new Environment().classpath mustEqual sysClassPath
+        }        
+        
+        "be user changable, affecting the system path" in {
             val env = new Environment()
             env.classpath = "foo/bar" :: beforeCP
             env.classpath mustEqual ("foo/bar" :: beforeCP)
-            sysClassPath  mustEqual beforeCP
+            sysClassPath  must beDifferent(beforeCP)
+            sysClassPath  mustEqual env.classpath
         }
     }
     
