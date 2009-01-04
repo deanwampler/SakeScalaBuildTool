@@ -29,7 +29,7 @@ esac
 
 file=sake.scala
 interactive="false"
-args[0]=-cp
+args[0]=-classpath
 args[1]=$CLASSPATH
 
 function showhelp {

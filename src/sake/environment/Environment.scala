@@ -1,5 +1,7 @@
 package sake.environment
 
+import sake.util.Path
+
 /**
  * Encapsulates runtime environment properties, etc. Some java.lang.System
  * properties are exposed as variables for convenient use in build scripts.
@@ -36,19 +38,18 @@ class Environment {
      * the "classpath" is exposed explicitly as a List that is kept synchronized with the
      * system's value. Use standard list operations to change it. 
      */
-    def classpath: List[String] = {
+    def classpath: Path = {
         val seq = for {
             s <- Environment.getSystemProperty("java.class.path").split(pathSeparator)
         } yield s
-        seq.foldLeft[List[String]](Nil) {(cp, elem) => elem :: cp }.reverse
+        Path(seq)(pathSeparator)
     }
 
     /**
      * Set the system classpath.
      */
-    def classpath_=(newPath: List[String]) = {
-        val newPathString = newPath.reduceLeft { _ + pathSeparator + _ }
-        Environment.setSystemProperty("java.class.path", newPathString)
+    def classpath_=(newPath: Path) = {
+        Environment.setSystemProperty("java.class.path", newPath.joined)
     }
 }
 

@@ -2,10 +2,11 @@ package sake.command.builtin
 
 import sake.command._
 import sake.util._
+import sake.util.Path._
 
 trait Commands {
 
-    var classpath: List[String] = Nil
+    var classpath = Path()
 
     val files = new FilesFinder()
 

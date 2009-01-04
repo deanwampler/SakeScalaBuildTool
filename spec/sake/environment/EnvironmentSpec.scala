@@ -5,10 +5,11 @@ import org.specs._
 object EnvironmentSpec extends Specification { 
 
     def sysClassPath = {
+        val sep = System.getProperty("path.separator")
         val seq = for {
-            s <- System.getProperty("java.class.path").split(System.getProperty("path.separator"))
+            s <- System.getProperty("java.class.path").split(sep)
         } yield s
-        seq.foldLeft[List[String]](Nil) {(cp, elem) => elem :: cp }.reverse
+        sake.util.Path(seq.foldLeft[List[String]](Nil) {(cp, elem) => elem :: cp }.reverse)(sep)
     }
     
     "The classpath" should {
@@ -18,11 +19,11 @@ object EnvironmentSpec extends Specification {
             Environment.environment.classpath = beforeCP  // reset
         }
         
-        "return to the system classpath converted to a List" in {
+        "return the system classpath converted to a Path" in {
             new Environment().classpath mustEqual sysClassPath
         }        
         
-        "return to list with the elements in the same order as the original path" in {
+        "return a Path with the elements in the same order as the original path" in {
             new Environment().classpath mustEqual sysClassPath
         }        
         

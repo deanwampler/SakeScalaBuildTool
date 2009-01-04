@@ -2,6 +2,7 @@ package sake.command
 
 import java.lang._
 import sake.util._
+import sake.util.Path._
 import sake.environment._
 
 /**
@@ -77,7 +78,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     protected def makeFilesLister() = new FilesFinder()
 
     protected def pathToString(value: Any) = value match {
-        case seq:Seq[_] => Path(seq)
+        case seq:Seq[_] => new Path(seq).toString()
         case _ => value.toString()
     }
     

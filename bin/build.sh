@@ -4,5 +4,4 @@
 # you won't see the latest changes, because the previous build was already loaded
 # from the classpath!
 
-bin/sake clean compile || exit $?
-bin/sake -cp build spec jar
+bin/sake clean compile && bin/sake -cp build spec jar
