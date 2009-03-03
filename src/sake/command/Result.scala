@@ -2,7 +2,7 @@ package sake.command
 
 import sake.util._
 
-abstract case class Result {
+abstract case class Result() {
     val success: Boolean
 
     /** 
