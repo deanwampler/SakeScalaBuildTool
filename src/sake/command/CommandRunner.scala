@@ -24,10 +24,14 @@ class CommandRunner(val command: String, val arguments: List[String], val enviro
     def run() = {
         processBuilder.redirectErrorStream(true)
         processBuilder.command(toJavaArrayList(command :: arguments))
-        val process = processBuilder.start()
-        handleInputFor(process)
-        handleOutputFor(process)
-        getStatus(process)
+        try {
+            val process = processBuilder.start()
+            handleInputFor(process)
+            handleOutputFor(process)
+            getStatus(process)
+        } catch {
+            case th: Throwable => new Failed(Some(th), Some(th.getMessage()))
+        }
     }
 
     protected def handleInputFor(process: Process): Unit = {

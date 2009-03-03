@@ -60,10 +60,11 @@ trait Commands {
 
     val echo = new EchoCommand()
 
-    val specs = new SpecCommand()
-    
     val scala  = new JVMCommand("scala")
     val scalac = new JVMCommand("scalac", 'files -> ".")
+
+    val specs = new SpecCommand()
+
     // Old:
     val specJVM = new JVMCommand("scala") {
         private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 

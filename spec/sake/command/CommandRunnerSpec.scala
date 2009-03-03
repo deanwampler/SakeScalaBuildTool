@@ -27,7 +27,7 @@ object CommandRunnerSpec extends Specification {
         }
         
         "accept an environment option 'directory to specify the directory to use as the working directory" in {
-            runLsJarsCommand
+            runSuccessfulTestCommand
         }
 
         def doInputTextOutputFile(outputFile: File) {
@@ -114,13 +114,17 @@ object CommandRunnerSpec extends Specification {
             runner.processBuilder.environment.get("FOO_BAR") mustEqual "foobar"
         }
 
-        "run an external program and process its output" in {
-            runLsJarsCommand
+        "run a successful external program and process its output" in {
+            runSuccessfulTestCommand
+        }
+        
+        "run an unsuccessful external program and fail" in {
+            runFailedTestCommand
         }
         
     }
     
-    protected def runLsJarsCommand = {
+    protected def runSuccessfulTestCommand = {
         val outputFile = new FakeFile("toss.out")
         val environment = Some(Map[Any, Any]('directory -> "lib", 'outputFile -> outputFile))
         val runner = new CommandRunner("pwd", Nil, environment)
@@ -130,6 +134,15 @@ object CommandRunnerSpec extends Specification {
         """sake/lib$""".r findFirstIn result match {
             case None => fail(result)
             case Some(_) =>
+        }
+    }    
+
+    protected def runFailedTestCommand = {
+        val outputFile = new FakeFile("toss.out")
+        val runner = new CommandRunner("ls nonexistentfile")
+        runner.run() match {
+            case f: Failed[_] =>
+            case p: Passed[_] => fail
         }
     }    
 }
