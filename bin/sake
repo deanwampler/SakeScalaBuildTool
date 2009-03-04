@@ -89,7 +89,7 @@ else
     scala -version | grep --silent 2.7.2
     if [ $? = 0 ] ; then
         echo "The interactive option can't be used with scala v2.7.2, because a bug in"
-        echo "the -i option causes it to load the build file twice. Use v2.7.1 instead."
+        echo "the -i option causes it to load the build file twice. Upgrade to a more recent version instead."
         exit 1
     fi
 fi
