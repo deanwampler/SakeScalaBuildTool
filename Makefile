@@ -7,10 +7,10 @@ clean:
 	rm -rf build
 
 compile: build_dir
-	scalac -d build -cp ${CLASSPATH} -unchecked -deprecation $$(find src spec -name '*.scala')
+	scalac -d build -classpath ${CLASSPATH} -unchecked -deprecation $$(find src spec -name '*.scala')
 
 test:
-	scala -cp build:${CLASSPATH} bin/specrunner.scala
+	scala -classpath build:${CLASSPATH} bin/specrunner.scala
 
 jar: lib_dir remove_jar
 	cd build; \

@@ -161,8 +161,8 @@ object ShellCommandSpec extends Specification {
 
         "map 'command -> string to use 'string' as the shell command name" in {
              val cmd = new ShellCommand("shcmd")
-             cmd('command -> "java", 'opts -> "-cp foo:bar -Dx=y -d -g:1")
-             checkString("""java\s+-cp foo[:;]bar -Dx=y -d -g:1""".r, byteStream.toString())
+             cmd('command -> "java", 'opts -> "-classpath foo:bar -Dx=y -d -g:1")
+             checkString("""java\s+-classpath foo[:;]bar -Dx=y -d -g:1""".r, byteStream.toString())
         }
 
         "map 'opts -> string to a string with each word (split on whitespace)" in {
