@@ -39,13 +39,6 @@ target('spec) {
        'pattern -> ".*Spec.*"
     )
 }
-target('spec2) {
-    specs(
-       'classpath -> environment.classpath, 
-       'path -> "spec", 
-       'pattern -> ".*SpecCommandSpec.*"
-    )
-}
 
 target('compile -> List('clean, 'build_dir)) {
     scalac(
