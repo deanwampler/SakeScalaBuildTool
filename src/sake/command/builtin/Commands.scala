@@ -63,23 +63,7 @@ trait Commands {
     val scala  = new JVMCommand("scala")
     val scalac = new JVMCommand("scalac", 'files -> ".")
 
-    val specs = new SpecCommand()
-
-    // Old:
-    val specJVM = new JVMCommand("scala") {
-        private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
-            key match {
-                case 'specs => {
-                    val specsToRun = List(stringize(value))
-                    if (specsToRun.length == 0)
-                        Exit.error("spec: No specification files were given!")
-                    Some(specsToRun)
-                }
-                case _ => None
-            }
-        
-        optionsProcessor.addProcessor(optionProcessor _)
-    }
+    val specs  = new SpecCommand()
 
     val java   = new JVMCommand("java")
     val javac  = new JVMCommand("javac", 'files -> ".")

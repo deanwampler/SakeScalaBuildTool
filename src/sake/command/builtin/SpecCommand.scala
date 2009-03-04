@@ -8,12 +8,12 @@ import sake.util._
  * The default options are
  * <ol>
  *  <li><em>'path</em> => directory path. Any pattern, inluding "globs", allowed by 
- *  {@link org.specs.runner.SpecsFinder} can be used. Defaults to "spec".</li>
+ *  {@link org.specs.runner.SpecsFinder} can be used. Defaults to "spec" (a presumed directory for "spec" source files).</li>
  *  <li><em>'pattern</em> => spec class or object name filter regex. Defaults to ".*".</li>
  * </ol>
+ * @note Must run as a separate process to pick up any newly compiled files, rather than reading what's in the sake.jar file!
  */
-class SpecCommand(defaultOptions: Option[Map[Symbol, Any]]) 
-    extends Command[Symbol, Any]("spec", defaultOptions){
+class SpecCommand(defaultOptions: Option[Map[Symbol, Any]]) extends JVMCommand("scala", defaultOptions){
 
     def this(defaultOpts: Map[Symbol, Any]) = this(Some(defaultOpts))
 
@@ -26,42 +26,49 @@ class SpecCommand(defaultOptions: Option[Map[Symbol, Any]])
         key match {
             case 'path    => Some(List(value.toString()))
             case 'pattern => Some(List(value.toString()))
-            case 'report  => Some(List(toBoolean(value)))
             case _  => None
         }
 
-    protected val optionsProcessor = new OptionsProcessor[Symbol, Any]().addProcessor(optionProcessor _)
+    optionsProcessor.addProcessor(optionProcessor _)
     
-    override def action(options: Map[Symbol, Any]): Result = {
-        val path     = options.getOrElse('path,    "spec").toString()
-        val pattern  = options.getOrElse('pattern, ".*").toString()
-        val doReport = toBoolean(options.getOrElse('report,  true))
-        
-        if (Environment.environment.dryRun == true)
-            return new Passed()
-        runSpecs(makeSpecsFileRunner(path, pattern), doReport)
-    }
-    
-    import org.specs._
-    import org.specs.runner._
-    
-    protected def makeSpecsFileRunner(path: String, pattern: String) = 
-        new SpecsFileRunner(path, pattern)
-        
-    protected def runSpecs(runner: SpecsFileRunner, outputReport: Boolean): Result = {
-        if (outputReport)
-            runner.report(runner.specs)
-        runner.specs foreach { spec => 
-            if (spec.isFailing)
-                return new Failed()
+    override protected def optionsPostFilter(options: Map[Symbol,Any]) = {
+        val path    = options.getOrElse('path,    SakeSpecRunner.defaultPath).toString()
+        val pattern = options.getOrElse('pattern, SakeSpecRunner.defaultPattern).toString()
+        val opts    = options.getOrElse('opts, Nil) match {
+            case l: List[_] => l
+            case o => List(o)
         }
-        new Passed()
+//        val scalaScript = "import org.specs.runner._; val r = new SpecsFileRunner(\"" +
+//                          path + "\", \"" + pattern + "\"); r.report(r.specs)"
+//        super.optionsPostFilter(removePathAndPattern(options.update('opts, "-e" :: scalaScript :: opts)))
+        val scalaScriptOpts = "sake.command.builtin.SakeSpecRunner" :: path :: pattern :: Nil
+        super.optionsPostFilter(removePathAndPattern(options.update('opts, opts ::: scalaScriptOpts)))
     }
     
-    private def toBoolean(value: Any): Boolean = value match {
-        case b:Boolean => b
-        case _ => Exit.error("Must specify true or false for the 'report option.")
-    }
-    
+    protected def removePathAndPattern(options: Map[Symbol,Any]) = options - 'path - 'pattern
 }
 
+import org.specs.runner._
+
+/** 
+ * Simple command line tool to run the specs in the given file/directory specification (1st argument)
+ * matching the given pattern (2nd argument).
+ * When running this object separately, use the command,
+ *   scala -classpath lib/specs-1.4.3.jar:lib/junit-4.4.jar:build sake.command.builtin.SakeSpecRunner [path [pattern]]
+ */
+object SakeSpecRunner {
+    val defaultPath    = "spec"
+    val defaultPattern = ".*"
+    
+    def main(args: Array[String]) = {
+        val path    = if (args.length >= 1) args(0) else defaultPath
+        val pattern = if (args.length >= 2) args(1) else defaultPattern
+        runSpecs(path, pattern)
+    }
+    
+    def runSpecs(path: String, pattern: String) = {
+        val runner = new SpecsFileRunner(path, pattern)
+        runner.report(runner.specs)
+        if (runner.specs.exists(_.isFailing)) System.exit(1) else System.exit(0)  
+    }
+}

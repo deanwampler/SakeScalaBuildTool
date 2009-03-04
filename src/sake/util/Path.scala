@@ -14,7 +14,7 @@ class Path(elems: Seq[Any])(implicit val separator: String) {
     }
     
     def this()(implicit sep: String) = this(Nil)(sep)
-    def this(element: String)(implicit sep: String) = this(List(element))(sep)
+    def this(element: String)(implicit sep: String) = this(element.split(sep).toList)(sep)
     def this(elem1: Any, elem2: Any, elems: Any*)(implicit sep: String) = 
         this(elem1:: elem2 :: elems.toList)(sep)
     
@@ -91,3 +91,4 @@ object Path {
     implicit val pathStringSeparator: String = Environment.environment.pathSeparator
 }
 
+object NilPath extends Path(Nil)(Path.pathStringSeparator)

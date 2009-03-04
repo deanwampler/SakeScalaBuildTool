@@ -37,16 +37,16 @@ object JVMCommandSpec extends Specification {
             Log.log.out = newStream
         }
 
-        "maps 'classpath -> List(a,b,c) to '-cp a:b:c'" in {
+        "maps 'classpath -> List(a,b,c) to -classpath a:b:c'" in {
              val cmd = new JVMCommand("java", Map('classpath -> List("bar1", "bar2", "bar3")))
              cmd()
-             checkString("""java\s+-cp bar1[:;]bar2[:;]bar3""".r, byteStream.toString())
+             checkString("""java\s+-classpath bar1[:;]bar2[:;]bar3[:;].*""".r, byteStream.toString())
         }        
 
-        "maps 'cp -> List(a,b,c) to '-cp a:b:c'" in {
+        "maps 'cp -> List(a,b,c) to -classpath a:b:c'" in {
              val cmd = new JVMCommand("java", Map('classpath -> List("bar1", "bar2", "bar3")))
              cmd()
-             checkString("""java\s+-cp bar1[:;]bar2[:;]bar3""".r, byteStream.toString())
+             checkString("""java\s+-classpath bar1[:;]bar2[:;]bar3[:;].*""".r, byteStream.toString())
         }        
 
         "maps 'class -> name to 'name'" in {

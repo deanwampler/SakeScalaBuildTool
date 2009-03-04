@@ -34,6 +34,11 @@ class Environment {
     val currentWorkingDirectory = Environment.getSystemProperty("user.dir")
     
     /**
+     * For convenience, the environment variables map is exposed explicitly, read only.
+     */
+    val environmentVariables = Environment.getSystemEnvironmentVariables
+    
+    /**
      * For convenience and to keep the system classpath consistent with any user changes,
      * the "classpath" is exposed explicitly as a List that is kept synchronized with the
      * system's value. Use standard list operations to change it. 
@@ -67,4 +72,9 @@ object Environment {
     }
 
     def setSystemProperty(key:String, value:String):Unit = System.setProperty(key, value)
+    
+    /**
+     * Returns the system environment, a map of variables.
+     */
+    def getSystemEnvironmentVariables = System.getenv()
 }

@@ -60,20 +60,27 @@ object EnvironmentSpec extends Specification {
         }
     }
     
-    "The systemProperty getter" should {
+    "The System Property getter" should {
         "return the system property" in {
             val expected = System.getProperty("java.class.path")
             Environment.getSystemProperty("java.class.path") mustEqual expected
         }
     }
     
-    "The systemProperty setter" should {
+    "The System Property setter" should {
         "set the system property" in {
             val save = System.getProperty("java.class.path")
             val expected = save + System.getProperty("file.separator") + "/foo/bar"
             Environment.setSystemProperty("java.class.path", expected)
             Environment.getSystemProperty("java.class.path") mustEqual expected
             Environment.setSystemProperty("java.class.path", save)
+        }
+    }
+
+    "The System Environment Variables getter" should {
+        "return the system environment, a map of defined variables" in {
+            val expected = System.getenv.get("CLASSPATH")
+            Environment.getSystemEnvironmentVariables.get("CLASSPATH") mustEqual expected
         }
     }
 }

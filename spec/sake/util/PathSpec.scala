@@ -25,6 +25,9 @@ object PathSpec extends Specification {
         "be constructed with one Any element" in {
             sake.util.Path("foo").elements mustEqual List("foo")
         }
+        "be constructed with one String element that is split on the separator" in {
+            sake.util.Path("foo:bar")(":").elements mustEqual List("foo", "bar")
+        }
         "be constructed with 2 or more Any elements" in {
             sake.util.Path(1.23, "foo").elements mustEqual List(1.23,"foo")
             sake.util.Path(1.23, "foo", 1, 'a).elements mustEqual List(1.23,"foo",1,'a)
