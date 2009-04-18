@@ -5,6 +5,7 @@ val srcDir   = "src/"
 var specDir  = "spec/"
 val buildDir = "build/"
 val libDir   = "lib/"
+val sxr      = libDir + "/sxr-0.1.jar"
 
 // If true, don't actually run any commands.
 environment.dryRun = false
@@ -45,7 +46,7 @@ target('compile -> List('clean, 'build_dir)) {
         'files     -> files(srcDir+"**/*.scala", specDir+"**/*.scala"),
         'classpath -> environment.classpath,
         'd         -> buildDir,
-        'opts      -> "-unchecked -deprecation"
+        'opts      -> ("-unchecked -deprecation -Xplugin:" + sxr +" -P:sxr:base-directory:.")
     )
 }
 
