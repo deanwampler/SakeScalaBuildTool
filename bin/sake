@@ -18,7 +18,13 @@ if [ "$SAKE_HOME" = "" ] ; then
 fi
 for lib in ${SAKE_HOME}/lib/*.jar
 do
-    CLASSPATH=$lib:$CLASSPATH
+    case "$lib" in
+        *src.jar)
+            ;;  # do nothing
+        *)
+            CLASSPATH=$lib:$CLASSPATH
+            ;;
+    esac
 done
 
 cygwin=false;

@@ -1,5 +1,5 @@
 
-CLASSPATH=lib/specs-1.4.1.jar:lib/junit-4.4.jar
+CLASSPATH=lib/specs-1.5.0.jar:lib/junit-4.5.jar
 
 all: clean compile test jar
 

@@ -17,7 +17,7 @@ showStackTracesOnFailures = false
 log.threshold = Level.Info
 
 // Add to the classpath using list semantics.
-environment.classpath :::= files(libDir + "*.jar")
+environment.classpath :::= (files(libDir + "*.jar") -- files(libDir + "*src.jar"))
 environment.classpath ::= buildDir
 
 target('all -> List('clean, 'compile, 'spec, 'jars))
@@ -36,8 +36,8 @@ target('srcjar) {
 target('spec) {
     specs(
        'classpath -> environment.classpath, 
-       'path -> "spec", 
-       'pattern -> ".*Spec.*"
+       'path -> "./spec/**/*.scala", 
+       'pattern -> ".*"
     )
 }
 
@@ -46,7 +46,7 @@ target('compile -> List('clean, 'build_dir)) {
         'files     -> files(srcDir+"**/*.scala", specDir+"**/*.scala"),
         'classpath -> environment.classpath,
         'd         -> buildDir,
-        'opts      -> ("-unchecked -deprecation -Xplugin:" + sxr +" -P:sxr:base-directory:.")
+        'opts      -> ("-unchecked -deprecation") // -Xplugin:" + sxr +" -P:sxr:base-directory:.")
     )
 }
 

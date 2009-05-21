@@ -43,8 +43,8 @@ object SpecCommandSpec extends Specification {
         }
     }
     
-    "Invoking a failing specs" should {
-        "exit" in {
+    "Invoking a failing spec" should {
+        "throw a build error" in {
             new SpecCommand() (
                 'classpath -> environment.classpath,
                 'path -> "spec/**/FailingSpek.scala",

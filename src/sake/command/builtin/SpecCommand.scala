@@ -54,11 +54,11 @@ import org.specs.runner._
  * Simple command line tool to run the specs in the given file/directory specification (1st argument)
  * matching the given pattern (2nd argument).
  * When running this object separately, use the command,
- *   scala -classpath lib/specs-1.4.3.jar:lib/junit-4.4.jar:build sake.command.builtin.SakeSpecRunner [path [pattern]]
+ *   scala -classpath lib/specs-1.4.3.jar:build sake.command.builtin.SakeSpecRunner [path [pattern]]
  */
 object SakeSpecRunner {
     val defaultPath    = "spec"
-    val defaultPattern = ".*"
+    val defaultPattern = ".*Spec.*"
     
     def main(args: Array[String]) = {
         val path    = if (args.length >= 1) args(0) else defaultPath
