@@ -12,7 +12,7 @@ object SymbolUtilSpec extends Specification {
         }
 
         "return the corresponding symbol if given a string" in {
-            toSymbol('symbol) mustEqual 'symbol
+            toSymbol("symbol") mustEqual 'symbol
         }
         
         "throw a BuildError if the given item is not a string and not a symbol" in {

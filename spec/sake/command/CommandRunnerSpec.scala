@@ -130,20 +130,13 @@ object CommandRunnerSpec extends Specification {
         val runner = new CommandRunner("pwd", Nil, environment)
         runner.environment mustEqual environment
         runner.run()
-        val result = outputFile.writer.toString()
-        """sake/lib$""".r findFirstIn result match {
-            case None => fail(result)
-            case Some(_) =>
-        }
+        outputFile.writer.toString must be matching ("""sake/lib$""")
     }    
 
     protected def runFailedTestCommand = {
         val outputFile = new FakeFile("toss.out")
         val runner = new CommandRunner("ls nonexistentfile")
-        runner.run() match {
-            case f: Failed[_] =>
-            case p: Passed[_] => fail
-        }
+        runner.run().success must beFalse
     }    
 }
 

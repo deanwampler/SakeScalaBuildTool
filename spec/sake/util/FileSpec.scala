@@ -114,17 +114,13 @@ object FileSpec extends Specification {
     
     "File.contents" should {
         "return a Some(List[String]) if the corresponding object is a directory" in {
-            new JavaFileWrapper(cwd).contents match {
-                case None => fail()
-                case Some(x) =>
-            } 
+            new JavaFileWrapper(cwd).contents must beSomething
         }
         
         "return the contents of the directory in the Some(List[String]) if the corresponding object is a directory" in {
-            new JavaFileWrapper(cwd).contents match {
-                case None => fail()
-                case Some(l:List[_]) => (l.length > 0) mustEqual true
-            } 
+            val listOpt = new JavaFileWrapper(cwd).contents
+            val list = listOpt.get
+            (list.length > 0) mustEqual true
         }
         
         "return None if the corresponding object is not a directory" in {
@@ -140,10 +136,7 @@ object FileSpec extends Specification {
     
     "File.contentsFilteredBy" should {
         "return a Some(List[String]) whose elements match the filter if the corresponding object is a directory" in {
-            new JavaFileWrapper(cwd).contentsFilteredBy("sake*") match {
-                case None => fail()
-                case Some(x) =>
-            } 
+            new JavaFileWrapper(cwd).contentsFilteredBy("sake*") must beSomething 
         }
         
         "return None if the corresponding object is not a directory" in {

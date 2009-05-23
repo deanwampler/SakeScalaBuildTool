@@ -38,9 +38,6 @@ class SpecCommand(defaultOptions: Option[Map[Symbol, Any]]) extends JVMCommand("
             case l: List[_] => l
             case o => List(o)
         }
-//        val scalaScript = "import org.specs.runner._; val r = new SpecsFileRunner(\"" +
-//                          path + "\", \"" + pattern + "\"); r.report(r.specs)"
-//        super.optionsPostFilter(removePathAndPattern(options.update('opts, "-e" :: scalaScript :: opts)))
         val scalaScriptOpts = "sake.command.builtin.SakeSpecRunner" :: path :: pattern :: Nil
         super.optionsPostFilter(removePathAndPattern(options.update('opts, opts ::: scalaScriptOpts)))
     }

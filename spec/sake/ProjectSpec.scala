@@ -136,13 +136,8 @@ object ProjectSpec extends Specification {
             val project = new ProjectDriver()
             val group1 = project.target('t1, 't2)
             val group2 = project.target('t2, 't3, 't4)
-            project.allTargetGroups match {
-                case group2 :: l => l match {
-                    case group1 :: Nil =>
-                    case _ => fail("second element is not group1")
-                }
-                case _ => fail("didn't match group2 :: list")
-            }
+            println("g1: " + group1 + ", g2: " + group2)
+            project.allTargetGroups must containAll(group1 :: group2 :: Nil)
         }
     } 
 
@@ -164,13 +159,9 @@ object ProjectSpec extends Specification {
             project.allTargets.size mustEqual 4
 
             def checkTarget(project:ProjectDriver, name:Symbol, expectedDeps:List[Symbol]) = {
-                project.allTargets.get(name) match {
-                    case None => fail(name.toString())
-                    case Some(t) => {
-                        t.name mustEqual name
-                        t.dependencies mustEqual expectedDeps
-                    }
-                }
+                val t = project.allTargets.get(name).get
+                t.name mustEqual name
+                t.dependencies mustEqual expectedDeps
             }
             checkTarget(project, 't1, List('d1, 'd2, 'd3))
             checkTarget(project, 't2, List('d1, 'd2, 'd3, 'd4))

@@ -17,10 +17,7 @@ object CommandSpec extends Specification {
             (new Command("command")).name mustEqual "command"
         }
         "have no default options" in {
-            (new Command("command")).defaultOptions match {
-                case None =>
-                case Some(opts) => fail()
-            }
+            (new Command("command")).defaultOptions must beNone
         }
     }
     
@@ -33,8 +30,8 @@ object CommandSpec extends Specification {
                 case None => fail ()
                 case Some(opts) => {
                     opts.size mustEqual 2
-                    checkOption(opts, 'x, "x")
-                    checkOption(opts, 'y, "y")
+                    opts.get('x) must be like { case Some("x") => true }
+                    opts.get('y) must be like { case Some("y") => true }
                 }
             }
         }
@@ -46,8 +43,8 @@ object CommandSpec extends Specification {
                 case None => fail ()
                 case Some(opts) => {
                     opts.size mustEqual 2
-                    checkOption(opts, 'x, "x")
-                    checkOption(opts, 'y, "y")
+                    opts.get('x) must be like { case Some("x") => true }
+                    opts.get('y) must be like { case Some("y") => true }
                 }
             }
         }
@@ -55,10 +52,10 @@ object CommandSpec extends Specification {
     
     "Invoking a Command" should {
         "merge the passed-in options with the default options, overriding the later" in {
-            val c = new Command("command", Map('x -> "x", 'y -> "y")) {
+            val c = new Command("command", Map('x -> "x2", 'y -> "y")) {
                 override def optionsPostFilter(opts: Map[Symbol,String]) = {
-                    checkOption(opts, 'x, "x2")
-                    checkOption(opts, 'y, "y")
+                    opts.get('x) must be like { case Some("x2") => true }
+                    opts.get('y) must be like { case Some("y")  => true }
                     opts
                 }
             }
@@ -111,10 +108,7 @@ object CommandSpec extends Specification {
                 invoked ::= 2 
                 result
             }
-            invoked match {
-                case 2 :: List(1) =>
-                case _ => fail(invoked.toString())
-            }
+            invoked must be like { case 2 :: List(1) => true }
         }
         
         "allow a user-specified 'and' block to process a successful result" in {

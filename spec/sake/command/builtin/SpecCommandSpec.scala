@@ -47,8 +47,8 @@ object SpecCommandSpec extends Specification {
         "throw a build error" in {
             new SpecCommand() (
                 'classpath -> environment.classpath,
-                'path -> "spec/**/FailingSpek.scala",
-                'pattern -> ".*Spek.*"
+                'path -> "./spec/**/*.scala",
+                'pattern -> "FailingSpek"
             ) must throwA[BuildError]
         }
     }
@@ -56,12 +56,8 @@ object SpecCommandSpec extends Specification {
     "Invoking a failing specs" should {
         "return Passed" in {
             new SpecCommand() (
-                'path -> "spec/**/PassingSpek.scala",
-                'pattern -> ".*Spek.*"
-            ) match {
-                case p: Passed[_] =>
-                case f: Failed[_] => fail("Failed! "+f)
-            }
+                'path -> "./spec/**/*.scala",
+                'pattern -> "PassingSpek").success must beTrue
         }
     }
 }

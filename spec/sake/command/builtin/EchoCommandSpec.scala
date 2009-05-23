@@ -19,11 +19,6 @@ object EchoCommandSpec extends Specification {
         Log.log = savedLog
     }
     
-    def checkString(expectedSubStr:String, actual:String) = actual.contains(expectedSubStr) match {
-        case false => fail("actual ("+actual+") doesn't contain expected ("+expectedSubStr+")")
-        case true =>
-    }
-
     "Running an EchoCommand" should {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
@@ -34,32 +29,31 @@ object EchoCommandSpec extends Specification {
         "maps 'words -> any to 'any.toString()'" in {
              val cmd = new EchoCommand()
              cmd('words -> "now is the time")
-             checkString("Notice: now is the time", byteStream.toString())
+             byteStream.toString must be matching ("Notice: now is the time")
         }        
 
         "accepts a string argument to print" in {
              val cmd = new EchoCommand()
              cmd("now is the time")
-             checkString("Notice: now is the time", byteStream.toString())
+             byteStream.toString must be matching ("Notice: now is the time")
         }        
 
         "outputs the text to the log" in {
              val cmd = new EchoCommand()
              cmd("now is the time")
-             checkString("Notice: now is the time", byteStream.toString())
+             byteStream.toString must be matching ("Notice: now is the time")
         }        
 
         "outputs nothing if the default log level is below the threshold" in {
              val cmd = new EchoCommand(Level.Info)
              cmd("now is the time")
-             checkString("", byteStream.toString())
              byteStream.toString() mustEqual ""
         }        
 
         "overrides the default log level if 'level => level is specified" in {
              val cmd = new EchoCommand(Level.Info)
              cmd('level -> Level.Warn, 'words -> "now is the time")
-             checkString("Warn: now is the time", byteStream.toString())
+             byteStream.toString must be matching ("Warn: now is the time")
         }        
     }
 }

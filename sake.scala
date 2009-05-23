@@ -37,7 +37,7 @@ target('spec) {
     specs(
        'classpath -> environment.classpath, 
        'path -> "./spec/**/*.scala", 
-       'pattern -> ".*"
+       'pattern -> ".*Spec.*"
     )
 }
 
@@ -61,6 +61,7 @@ target('build_dir) {
 target('fail) {
     fail("boo!")
 }
+
 import sake.util._
 target('ls) {
     shell('command -> "ls", 'opts -> ".", 'outputFile -> File("foo.txt"))

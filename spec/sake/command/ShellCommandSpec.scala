@@ -86,18 +86,12 @@ object ShellCommandSpec extends Specification {
     }
     "Running a ShellCommand with a string" should {
         "convert the string to 'command -> first_word and 'opts -> rest_of_string" in {
-            ShellCommand.tokenizeCommandString("echo hello world") match {
-                case "echo" :: List("hello", "world") =>
-                case list => fail(list.toString())
-            }
+            ShellCommand.tokenizeCommandString("echo hello world") must containAll ("echo" :: List("hello", "world"))
         }
         
-        "remove embedded \n and/or \r and other white space when tokenizing the command string" in {
-            ShellCommand.tokenizeCommandString("""echo 
-                    hello world""") match {
-                case "echo" :: List("hello", "world") =>
-                case list => fail(list.toString())
-            }
+        """remove embedded \n and/or \r and other white space when tokenizing the command string""" in {
+            ShellCommand.tokenizeCommandString("""echo
+                    hello world""") must containAll ("echo" :: List("hello", "world"))
             
         }
     }
@@ -116,7 +110,7 @@ object ShellCommandSpec extends Specification {
         "compose the default options into a command string, starting with the command name." in {
              val cmd = new ShellCommand("shcmd", Map('foo -> "foo", 'bar -> List("bar1", "bar2")))
              cmd()
-             checkString("""shcmd\s+-foo foo -bar bar1[:;]bar2""".r, byteStream.toString())
+             byteStream.toString() must be matching ("""shcmd\s+-foo foo -bar bar1[:;]bar2""")
         }        
     }        
     
@@ -134,7 +128,7 @@ object ShellCommandSpec extends Specification {
         "compose the additional and default options, overwriting the later into a command string, starting with the command name." in {
              val cmd = new ShellCommand("ls", Map('foo -> "foo", 'bar -> List("bar1", "bar2")))
              cmd('foo -> "foobar", 'baz -> ("a", "b"))
-             checkString("""ls\s+-foo foobar -bar bar1[:;]bar2 -baz \(a,b\)""".r, byteStream.toString())
+             byteStream.toString() must be matching("""ls\s+-foo foobar -bar bar1[:;]bar2 -baz \(a,b\)""")
         }        
     }
     
@@ -156,25 +150,25 @@ object ShellCommandSpec extends Specification {
             cmd('files -> "foo/**/*Spec.class")
             val actual = byteStream.toString()
             val expected = FakeFileForSpecs.fakeFilesExpected.reduceLeft(_+" "+_)
-            checkString(("""shcmd\s+(?!-files)\s*"""+expected).r, byteStream.toString())
+            byteStream.toString() must be matching ("""shcmd\s+(?!-files)\s*""" + expected)
         }
 
         "map 'command -> string to use 'string' as the shell command name" in {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "java", 'opts -> "-classpath foo:bar -Dx=y -d -g:1")
-             checkString("""java\s+-classpath foo[:;]bar -Dx=y -d -g:1""".r, byteStream.toString())
+             byteStream.toString() must be matching ("""java\s+-classpath foo[:;]bar -Dx=y -d -g:1""")
         }
 
         "map 'opts -> string to a string with each word (split on whitespace)" in {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "shcmd", 'opts -> "-x foo:bar -Dx=y -d -g:1 -x'y z'")
-             checkString("""shcmd\s+-x foo:bar -Dx=y -d -g:1 -x'y z'\s*""".r, byteStream.toString())
+             byteStream.toString() must be matching ("""shcmd\s+-x foo:bar -Dx=y -d -g:1 -x'y z'\s*""")
         }
 
         "map 'opts -> List[String] to a string with each element of the list" in {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "shcmd", 'opts -> List("-x", "foo:bar", "-Dx=y", "-d", "-g:1", "-x'y z'"))
-             checkString("""shcmd\s+-x foo:bar -Dx=y -d -g:1 -x'y z'\s*""".r, byteStream.toString())
+             byteStream.toString() must be matching ("""shcmd\s+-x foo:bar -Dx=y -d -g:1 -x'y z'\s*""")
         }
 
         "map 'directory -> String to the working directory the shell command should use" in {
@@ -218,13 +212,13 @@ object ShellCommandSpec extends Specification {
         "map any other unknown 'opt -> List(a,b,c) to a path-like '-opt -> a:b:c'" in {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "shcmd", 'foo -> List("a", "b", "c"))
-             checkString("""shcmd\s+-foo a[:;]b[:;]c""".r, byteStream.toString())
+             byteStream.toString() must be matching ("""shcmd\s+-foo a[:;]b[:;]c""")
         }
 
         "map any other unknown 'opt -> Any to '-opt -> Any.toString()' (without quotes)" in {
              val cmd = new ShellCommand("shcmd")
              cmd('command -> "shcmd", 'foo -> ("a", "b", "c"))
-             checkString("""shcmd\s+-foo \(a,b,c\)""".r, byteStream.toString())
+             byteStream.toString() must be matching ("""shcmd\s+-foo \(a,b,c\)""")
         }
     }
     

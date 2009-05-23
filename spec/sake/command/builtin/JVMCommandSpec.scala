@@ -40,19 +40,19 @@ object JVMCommandSpec extends Specification {
         "maps 'classpath -> List(a,b,c) to -classpath a:b:c'" in {
              val cmd = new JVMCommand("java", Map('classpath -> List("bar1", "bar2", "bar3")))
              cmd()
-             checkString("""java\s+-classpath bar1[:;]bar2[:;]bar3[:;].*""".r, byteStream.toString())
+             byteStream.toString() must be matching("""java\s+-classpath bar1[:;]bar2[:;]bar3[:;].*""")
         }        
 
         "maps 'cp -> List(a,b,c) to -classpath a:b:c'" in {
              val cmd = new JVMCommand("java", Map('classpath -> List("bar1", "bar2", "bar3")))
              cmd()
-             checkString("""java\s+-classpath bar1[:;]bar2[:;]bar3[:;].*""".r, byteStream.toString())
+             byteStream.toString() must be matching("""java\s+-classpath bar1[:;]bar2[:;]bar3[:;].*""")
         }        
 
         "maps 'class -> name to 'name'" in {
              val cmd = new JVMCommand("java", Map('class -> "foo.bar.Bar"))
              cmd()
-             checkString("""java\s+foo.bar.Bar""".r, byteStream.toString())
+             byteStream.toString() must be matching("""java\s+foo.bar.Bar""")
         }        
     }
 }
