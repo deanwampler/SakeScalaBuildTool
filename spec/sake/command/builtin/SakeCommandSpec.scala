@@ -41,9 +41,14 @@ object SakeCommandSpec extends Specification {
             sc('file -> "sake2.scala")
         }
 
-        "override the targets if 'targets is specified" in {
+        "override the targets if 'targets are specified" in {
             val sc = makeTestSakeCommand("sake.scala", "foo bar")
             sc('targets -> "foo bar")
+        }
+
+        "override the targets if 'targets are specified and convert symbols to strings for JVM invocation" in {
+            val sc = makeTestSakeCommand("sake.scala", "foo bar")
+            sc('targets -> List("foo", 'bar))
         }
     }
     

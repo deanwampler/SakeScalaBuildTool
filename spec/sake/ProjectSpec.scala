@@ -136,7 +136,6 @@ object ProjectSpec extends Specification {
             val project = new ProjectDriver()
             val group1 = project.target('t1, 't2)
             val group2 = project.target('t2, 't3, 't4)
-            println("g1: " + group1 + ", g2: " + group2)
             project.allTargetGroups must containAll(group1 :: group2 :: Nil)
         }
     } 

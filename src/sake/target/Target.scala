@@ -14,6 +14,8 @@ class Target(val name: Symbol, deps: List[Symbol]) {
     def dependencies = deps_
     
     def build() = {}
+    
+    override def toString = String.format("%s: name = %s, dependencies = %s", getClass.getSimpleName, name, dependencies)
 }
 
 
