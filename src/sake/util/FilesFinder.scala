@@ -76,9 +76,13 @@ class FilesFinder() {
         }
     }
 
-    protected def exists(path: String) = makeFile(path).exists
+    def exists(file: File):Boolean = file.exists
     
-    protected def isDirectory(file: File) = file.exists && file.isDirectory
+    def exists(path: String):Boolean = exists(makeFile(path))
+
+    def isDirectory(file: File):Boolean = exists(file) && file.isDirectory
+
+    def isDirectory(path: String):Boolean = isDirectory(makeFile(path))
     
     // Hook for overriding in tests.
     protected def makeFile(path: String): File = {

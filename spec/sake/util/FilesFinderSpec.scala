@@ -6,7 +6,7 @@ object FilesFinderSpec extends Specification {
 
     import sake.environment._
     
-    "Using a FilesFinder object" should {
+    "FilesFinder" should {
         
         "throw a BuildError if all specified strings are empty" in {
             (new FilesFinder()("")) must throwA[BuildError]
@@ -188,7 +188,6 @@ object FilesFinderSpec extends Specification {
             }
             f("**") mustEqual Nil
         }
-
     }
     
     "A specification like foo/bar1/**/*.class should match foo/bar1/Foo.scala, e.g., ** maps zero or more subpaths" should {
@@ -214,6 +213,27 @@ object FilesFinderSpec extends Specification {
         "return the first list minus the second" in {
             (FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class") --
              FakeFileForSpecs.fakeFilesFinder("foo/bar1/**")).sort(_.length < _.length) mustEqual FakeFileForSpecs.fakeFilesExpectedBar2a
+        }
+    }
+    
+    "FilesFinder.isDirectory" should {
+        "return true for a directory" in {
+            (new FilesFinder).isDirectory(".") must beTrue
+        }
+        "return false for a file" in {
+            (new FilesFinder).isDirectory("./sake.scala") must beFalse
+        }
+    }
+
+    "FilesFinder.exists" should {
+        "return true for a directory that exists" in {
+            (new FilesFinder).exists(".") must beTrue
+        }
+        "return true for a file that exists" in {
+            (new FilesFinder).exists("./sake.scala") must beTrue
+        }
+        "return false for a file or directory that doesn't exist" in {
+            (new FilesFinder).exists("doesnotexist") must beFalse
         }
     }
 }
