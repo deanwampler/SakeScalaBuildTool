@@ -30,7 +30,6 @@ h2. Layout of the Distribution
 * README.txt - This file.
 * sake.scala - Sake build file that builds sake itself. Used by "bin/sake"
 * bin - Directory with the "sake" UNIX shell script and "sake.bat" Windows script.
-* browse - Directory of browsable HTML version of the Sake source code, generated using "sxr" (http://github.com/harrah/browse/tree/master). When you compile, you'll get the same browsable HTML output in the browse directory.
 * build - Directory where build projects are staged.
 * lib - Directory of 3rd party libraries necessary to build and use Sake.
 * spec - Directory of "specs" files for testing.
@@ -44,13 +43,14 @@ December 20, 2008: First "bootstrap" build of Sake with itself!
 April 18, 2009: Added sxr to build for generating browsable HTML of the source.
 September 21, 2009: Moved Sake to GitHub.
 
-h2. Todo
+h2. TODO
 
 * Add a built-in jar command.
 * Add copy and mv/rename commands.
 * Add ScalaTest and ScalaCheck commands.
 * Support setting environment options through command-line options.
 * Provide a way for the user to specify the default target.
+* Get "sxr" (http://github.com/harrah/browse/tree/master) to work. It generates a browsable HTML version of the Sake source code. When you compile, it should be written into the "browse" directory, but for some reason it isn't working. See comments in the "sake.scala" file.
 * Interactive Mode:
 ** Run targets, if specified, after loading file.
 ** If a target fails, don't exit!

@@ -1,0 +1,97 @@
+<html>
+<head>
+  <title>Sake Build Tool README</title>
+</head>
+<body>  
+  <h1><span class="caps">README</span> for Sake a build tool written in Scala</h1>
+
+
+	<p>Dean Wampler 
+dean@polyglotprogramming.com</p>
+
+
+	<p>I wrote <em>Sake</em> (pronounced like the Japanese rice beverage) as a learning exercise to experiment with Scala features, like <span class="caps">DSL</span> creation. It is inspired by Ruby <em>Rake</em> and Unix <em>Make</em>, hence the name. (I know that there is already a distributed build system for Ruby called <em>Sake</em>...) <em>Sake</em> is used to build the <a href="http://examples.oreilly.com/9780596155964/">code examples</a> for <a href="http://programming-scala.labs.oreilly.com/">Programming Scala</a></p>
+
+
+	<p><em>Sake</em> is very incomplete and it has plenty of warts. If you want a &#8220;production quality&#8221; build tool, consider <em>Simple Build Tool</em> (sbt), which uses Scala for build scripts, or <em>Buildr</em>, which uses Ruby scripts, but has built-in support for building Scala code.</p>
+
+
+	<h2>Getting Started</h2>
+
+
+	<p>The distribution is already built, but you can run &#8220;bin/sake&#8221; to re-build it at any time.</p>
+
+
+	<p>It is easiest to copy the whole distribution somewhere useful and then define a <span class="caps">SAKE</span>_HOME environment variable that points to that root directory. Follow these steps.</p>
+
+
+	<ul>
+	<li>Copy the distribution somewhere convenient, e.g., /usr/local/sake.</li>
+		<li>Define <span class="caps">SAKE</span>_HOME, e.g., <span class="caps">SAKE</span>_HOME = /usr/local/sake (using appropriate syntax for your shell).</li>
+		<li>Add $SAKE_HOME/bin to your path.</li>
+	</ul>
+
+
+	<p>To use Sake in a project:</p>
+
+
+	<ul>
+	<li>Create a &#8220;sake.scala&#8221; file in the root of your project.</li>
+		<li>Copy the &#8220;sake.scala&#8221; contents from the Sake distribution to your sake.scala.</li>
+		<li>Edit to taste.</li>
+		<li>Build with &#8220;bin/sake [targets]&#8221;, where one or more targets can be specified. (Defaults to &#8220;all&#8221;.)</li>
+	</ul>
+
+
+	<h2>Layout of the Distribution</h2>
+
+
+	<ul>
+	<li><span class="caps">README</span>.txt &#8211; This file.</li>
+		<li>sake.scala &#8211; Sake build file that builds sake itself. Used by &#8220;bin/sake&#8221; </li>
+		<li>bin &#8211; Directory with the &#8220;sake&#8221; <span class="caps">UNIX</span> shell script and &#8220;sake.bat&#8221; Windows script.</li>
+		<li>build &#8211; Directory where build projects are staged.</li>
+		<li>lib &#8211; Directory of 3rd party libraries necessary to build and use Sake.</li>
+		<li>spec &#8211; Directory of &#8220;specs&#8221; files for testing.</li>
+		<li>src &#8211; Directory of Sake source code.</li>
+	</ul>
+
+
+	<h2>History</h2>
+
+
+	<p>December 6, 2008: Created Sake project.
+December 20, 2008: First &#8220;bootstrap&#8221; build of Sake with itself!
+April 18, 2009: Added sxr to build for generating browsable <span class="caps">HTML</span> of the source.
+September 21, 2009: Moved Sake to GitHub.</p>
+
+
+	<h2><span class="caps">TODO</span></h2>
+
+
+	<ul>
+	<li>Add a built-in jar command.</li>
+		<li>Add copy and mv/rename commands.</li>
+		<li>Add ScalaTest and ScalaCheck commands.</li>
+		<li>Support setting environment options through command-line options.</li>
+		<li>Provide a way for the user to specify the default target.</li>
+		<li>Get &#8220;sxr&#8221; (http://github.com/harrah/browse/tree/master) to work. It generates a browsable <span class="caps">HTML</span> version of the Sake source code. When you compile, it should be written into the &#8220;browse&#8221; directory, but for some reason it isn&#8217;t working. See comments in the &#8220;sake.scala&#8221; file.</li>
+		<li>Interactive Mode:
+	<ul>
+	<li>Run targets, if specified, after loading file.</li>
+		<li>If a target fails, don&#8217;t exit!</li>
+	</ul>
+	</li>
+		<li>Use implicits to convert from strings to symbols where &#8220;useful&#8221;. Same for A* vs. List[A] ??</li>
+		<li>Support using tuples when defining dependencies, where lists are now required.</li>
+	</ul>
+
+
+	<h2>Implementation Notes</h2>
+
+
+	<ul>
+	<li>You&#8217;ll notice that a lot of types have small, protected methods that are often one liners for creating Files, etc. They could be easily in-lined. Usually, they are there to facilitate testing. A spec can subclass the type under test (TUT) and override the method to return a test double, etc.</li>
+	</ul>
+</body>
+</html>
