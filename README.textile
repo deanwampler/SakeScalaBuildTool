@@ -7,6 +7,8 @@ I wrote _Sake_ (pronounced like the Japanese rice beverage) as a learning exerci
 
 _Sake_ is very incomplete and it has plenty of warts. If you want a "production quality" build tool, consider _Simple Build Tool_ (sbt), which uses Scala for build scripts, or _Buildr_, which uses Ruby scripts, but has built-in support for building Scala code.
 
+_Sake_ is maintained on "GitHub":http://github.com/deanwampler/SakeScalaBuildTool.
+
 h2. Getting Started
 
 The distribution is already built, but you can run "bin/sake" to re-build it at any time.
