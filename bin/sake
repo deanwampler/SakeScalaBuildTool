@@ -36,6 +36,7 @@ case "`uname`" in
         ;;
 esac
 
+export CLASSPATH
 file=sake.scala
 interactive="false"
 args[0]=-classpath
