@@ -31,6 +31,7 @@ target('jar) {
 
 target('srcjar) {
     sh("jar cf "+buildDir+"/sake-src.jar src spec")
+    sh("cp "+buildDir+"/sake-src.jar "+libDir)
 }
 
 target('spec) {

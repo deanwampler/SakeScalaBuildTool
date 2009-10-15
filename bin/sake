@@ -1,4 +1,4 @@
-#!/bin/sh -- 
+#!/bin/bash -- 
 #===================================================================
 # sake - driver command for "sake" build tool.
 # Run "sake -h" for help.
