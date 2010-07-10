@@ -103,7 +103,7 @@ class CommandRunner(val command: String, val arguments: List[String], val enviro
         list.foldLeft(new java.util.ArrayList[String]()) { (l, s) => l.add(s.toString()); l }
 
     private def getStatus(process: Process) = process.waitFor() match {
-        case 0 => new Passed()
+        case 0     => new Passed()
         case i:Int => new Failed(Some(i))
     }
 }

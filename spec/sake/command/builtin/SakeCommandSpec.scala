@@ -1,5 +1,6 @@
 package sake.command.builtin
 
+import sake.command._
 import org.specs._ 
 
 object SakeCommandSpec extends Specification {

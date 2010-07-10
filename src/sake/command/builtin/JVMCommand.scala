@@ -38,7 +38,7 @@ class JVMCommand(name: String, options: Option[Map[Symbol,Any]]) extends ShellCo
             case s: Seq[_] => Path(s)
             case _ => Path(cp.toString)
         }
-        super.optionsPostFilter(options.update(key, cpath ::: environment.classpath))
+        super.optionsPostFilter(options.updated(key, cpath ::: environment.classpath))
     }
 }
 

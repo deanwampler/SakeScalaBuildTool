@@ -13,7 +13,7 @@ class FilesFinder() {
         
         specs.foldLeft(List[String]()) { (all, spec) =>
             findFiles(spec) ::: all
-        }.removeDuplicates.reverse
+        }.distinct.reverse
     }
     
     protected def findFiles(spec: String):List[String] = {

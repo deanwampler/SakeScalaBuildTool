@@ -11,7 +11,7 @@ _Sake_ is maintained on "GitHub":http://github.com/deanwampler/SakeScalaBuildToo
 
 h2. Getting Started
 
-The distribution is already built, but you can run "bin/sake" to re-build it at any time.
+The distribution is already built, but you can run "bin/sake" to re-build it at any time. (See also the note below.)
 
 It is easiest to copy the whole distribution somewhere useful and then define a SAKE_HOME environment variable that points to that root directory. Follow these steps.
 
@@ -26,6 +26,7 @@ To use Sake in a project:
 * Edit to taste.
 * Build with "bin/sake [targets]", where one or more targets can be specified. (Defaults to "all".)
 
+*Note:* To boot strap sake when there is not a previous version built, use the included Makefile. For example, this will be necessary when upgrading to a newer version of Scala that is not binary compatible with the previous version. (I had to do this when migrating from v2.7.7 to 2.8.0.)
 
 h2. Layout of the Distribution
 

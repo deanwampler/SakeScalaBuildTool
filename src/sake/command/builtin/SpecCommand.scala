@@ -39,7 +39,7 @@ class SpecCommand(defaultOptions: Option[Map[Symbol, Any]]) extends JVMCommand("
             case o => List(o)
         }
         val scalaScriptOpts = "sake.command.builtin.SakeSpecRunner" :: path :: pattern :: Nil
-        super.optionsPostFilter(removePathAndPattern(options.update('opts, opts ::: scalaScriptOpts)))
+        super.optionsPostFilter(removePathAndPattern(options.updated('opts, opts ::: scalaScriptOpts)))
     }
     
     protected def removePathAndPattern(options: Map[Symbol,Any]) = options - 'path - 'pattern

@@ -11,7 +11,7 @@ object CommandRunnerSpec extends Specification {
             new CommandRunner("") must throwA[BuildError]
         }
 
-        "accept a list of command argumets" in {
+        "accept a list of command arguments" in {
             val args = List("-e", "println(List(1,2.0,\"three\"))")
             val runner = new CommandRunner("scala", args)
             runner.arguments mustEqual args

@@ -211,8 +211,9 @@ object FilesFinderSpec extends Specification {
     
     "When one specification is subtracted from another spec., apply()" should {
         "return the first list minus the second" in {
-            (FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class") --
-             FakeFileForSpecs.fakeFilesFinder("foo/bar1/**")).sort(_.length < _.length) mustEqual FakeFileForSpecs.fakeFilesExpectedBar2a
+            val fakes = FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class")
+            val skips = FakeFileForSpecs.fakeFilesFinder("foo/bar1/**")
+            (fakes filterNot { x => skips contains x }).sortWith(_.length < _.length) mustEqual FakeFileForSpecs.fakeFilesExpectedBar2a
         }
     }
     

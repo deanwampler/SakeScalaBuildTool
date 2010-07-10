@@ -4,6 +4,18 @@ import org.specs._
 
 object EnvironmentSpec extends Specification { 
 
+    var cpflag:Boolean = _
+    
+    doBeforeSpec {
+        // Don't let CLASSPATH participate for most tests.
+        cpflag = Environment.combineCLASSPATHandSystemClassPath
+        Environment.combineCLASSPATHandSystemClassPath = false
+    }
+  
+    doAfterSpec {
+        Environment.combineCLASSPATHandSystemClassPath = cpflag
+    }
+
     def sysClassPath = {
         val sep = System.getProperty("path.separator")
         val seq = for {
@@ -33,6 +45,11 @@ object EnvironmentSpec extends Specification {
             env.classpath mustEqual ("foo/bar" :: beforeCP)
             sysClassPath  must beDifferent(beforeCP)
             sysClassPath  mustEqual env.classpath
+        }
+        "include the environment's CLASSPATH if Environment.combineCLASSPATHandSystemClassPath is true" in {
+          Environment.combineCLASSPATHandSystemClassPath = true
+          val env = new Environment()
+          env.classpath must beDifferent(sysClassPath)
         }
     }
     
@@ -79,7 +96,7 @@ object EnvironmentSpec extends Specification {
 
     "The System Environment Variables getter" should {
         "return the system environment, a map of defined variables" in {
-            val expected = System.getenv.get("CLASSPATH")
+            val expected = Some(System.getenv.get("CLASSPATH"))
             Environment.getSystemEnvironmentVariables.get("CLASSPATH") mustEqual expected
         }
     }

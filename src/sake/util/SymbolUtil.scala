@@ -2,7 +2,7 @@ package sake.util
 
 object SymbolUtil {
 
-    def toSymbols(list: Collection[Any]): List[Symbol] = 
+    def toSymbols(list: Iterable[Any]): List[Symbol] = 
         Nil ++ (for (item <- list) yield toSymbol(item))
 
     def toSymbol(item: Any) = item match {
@@ -11,7 +11,7 @@ object SymbolUtil {
         case _         => Exit.error("Unrecognized type of object: \""+item+"\". Expected a Symbol or String.")
     }
     
-    def removeDuplicates(list: Collection[Symbol]) = {
+    def removeDuplicates(list: Iterable[Symbol]) = {
         // Preserve the order. ListSet doesn't seem to do this. Hmmm.
         list.foldLeft(List[Symbol]()) { (list2, item) => 
             if (list2.contains(item)) 
