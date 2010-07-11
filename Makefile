@@ -51,4 +51,4 @@ lib_dir:
 	mkdir -p lib
 
 remove_jar:
-	rm -f lib/sake*.jar    
+	rm -f lib/sake-$(VERSION).jar lib/sake-$(VERSION)-src.jar    

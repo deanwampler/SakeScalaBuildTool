@@ -56,7 +56,7 @@ class Environment {
         val seq = for {
             s <- cp.split(pathSeparator)
         } yield s
-        Path(seq)(pathSeparator)
+        Path(seq.distinct)(pathSeparator)
     }
 
     /**

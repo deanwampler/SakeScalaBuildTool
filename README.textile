@@ -9,6 +9,8 @@ _Sake_ is very incomplete and it has plenty of warts. If you want a "production 
 
 _Sake_ is maintained on "GitHub":http://github.com/deanwampler/SakeScalaBuildTool.
 
+NOTE: I recently ported _Sake_ to Scala v2.8.0.RC7, but there's a problem with the _scala_ driver script for this release that prevents _Sake_ from driving scripts using the _scala_ script.
+
 h2. Getting Started
 
 The distribution is already built, but you can run "bin/sake" to re-build it at any time. (See also the note below.)
@@ -34,7 +36,7 @@ h2. Layout of the Distribution
 * sake.scala - Sake build file that builds sake itself. Used by "bin/sake"
 * bin - Directory with the "sake" UNIX shell script and "sake.bat" Windows script.
 * build - Directory where build projects are staged.
-* lib - Directory of 3rd party libraries necessary to build and use Sake.
+* lib - Directory of 3rd party libraries necessary to build and use Sake and where the sake jars themselves are also written.
 * spec - Directory of "specs" files for testing.
 * src - Directory of Sake source code.
 
@@ -45,6 +47,7 @@ December 6, 2008: Created Sake project.
 December 20, 2008: First "bootstrap" build of Sake with itself!
 April 18, 2009: Added sxr to build for generating browsable HTML of the source.
 September 21, 2009: Moved Sake to GitHub.
+July 10, 2010: Ported to Scala v2.8.0.RC7.
 
 h2. TODO
 
@@ -59,7 +62,7 @@ h2. TODO
 ** If a target fails, don't exit!
 * Use implicits to convert from strings to symbols where "useful". Same for A* vs. List[A] ??
 * Support using tuples when defining dependencies, where lists are now required.
-
+* Work around the 2.8.0 problem with the _scala_ script driver.
 
 h2. Implementation Notes
 

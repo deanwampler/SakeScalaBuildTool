@@ -46,6 +46,13 @@ object EnvironmentSpec extends Specification {
             sysClassPath  must beDifferent(beforeCP)
             sysClassPath  mustEqual env.classpath
         }
+        
+        "remove duplicate entries, preserving priority order" in {
+          val env = new Environment()
+          env.classpath = sake.util.Path("foo/bar" :: "x/y" :: "x/y" :: "foo/bar" :: "baz/barf" :: Nil)(env.pathSeparator)
+          env.classpath mustEqual (sake.util.Path("foo/bar" :: "x/y" :: "baz/barf" :: Nil)(env.pathSeparator))
+        }
+        
         "include the environment's CLASSPATH if Environment.combineCLASSPATHandSystemClassPath is true" in {
           Environment.combineCLASSPATHandSystemClassPath = true
           val env = new Environment()
