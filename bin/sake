@@ -33,16 +33,6 @@ do
     esac
 done
 
-cygwin=false;
-case "`uname`" in
-    CYGWIN*) 
-        cygwin=true 
-        SAKE_HOME=`cygpath --$format "$SAKE_HOME"`
-        CLASSPATH=`cygpath --path --$format "$CLASSPATH"`
-        ;;
-esac
-
-export CLASSPATH
 file=sake.scala
 interactive="false"
 args[0]=-classpath
@@ -80,7 +70,8 @@ do
 			;;
 		-classpath)
 			shift
-			args[1]=$1:${args[1]}
+			CLASSPATH=$CLASSPATH:$1
+			args[1]=$args[1]:$1
 			;;
 		-*)
 			args[${#args[@]}]=$1
@@ -93,6 +84,17 @@ do
 	esac
 	shift
 done
+
+cygwin=false;
+case "`uname`" in
+    CYGWIN*) 
+        cygwin=true 
+        SAKE_HOME=`cygpath --$format "$SAKE_HOME"`
+        CLASSPATH=`cygpath --path --$format "$CLASSPATH"`
+        ;;
+esac
+
+export CLASSPATH
 
 if [ $interactive = "false" ]; then
     if [ "${#targets[@]}" == 0 ]; then
@@ -115,8 +117,8 @@ EOF
 }
 
 if [ $interactive = "true" ]; then
-    env SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]} -i $file
+    env CLASSPATH=$CLASSPATH SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]} -i $file
 else
-    stdinput | env SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]}
+    stdinput | env CLASSPATH=$CLASSPATH SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]}
 fi
 echo ""
