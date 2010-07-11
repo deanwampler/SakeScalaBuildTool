@@ -7,6 +7,12 @@ val buildDir = "build/"
 val libDir   = "lib/"
 val sxr      = libDir + "/sxr-0.1.jar"
 
+// Version strings used for the generated jars:
+// What version of Sake? Can specify on the command line with VERSION=...
+val version = environment.environmentVariables.getOrElse("VERSION", "1.1")
+// What Scala version of Sake? Can specify on the command line with SCALA_VERSION=...
+val scalaVersion = environment.environmentVariables.getOrElse("SCALA_VERSION", "2.8.0.RC7")
+
 // If true, don't actually run any commands.
 environment.dryRun = false
 
@@ -25,13 +31,15 @@ target('all -> List('clean, 'compile, 'spec, 'jars))
 target('jars -> List('jar, 'srcjar))
 
 target('jar) {
-    sh("jar cf "+buildDir+"/sake.jar -C "+buildDir+" sake")
-    sh("cp "+buildDir+"/sake.jar "+libDir)
+    val jarName = buildDir+"/sake-"+scalaVersion+"-"+version+".jar"
+    sh("jar cf "+jarName+" -C "+buildDir+" sake")
+    sh("cp "+jarName+" "+libDir+"/"+scalaVersion)
 }
 
 target('srcjar) {
-    sh("jar cf "+buildDir+"/sake-src.jar src spec")
-    sh("cp "+buildDir+"/sake-src.jar "+libDir)
+    val jarName = buildDir+"/sake-"+scalaVersion+"-"+version+"-src.jar"
+    sh("jar cf "+jarName+" -C "+buildDir+" sake")
+    sh("cp "+jarName+" "+libDir+"/"+scalaVersion)
 }
 
 target('spec) {

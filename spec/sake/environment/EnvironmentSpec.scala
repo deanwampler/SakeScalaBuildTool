@@ -1,5 +1,6 @@
 package sake.environment
 
+import sake.util.Path
 import org.specs._
 
 object EnvironmentSpec extends Specification { 
@@ -32,19 +33,18 @@ object EnvironmentSpec extends Specification {
         }
         
         "return the system classpath converted to a Path" in {
-            new Environment().classpath mustEqual sysClassPath
+            ((new Environment()).classpath.elements) must containAll (sysClassPath)
         }        
         
         "return a Path with the elements in the same order as the original path" in {
-            new Environment().classpath mustEqual sysClassPath
+          ((new Environment()).classpath.elements) must containAll (sysClassPath)
         }        
         
         "be user changable, affecting the system path" in {
             val env = new Environment()
             env.classpath = "foo/bar" :: beforeCP
-            env.classpath mustEqual ("foo/bar" :: beforeCP)
-            sysClassPath  must beDifferent(beforeCP)
-            sysClassPath  mustEqual env.classpath
+            env.classpath.elements must containAll ("foo/bar" :: beforeCP)
+            beforeCP  must beDifferent (sysClassPath)
         }
         
         "remove duplicate entries, preserving priority order" in {

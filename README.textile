@@ -1,4 +1,4 @@
-h1. README for Sake a build tool written in Scala
+h1. README for Sake: a build tool written in Scala
 
 Dean Wampler 
 dean@polyglotprogramming.com
@@ -9,7 +9,14 @@ _Sake_ is very incomplete and it has plenty of warts. If you want a "production 
 
 _Sake_ is maintained on "GitHub":http://github.com/deanwampler/SakeScalaBuildTool.
 
-NOTE: I recently ported _Sake_ to Scala v2.8.0.RC7, but there's a problem with the _scala_ driver script for this release that prevents _Sake_ from driving scripts using the _scala_ script.
+NOTE: I recently ported _Sake_ to Scala v2.8.0.RC7, but to use it, you have to patch the _scala_ driver script in the Scala v2.8.0.RC7 to fix a bug involving classpaths. If "$SCALA_HOME/bin" is the location for this script, then run the following commands:
+
+* mv $SCALA_HOME/bin/scala $SCALA_HOME/bin/scala.original
+* mv bin/scala $SCALA_HOME/bin/scala
+
+(Unfortunately, you can't just run this script from the "bin" directory.)
+
+This patch may not be required when the 2.8.0.final comes out.
 
 h2. Getting Started
 
@@ -28,7 +35,7 @@ To use Sake in a project:
 * Edit to taste.
 * Build with "bin/sake [targets]", where one or more targets can be specified. (Defaults to "all".)
 
-*Note:* To boot strap sake when there is not a previous version built, use the included Makefile. For example, this will be necessary when upgrading to a newer version of Scala that is not binary compatible with the previous version. (I had to do this when migrating from v2.7.7 to 2.8.0.)
+*Note:* To bootstrap sake when there is not a previous version built, use the included Makefile. For example, this will be necessary when upgrading to a newer version of Scala that is not binary compatible with the previous version. (I had to do this when migrating from v2.7.7 to 2.8.0.)
 
 h2. Layout of the Distribution
 
@@ -43,11 +50,11 @@ h2. Layout of the Distribution
 
 h2. History
 
-December 6, 2008: Created Sake project.
-December 20, 2008: First "bootstrap" build of Sake with itself!
-April 18, 2009: Added sxr to build for generating browsable HTML of the source.
-September 21, 2009: Moved Sake to GitHub.
-July 10, 2010: Ported to Scala v2.8.0.RC7.
+* December 6, 2008: Created Sake project.
+* December 20, 2008: First "bootstrap" build of Sake with itself!
+* April 18, 2009: Added sxr to build for generating browsable HTML of the source.
+* September 21, 2009: Moved Sake to GitHub.
+* July 10, 2010: Ported to Scala v2.8.0.RC7.
 
 h2. TODO
 

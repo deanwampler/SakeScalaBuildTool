@@ -89,6 +89,8 @@ object Path {
             new Path(elem1:: elem2 :: elems.toList)(separator)
     
     implicit val pathStringSeparator: String = Environment.environment.pathSeparator
+    
+    implicit def pathToIterable(path:Path) = path.elements
 }
 
 object NilPath extends Path(Nil)(Path.pathStringSeparator)
