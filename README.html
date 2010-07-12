@@ -19,21 +19,6 @@
   	<p><em>Sake</em> is maintained on <a href="http://github.com/deanwampler/SakeScalaBuildTool">GitHub</a>.</p>
 
 
-  	<p><span class="caps">NOTE</span>: I recently ported <em>Sake</em> to Scala v2.8.0.RC7, but to use it, you have to patch the <em>scala</em> driver script in the Scala v2.8.0.RC7 to fix a bug involving classpaths. If &#8221;$SCALA_HOME/bin&#8221; is the location for this script, then run the following commands:</p>
-
-
-  	<ul>
-  	<li>mv $SCALA_HOME/bin/scala $SCALA_HOME/bin/scala.original</li>
-  		<li>mv bin/scala $SCALA_HOME/bin/scala</li>
-  	</ul>
-
-
-  	<p>(Unfortunately, you can&#8217;t just run this script from the &#8220;bin&#8221; directory.)</p>
-
-
-  	<p>This patch may not be required when the 2.8.0.final comes out.</p>
-
-
   	<h2>Getting Started</h2>
 
 
@@ -57,6 +42,7 @@
   	<li>Create a &#8220;sake.scala&#8221; file in the root of your project.</li>
   		<li>Copy the &#8220;sake.scala&#8221; contents from the Sake distribution to your sake.scala.</li>
   		<li>Edit to taste.</li>
+  		<li>Copy the versions of Sake's jars that you want to use, either "lib/2.7.7/sake-2.7.7-1.1.jar" or "lib/2.8.0.RC7/sake-2.8.0.RC7-1.1.jar"</li>
   		<li>Build with &#8220;bin/sake [targets]&#8221;, where one or more targets can be specified. (Defaults to &#8220;all&#8221;.)</li>
   	</ul>
 

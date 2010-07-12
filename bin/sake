@@ -117,8 +117,8 @@ EOF
 }
 
 if [ $interactive = "true" ]; then
-    env CLASSPATH=$CLASSPATH SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]} -i $file
+    env SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]} -i $file
 else
-    stdinput | env CLASSPATH=$CLASSPATH SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]}
+    stdinput | env SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]}
 fi
 echo ""
