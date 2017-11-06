@@ -6,33 +6,33 @@ import sake.util.Path._
 import sake.environment._
 
 /**
- * Defining and running arbitrary shell commands. 
+ * Defining and running arbitrary shell commands.
  */
-class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]]) 
+class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     extends Command[Symbol,Any](name, defaultOptions) {
 
     def this(name:String, defaultOpts: Map[Symbol,Any]) = this(name, Some(defaultOpts))
-    
-    def this(name:String, defaultOpt0: (Symbol,Any), defaultOpts: (Symbol,Any)*) = 
+
+    def this(name:String, defaultOpt0: (Symbol,Any), defaultOpts: (Symbol,Any)*) =
         this(name, Map[Symbol,Any](defaultOpt0)++defaultOpts)
-    
+
     def this(name:String) = this(name, None)
 
     protected val optionsProcessor = new OptionsProcessor[Symbol,Any]().addProcessor(optionProcessor _)
-    
+
     override def action(options: Map[Symbol,Any]) = {
         val command = determineCommandName(options)
         val commandArgs = buildCommandArgsList(options)
         val commandEnv = buildCommandEnvMap(options)
         Log.log(Level.Notice, "shell: "+toCommandString(command, commandArgs, commandEnv))
         val commandRunner = makeCommandRunner(command, commandArgs, commandEnv)
-        if (Environment.environment.dryRun == true)
+        if (Environment.default.dryRun == true)
             new Passed()
         else
             commandRunner.run()
     }
-    
-    private def optionProcessor(key: Symbol, value: Any): Option[List[String]] = 
+
+    private def optionProcessor(key: Symbol, value: Any): Option[List[String]] =
         key match {
             case 'files => value match {
                 case f:FilesFinder => Some(f())
@@ -49,15 +49,15 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
             case other => Some(List("-"+stringize(other), pathToString(value)))
         }
 
-   protected def determineCommandName(options: Map[Symbol, Any]) = 
+   protected def determineCommandName(options: Map[Symbol, Any]) =
         options.getOrElse('command, name).toString()
 
-    protected def buildCommandArgsList(options: Map[Symbol, Any]) = 
+    protected def buildCommandArgsList(options: Map[Symbol, Any]) =
         optionsProcessor.processOptionsToList(options).map(_.toString()).filter(_.length > 0)
 
     protected def buildCommandEnvMap(options: Map[Symbol, Any]) = {
         var envMap = Map[Any, Any]()
-        options.foreach { key_value => 
+        options.foreach { key_value =>
             key_value._1 match {
                 case 'directory => envMap += (key_value._1 -> key_value._2)
                 case 'D => envMap += envVar(key_value._2.toString())
@@ -81,7 +81,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
         case seq:Seq[_] => new Path(seq).toString()
         case _ => value.toString()
     }
-    
+
     protected def toStringList(value: Any): List[String] = value match {
         case s:String => s.contains(" ") match {
             case true  => toStringListFromList(s.split(" ").toList)
@@ -90,12 +90,12 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
         case l:List[_] => toStringListFromList(l)
         case x => List(stringize(x))
     }
-    
+
     protected def toStringListFromList(list: List[Any]): List[String] = list match {
         case head :: tail => stringize(head) :: toStringListFromList(tail)
         case Nil => Nil
     }
-    
+
     protected def stringize(item: Any) = item match {
         case s:String => s
         case s:Symbol => s.name // not toString()
@@ -103,13 +103,13 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
     }
 
     protected def toCommandString(command: String, list: List[String], env: Option[Map[Any, Any]]) = {
-        val cstr = list.foldLeft(command)(_ + " " + _ ) 
+        val cstr = list.foldLeft(command)(_ + " " + _ )
         env match {
             case None => cstr
             case Some(e) => cstr + " (environment: " + e.toString() + ")"
         }
     }
-        
+
     protected def envVar(str: String): (String,String) = {
         val keyEqValue = """([^=]+)(=(.*))?""".r
         try {
@@ -125,7 +125,7 @@ class ShellCommand(name: String, defaultOptions: Option[Map[Symbol,Any]])
 object ShellCommand {
     /**
      * Shell command specified as a string. Note that the string will be split on
-     * whitespace into tokens. Use {@link Command.apply(options: (A,B)*)} if some of 
+     * whitespace into tokens. Use {@link Command.apply(options: (A,B)*)} if some of
      * the "words" contain whitespace.
      */
     def apply[Symbol,Any](str: String): Result = {

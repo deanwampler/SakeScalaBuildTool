@@ -6,24 +6,24 @@ import sake.util._
 import sake.environment._
 import java.io.{PrintStream, ByteArrayOutputStream}
 
-object ShellCommandSpec extends Specification { 
-    val savedDryRun = Environment.environment.dryRun
+object ShellCommandSpec extends Specification {
+    val savedDryRun = Environment.default.dryRun
     val savedLog    = Log.log
     var byteStream  = new ByteArrayOutputStream()
     var newStream   = new PrintStream(byteStream)
-    val delim = Environment.environment.pathSeparator
-    
+    val delim = Environment.default.pathSeparator
+
     def checkString(regex: Regex, actual: String) = {
         (regex findFirstIn actual) match {
             case Some(s) =>
             case None => fail("expected (regex): "+regex+", actual: "+actual)
         }
     }
-    
+
     doBeforeSpec {
         Log.log = new Log(Level.Info, newStream)
     }
-    
+
     doAfterSpec {
         Log.log = savedLog
     }
@@ -33,29 +33,29 @@ object ShellCommandSpec extends Specification {
              val cmd = new ShellCommand("shcmd")
              cmd.name mustEqual "shcmd"
              cmd.defaultOptions mustEqual None
-        }        
+        }
     }
-    
+
     "A new ShellCommand created with a name and one (A,B) option" should {
         "have the same name as the shell command invoked." in {
              val cmd = new ShellCommand("shcmd", 'foo -> "foo")
              cmd.name mustEqual "shcmd"
-        }        
+        }
 
         "have the specified options in the default options map." in {
              val cmd = new ShellCommand("shcmd", 'foo -> "foo")
              cmd.defaultOptions match {
                  case None => fail()
                  case Some(map) => map mustEqual Map('foo -> "foo")
-             } 
-        }        
+             }
+        }
     }
-    
+
     "A new ShellCommand created with a name and multiple (A,B) options" should {
         "have the same name as the shell command invoked." in {
              val cmd = new ShellCommand("shcmd", 'foo -> "foo", 'bar -> "bar")
              cmd.name mustEqual "shcmd"
-        }        
+        }
 
         "have the specified options in the default options map." in {
              val cmd = new ShellCommand("shcmd", 'foo -> "foo", 'bar -> "bar")
@@ -65,7 +65,7 @@ object ShellCommandSpec extends Specification {
              }
         }
     }
-    
+
     "A new ShellCommand created with a name and a Map of (A,B) options" should {
         "have the same name as the shell command invoked." in {
              val cmd = new ShellCommand("shcmd", Map('foo -> "foo", 'bar -> "bar"))
@@ -73,76 +73,76 @@ object ShellCommandSpec extends Specification {
              cmd.defaultOptions match {
                  case None => fail()
                  case Some(map) => map mustEqual Map('foo -> "foo", 'bar -> "bar")
-             } 
-        }        
+             }
+        }
 
         "have the specified options in the default options map." in {
              val cmd = new ShellCommand("shcmd", Map('foo -> "foo", 'bar -> "bar"))
              cmd.defaultOptions match {
                  case None => fail()
                  case Some(map) => map mustEqual Map('foo -> "foo", 'bar -> "bar")
-             } 
-        }        
+             }
+        }
     }
     "Running a ShellCommand with a string" should {
         "convert the string to 'command -> first_word and 'opts -> rest_of_string" in {
             ShellCommand.tokenizeCommandString("echo hello world") must containAll ("echo" :: List("hello", "world"))
         }
-        
+
         """remove embedded \n and/or \r and other white space when tokenizing the command string""" in {
             ShellCommand.tokenizeCommandString("""echo
                     hello world""") must containAll ("echo" :: List("hello", "world"))
-            
+
         }
     }
-    
+
     "Running a ShellCommand without additional options" should {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
             Log.log.out = newStream
-            Environment.environment.dryRun = true
+            Environment.default.dryRun = true
         }
         doAfter {
-            Environment.environment.dryRun = savedDryRun
+            Environment.default.dryRun = savedDryRun
         }
-        
+
         "compose the default options into a command string, starting with the command name." in {
              val cmd = new ShellCommand("shcmd", Map('foo -> "foo", 'bar -> List("bar1", "bar2")))
              cmd()
              byteStream.toString() must be matching ("""shcmd\s+-foo foo -bar bar1[:;]bar2""")
-        }        
-    }        
-    
+        }
+    }
+
     "Running a ShellCommand with additional options" should {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
             Log.log.out = newStream
-            Environment.environment.dryRun = true
+            Environment.default.dryRun = true
         }
         doAfter {
-            Environment.environment.dryRun = savedDryRun
+            Environment.default.dryRun = savedDryRun
         }
 
         "compose the additional and default options, overwriting the later into a command string, starting with the command name." in {
              val cmd = new ShellCommand("ls", Map('foo -> "foo", 'bar -> List("bar1", "bar2")))
              cmd('foo -> "foobar", 'baz -> ("a", "b"))
              byteStream.toString() must be matching("""ls\s+-foo foobar -bar bar1[:;]bar2 -baz \(a,b\)""")
-        }        
+        }
     }
-    
+
     "Running a ShellCommand with standard options" should {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
             Log.log.out = newStream
-            Environment.environment.dryRun = true
+            Environment.default.dryRun = true
         }
         doAfter {
-            Environment.environment.dryRun = savedDryRun
+            Environment.default.dryRun = savedDryRun
         }
-        
+
         "map 'files -> file_spec to the list of files matching the spec." in {
             val cmd = new ShellCommand("shcmd") {
                 override def makeFilesLister = FakeFileForSpecs.fakeFilesFinder
@@ -221,17 +221,17 @@ object ShellCommandSpec extends Specification {
              byteStream.toString() must be matching ("""shcmd\s+-foo \(a,b,c\)""")
         }
     }
-    
+
     "Running a ShellCommand with standard file I/O options" should {
         doBefore {
-            Environment.environment.dryRun = false
+            Environment.default.dryRun = false
         }
         doAfter {
-            Environment.environment.dryRun = savedDryRun
+            Environment.default.dryRun = savedDryRun
         }
-    
+
         def doInputTextOutputFile {
-            Environment.environment.dryRun = false
+            Environment.default.dryRun = false
             val outputFile = new FakeFile("toss.out")
             val cmd = new ShellCommand("shcmd")
             cmd('command -> "cat", 'inputText -> "hello world!", 'outputFile -> outputFile)
@@ -251,9 +251,9 @@ object ShellCommandSpec extends Specification {
             writer.close()
             tempFile
         }
-        
+
         "map 'inputFile -> sake.util.File to the source of input written to the subprocess" in {
-            Environment.environment.dryRun = false
+            Environment.default.dryRun = false
             val tempFile = makeTempFileWithContent
             val outputFile = new FakeFile("toss.out")
             val cmd = new ShellCommand("shcmd")
@@ -265,5 +265,5 @@ object ShellCommandSpec extends Specification {
             doInputTextOutputFile
         }
     }
-    
+
 }

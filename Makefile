@@ -1,9 +1,5 @@
 # gnu make
 
-# For Scala 2.7.7 
-# CLASSPATH=lib/specs-1.5.0.jar:lib/junit-4.5.jar
-# SCALA_VERSION=2.7.7
-# For Scala 2.8.0
 CLASSPATH=build:lib/specs_2.8.0.RC7-1.6.5-SNAPSHOT.jar:lib/embedded-interpreter-0.1-2.8.0.RC7.jar:lib/junit-4.5.jar
 SCALA_VERSION=2.8.0.RC7
 VERSION=1.1
@@ -44,7 +40,7 @@ jars: lib_dir remove_jar
 	cd build; \
 		jar cf ../lib/$(SCALA_VERSION)/sake-$(SCALA_VERSION)-$(VERSION).jar -C . `find . -type f`
 	jar cf lib/$(SCALA_VERSION)/sake-$(SCALA_VERSION)-$(VERSION)-src.jar -C . Makefile README.* sake.scala *LICENSE `find src spec -type f`
-    
+
 build_dir:
 	mkdir -p build
 

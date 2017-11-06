@@ -5,7 +5,7 @@ import sake.environment._
 import sake.util.Path._
 
 // Uses the full path to {@link sake.util.Path} to avoid collisions with Spec's own FileMatchers.Path.
-object PathSpec extends Specification { 
+object PathSpec extends Specification {
 
     "A Path" can {
         "be empty" in {
@@ -40,29 +40,29 @@ object PathSpec extends Specification {
             sake.util.Path(List(1.23, "foo", 1, 'a)).elements mustEqual List(1.23,"foo",1,'a)
         }
     }
-    
+
     "A Path constructor" should {
         "flatten nested sequences" in {
             sake.util.Path(List(1.23, List("foo", 1), 'a)).elements mustEqual List(1.23,"foo",1,'a)
         }
     }
-    
+
     "elements" should {
         "return a List of the elements" in {
-            sake.util.Path(List(1.23, "foo", 1, 'a)).elements mustEqual List(1.23,"foo",1,'a)            
+            sake.util.Path(List(1.23, "foo", 1, 'a)).elements mustEqual List(1.23,"foo",1,'a)
         }
         "return Nil for an empty path" in {
             sake.util.Path().elements mustEqual Nil
         }
     }
-    
+
     "The Path separator" should {
         "default to the system path separator" in {
-             sake.util.Path().separator mustEqual Environment.environment.pathSeparator
-        }        
+             sake.util.Path().separator mustEqual Environment.default.pathSeparator
+        }
         "be setable during construction" in {
              sake.util.Path()("|").separator mustEqual "|"
-        }        
+        }
         "be invariant when new Paths are created from this Path" in {
             val p1 = sake.util.Path()("|")
             val p2 = "foo" :: p1
@@ -70,7 +70,7 @@ object PathSpec extends Specification {
             p2 must beDifferent(p1)
         }
     }
-    
+
     "joined and toString()" should {
         "convert the path's list[Any] into a separator-separated string" in {
             val list = List(1, 2.3, "foo", 'foo, List("x", "y"), ("a", 'b))
@@ -92,7 +92,7 @@ object PathSpec extends Specification {
             sake.util.Path(1.23, "foo", 1, 'a).joined mustEqual "1.23:foo:1:'a"
         }
     }
-    
+
     "+" should {
         "append an element to the path, returning a new path" in {
             val p = sake.util.Path(List(1.23, "foo"))
@@ -101,7 +101,7 @@ object PathSpec extends Specification {
             (p + "bar" + "baz").elements mustEqual List(1.23, "foo", "bar", "baz")
         }
     }
-    
+
     "++" should {
         "append a sequence of new elements to the path, returning a new path" in {
             val p = sake.util.Path(List(1.23, "foo"))
@@ -117,7 +117,7 @@ object PathSpec extends Specification {
             (p12).elements mustEqual List(1.23, "foo", "bar", "baz")
         }
     }
-    
+
     "::" should {
         "prepend an element to the path, returning a new path" in {
             val p = sake.util.Path(List(1.23, "foo"))
@@ -126,7 +126,7 @@ object PathSpec extends Specification {
             ("baz" :: "bar" :: p).elements mustEqual List("baz", "bar", 1.23, "foo")
         }
     }
-    
+
     ":::" should {
         "prepend a sequence of new elements to the path, returning a new path" in {
             val p = sake.util.Path(List(1.23, "foo"))
@@ -143,7 +143,7 @@ object PathSpec extends Specification {
             (p21).elements mustEqual List("bar", "baz", 1.23, "foo")
         }
     }
-    
+
     "equals" should {
         "be reflexive" in {
             val p = sake.util.Path(1.23, "foo")
@@ -174,13 +174,13 @@ object PathSpec extends Specification {
         "return false for null objects" in {
             val p1 = sake.util.Path(1.23, "foo")
             (p1 == null) mustEqual false
-            
+
         }
         "return false for non-Path objects" in {
             val p1 = sake.util.Path(1.23, "foo")
             val l2 = List(1.23, "foo")
             (p1 == l2) mustEqual false
-            
+
         }
         "return true for Paths with identical elements and separators" in {
             val p1 = sake.util.Path(1.23, "foo")("|")
@@ -198,7 +198,7 @@ object PathSpec extends Specification {
             (p1 == p2) mustEqual false
         }
     }
-    
+
     "hashCode" should {
         "always return the same value for the same path" in {
             val p1 = sake.util.Path(1.23, "foo")
@@ -222,5 +222,5 @@ object PathSpec extends Specification {
             (p1.hashCode) must beDifferent (p2.hashCode)
         }
     }
-    
+
 }

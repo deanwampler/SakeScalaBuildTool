@@ -12,43 +12,54 @@ class Environment {
      * If true, don't actually build anything, just report the the commands that would be executed.
      */
     var dryRun = false
-    
+
     /**
      * For convenience, the path separator is exposed explicitly, read only.
      */
     val pathSeparator = Environment.getSystemProperty("path.separator")
-    
+
     /**
      * For convenience, the file separator is exposed explicitly, read only.
      */
     val fileSeparator = Environment.getSystemProperty("file.separator")
-    
+
     /**
      * For convenience, the line separator is exposed explicitly, read only.
      */
     val lineSeparator = Environment.getSystemProperty("line.separator")
-    
+
     /**
      * For convenience, the current working directory is exposed explicitly, read only.
      */
     val currentWorkingDirectory = Environment.getSystemProperty("user.dir")
-    
+
     /**
      * For convenience, the full environment variables map is exposed as an
-     * immutable Scala (not Java) Map.
+     * immutable Scala (not Java) Map. However, it's probably easier to just call get
+     * or getOrElse.
      */
     val environmentVariables = Environment.getSystemEnvironmentVariables
-    
+
+    /**
+     * Get a system environment variable value.
+     */
+    def get(key: String): Option[String] = environmentVariables.get(key)
+
+    /**
+     * Get a system environment variable value or return the supplied default value.
+     */
+    def getOrElse(key: String, default: String): String = environmentVariables.getOrElse(key, default)
+
     /**
      * For convenience and to keep the system classpath consistent with any user changes,
      * the "classpath" is exposed explicitly as a List that is kept synchronized with the
-     * system's value. Use standard list operations to change it. 
+     * system's value. Use standard list operations to change it.
      * We have also found it necessary to merge the environment variable CLASSPATH
      * with the property, which apparently isn't done by the JVM by default.
      */
     def classpath: Path = {
         val cp = if (Environment.combineCLASSPATHandSystemClassPath) {
-          Environment.getSystemProperty("java.class.path") + 
+          Environment.getSystemProperty("java.class.path") +
                   pathSeparator + environmentVariables.getOrElse("CLASSPATH","")
         } else {
           Environment.getSystemProperty("java.class.path")
@@ -68,8 +79,8 @@ class Environment {
 }
 
 object Environment {
-    
-    val environment:Environment = new Environment()
+
+    val global: Environment = new Environment()
 
     /**
      * It appears that the "java.class.path" does not include the environments
@@ -81,17 +92,17 @@ object Environment {
      * Returns a system property or "" if not defined. If you would prefer null for
      * not defined, use System.getProperty() directory.
      */
-    def getSystemProperty(key:String) = System.getProperty(key) match {
+    def getSystemProperty(key:String): String = System.getProperty(key) match {
         case null => ""
         case s    => s
     }
 
-    def setSystemProperty(key:String, value:String):Unit = System.setProperty(key, value)
-    
+    def setSystemProperty(key:String, value:String): Unit = System.setProperty(key, value)
+
     /**
      * Returns the system environment, as an immutable Scala Map.
      */
-    def getSystemEnvironmentVariables = {
+    def getSystemEnvironmentVariables: Map[String,String] = {
       val map = scala.collection.mutable.HashMap.empty[String,String]
       val iter = System.getenv().entrySet.iterator
       while (iter.hasNext) {

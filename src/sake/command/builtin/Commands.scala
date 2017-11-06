@@ -6,65 +6,64 @@ import sake.util.Path._
 
 trait Commands {
 
-    var classpath = Path()
+  var classpath = Path()
 
-    val files = new FilesFinder()
+  val files = new FilesFinder()
 
-    def mkdirs(paths: String*): Unit = mkdirs(paths.toList)
-    
-    def mkdirs(paths: List[String]): Unit = paths foreach { path => 
-        val dir = makeFile(path)
-        if (dir.exists == false)
-            if (dir.mkdirs == false)
-                Exit.error("Could not create directory \""+path+"\".")
-    }
-    
-    def mkdir(path: String) = mkdirs(path)
+  def mkdirs(paths: String*): Unit = mkdirs(paths.toList)
 
-    def delete(paths: String*): Unit = delete(paths.toList)
+  def mkdirs(paths: List[String]): Unit = paths foreach { path =>
+    val dir = makeFile(path)
+    if (dir.exists == false && dir.mkdirs == false)
+      Exit.error("Could not create directory \""+path+"\".")
+  }
 
-    def delete(paths: List[String]): Unit = paths foreach { path =>
-        val file = makeFile(path)
-        if (file.exists && file.delete == false)
-            Exit.error("Could not delete \""+path+"\".")
-    }  
+  def mkdir(path: String) = mkdirs(path)
 
-    def deleteRecursively(paths: String*): Unit = deleteRecursively(paths.toList)
+  def delete(paths: String*): Unit = delete(paths.toList)
 
-    def deleteRecursively(paths: List[String]): Unit = paths foreach { path =>
-        val file = makeFile(path)
-        if (file.exists && file.deleteRecursively == false)
-            Exit.error("Could not delete \""+path+"\" recursively.")
-    }
-    
-    def fail(): Unit = fail("Build failed!")
+  def delete(paths: List[String]): Unit = paths foreach { path =>
+    val file = makeFile(path)
+    if (file.exists && file.delete == false)
+      Exit.error("Could not delete \""+path+"\".")
+  }
 
-    def fail(message: String): Unit = Exit.error(message)
-    
-    protected def makeFile(path: String) = File(path)
-    
-    /**
-     * Command for recursive invocations of sake (as a new process), usually in a different directory.
-     */
-    val sakecmd = new SakeCommand()
-    
-    /**
-     * Use "sh" for invoking a shell command with a command string.
-     */
-    def sh(command: String) = ShellCommand(command)
+  def deleteRecursively(paths: String*): Unit = deleteRecursively(paths.toList)
 
-    /**
-     * Use "shell" for invoking a shell command with key-value pairs.
-     */
-    val shell = new ShellCommand("shell", Map('command -> "shell", 'opts -> ""))
+  def deleteRecursively(paths: List[String]): Unit = paths foreach { path =>
+    val file = makeFile(path)
+    if (file.exists && file.deleteRecursively == false)
+      Exit.error("Could not delete \""+path+"\" recursively.")
+  }
 
-    val echo = new EchoCommand()
+  def fail(): Unit = fail("Build failed!")
 
-    val scala  = new JVMCommand("scala")
-    val scalac = new JVMCommand("scalac", 'files -> ".")
+  def fail(message: String): Unit = Exit.error(message)
 
-    val specs  = new SpecCommand()
+  protected def makeFile(path: String) = File(path)
 
-    val java   = new JVMCommand("java")
-    val javac  = new JVMCommand("javac", 'files -> ".")
+  /**
+   * Command for recursive invocations of sake (as a new process), usually in a different directory.
+   */
+  val sakecmd = new SakeCommand()
+
+  /**
+   * Use "sh" for invoking a shell command with a command string.
+   */
+  def sh(command: String) = ShellCommand(command)
+
+  /**
+   * Use "shell" for invoking a shell command with key-value pairs.
+   */
+  val shell = new ShellCommand("shell", Map('command -> "shell", 'opts -> ""))
+
+  val echo = new EchoCommand()
+
+  val scala  = new JVMCommand("scala")
+  val scalac = new JVMCommand("scalac", 'files -> ".")
+
+  val specs  = new SpecCommand()
+
+  val java   = new JVMCommand("java")
+  val javac  = new JVMCommand("javac", 'files -> ".")
 }

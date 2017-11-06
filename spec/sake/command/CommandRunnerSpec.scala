@@ -5,7 +5,7 @@ import sake.util._
 import sake.environment._
 import java.io.{PrintStream, ByteArrayOutputStream, BufferedReader}
 
-object CommandRunnerSpec extends Specification { 
+object CommandRunnerSpec extends Specification {
     "A CommandRunner" should {
         "require a non-empty command name" in {
             new CommandRunner("") must throwA[BuildError]
@@ -23,9 +23,9 @@ object CommandRunnerSpec extends Specification {
             val environment = Some(Map[Any, Any]('directory -> "lib"))
             val runner2 = new CommandRunner("scala", Nil, environment)
             runner2.environment mustEqual environment
-            
+
         }
-        
+
         "accept an environment option 'directory to specify the directory to use as the working directory" in {
             runSuccessfulTestCommand
         }
@@ -49,23 +49,23 @@ object CommandRunnerSpec extends Specification {
                 case Some(_) =>
             }
         }
-        
+
         def readFileContents(file: File): String = {
             val sb = new StringBuffer()
             val reader = new BufferedReader(file.reader)
             while(true) {
                 reader.readLine() match {
                     case null => return sb.toString()
-                    case line => sb.append(line+Environment.environment.lineSeparator)
+                    case line => sb.append(line+Environment.default.lineSeparator)
                 }
             }
             sb.toString()
         }
-        
+
         "accept an environment option 'inputText to specify a string of input for the subprocess" in {
             doInputTextOutputFile(new FakeFile("toss.out"))
         }
-        
+
         def makeTempFileWithContent(tempFile: File) = {
             val writer = tempFile.writer
             writer.write("""Hello
@@ -74,7 +74,7 @@ object CommandRunnerSpec extends Specification {
             writer.close()
             tempFile
         }
-        
+
         "accept an environment option 'inputFile to specify a file for input to the subprocess" in {
             val tempFile = makeTempFileWithContent(new FakeFile("tossInput.txt"))
             val outputFile = new FakeFile("toss.out")
@@ -117,13 +117,13 @@ object CommandRunnerSpec extends Specification {
         "run a successful external program and process its output" in {
             runSuccessfulTestCommand
         }
-        
+
         "run an unsuccessful external program and fail" in {
             runFailedTestCommand
         }
-        
+
     }
-    
+
     protected def runSuccessfulTestCommand = {
         val outputFile = new FakeFile("toss.out")
         val environment = Some(Map[Any, Any]('directory -> "lib", 'outputFile -> outputFile))
@@ -131,12 +131,12 @@ object CommandRunnerSpec extends Specification {
         runner.environment mustEqual environment
         runner.run()
         outputFile.writer.toString must be matching ("""sake/lib$""")
-    }    
+    }
 
     protected def runFailedTestCommand = {
         val outputFile = new FakeFile("toss.out")
         val runner = new CommandRunner("ls nonexistentfile")
         runner.run().success must beFalse
-    }    
+    }
 }
 

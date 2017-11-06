@@ -2,16 +2,14 @@ import sake.Project._
 
 // Define some convenient variables.
 val srcDir   = "src/"
-var specDir  = "spec/"
 val buildDir = "build/"
 val libDir   = "lib/"
-val sxr      = libDir + "/sxr-0.1.jar"
 
 // Version strings used for the generated jars:
 // What version of Sake? Can specify on the command line with VERSION=...
-val version = environment.environmentVariables.getOrElse("VERSION", "1.1")
+val version = environment.getOrElse("VERSION", "1.1")
 // What Scala version of Sake? Can specify on the command line with SCALA_VERSION=...
-val scalaVersion = environment.environmentVariables.getOrElse("SCALA_VERSION", "2.8.0.RC7")
+val scalaVersion = environment.getOrElse("SCALA_VERSION", "2.12.4")
 
 // If true, don't actually run any commands.
 environment.dryRun = false
@@ -44,8 +42,8 @@ target('srcjar) {
 
 target('spec) {
     specs(
-       'classpath -> environment.classpath, 
-       'path -> "./spec/**/*.scala", 
+       'classpath -> environment.classpath,
+       'path -> "./spec/**/*.scala",
        'pattern -> ".*Spec.*"
     )
 }

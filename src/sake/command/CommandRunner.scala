@@ -1,7 +1,7 @@
 package sake.command
 
-import java.io.{File => JFile, Reader => JReader, StringReader => JStringReader, 
-    InputStreamReader => JInputStreamReader, BufferedReader => JBufferedReader, 
+import java.io.{File => JFile, Reader => JReader, StringReader => JStringReader,
+    InputStreamReader => JInputStreamReader, BufferedReader => JBufferedReader,
     Writer => JWriter, BufferedWriter => JBufferedWriter, OutputStreamWriter => JOutputStreamWriter}
 import sake.util._
 import sake.environment._
@@ -10,17 +10,17 @@ class CommandRunner(val command: String, val arguments: List[String], val enviro
 
     def this(command: String, arguments: List[String]) = this(command, arguments, None)
     def this(command: String) = this(command, Nil)
-    
+
     protected var textInputForProcess:  Option[String] = None
     protected var fileInputForProcess:  Option[File] = None
     protected var fileOutputForProcess: Option[File] = None
-    
+
     val processBuilder = new ProcessBuilder()
     processEnvironment(processBuilder)
 
     if (command.length == 0)
         Exit.error("Must specify a non-empty command name")
-        
+
     def run() = {
         processBuilder.redirectErrorStream(true)
         processBuilder.command(toJavaArrayList(command :: arguments))
@@ -51,12 +51,12 @@ class CommandRunner(val command: String, val arguments: List[String], val enviro
                     return
                 }
                 case line => {
-                    writer.write(line + Environment.environment.lineSeparator)
+                    writer.write(line + Environment.default.lineSeparator)
                 }
             }
         }
     }
-    
+
     protected def handleOutputFor(process: Process) = {
         val writer: JWriter = fileOutputForProcess match {
             case None => new JBufferedWriter(new JOutputStreamWriter(Console.out))
@@ -65,11 +65,11 @@ class CommandRunner(val command: String, val arguments: List[String], val enviro
         val out = new JBufferedReader(new JInputStreamReader(process.getInputStream()))
         processCommandOutput(writer, out)
     }
-    
+
     protected def processCommandOutput(writer: JWriter, out: JBufferedReader): Unit = {
         var line = out.readLine()
         while (line != null) {
-            writer.write(line + Environment.environment.lineSeparator)
+            writer.write(line + Environment.default.lineSeparator)
             line = out.readLine()
         }
         writer.flush()
@@ -93,12 +93,12 @@ class CommandRunner(val command: String, val arguments: List[String], val enviro
             Exit.error("Can't specify both an input file and input text for a subprocess.")
         pb
     }
-    
+
     protected def determineFile(value: Any) = value match {
         case f:File => f
         case x      => File(x.toString())
     }
-    
+
     private def toJavaArrayList(list: List[_]) =
         list.foldLeft(new java.util.ArrayList[String]()) { (l, s) => l.add(s.toString()); l }
 
