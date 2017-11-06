@@ -6,15 +6,17 @@ import scala.util.matching.Regex
 import sake.environment._
 
 /**
- * A wrapper around Java's file, to better support mocking.
+ * A wrapper around Java's file. It's a trait to better support mocking with subclasses
+ * that are either real or fake.
  */
-case class File(path: String) {
+trait File {
+  val path: String
   if (path.length == 0) throw new BuildError("File path can't be an empty string.")
   def exists: Boolean
   def isDirectory: Boolean
   def isFile: Boolean
-  def contents: Option[List[String]]
-  def contentsFilteredBy(nameFilter: String): Option[List[String]]
+  def contents: Option[Seq[String]]
+  def contentsFilteredBy(nameFilter: String): Option[Seq[String]]
 
   def createNewFile: Boolean
 
@@ -65,15 +67,32 @@ case class File(path: String) {
   protected def makeFile(parent: String, child: String):File = File(parent, child)
 }
 
+/**
+ * By default, we instantiate JavaFileWrappers in the apply methods.
+ */
 object File {
   def apply(path: String) = new JavaFileWrapper(path)
   def apply(parent: String, child: String) = new JavaFileWrapper(parent, child)
 
   implicit def toJavaFile(jfw: JavaFileWrapper): JFile = jfw.javaFile
 
-  def makePath(prefix: String, elem: String) = prefix match {
+  def makePath(prefix: String, elem: String): String = prefix match {
     case "" => elem
     case _  => prefix + Environment.default.fileSeparator + elem
+  }
+}
+
+class FileFilter(val nameFilter: String) extends JFilenameFilter {
+
+  val regex = ("^"+nameFilter.replaceAll("\\*", ".*").replaceAll("\\?", ".")+"$").r
+
+  def accept(dir: JFile, name: String): Boolean = acceptName(name, regex)
+
+  protected def acceptName(name: String, filterRegex: Regex) = {
+    regex findFirstIn name match {
+      case None => false
+      case Some(n) => true
+    }
   }
 }
 

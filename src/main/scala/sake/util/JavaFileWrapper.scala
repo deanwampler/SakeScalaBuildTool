@@ -4,7 +4,7 @@ import java.io.{File => JFile, FilenameFilter => JFilenameFilter,
     InputStreamReader  => JInputStreamReader,  FileInputStream  => JFileInputStream,
     OutputStreamWriter => JOutputStreamWriter, FileOutputStream => JFileOutputStream }
 
-class JavaFileWrapper(override val path: String) extends File {
+case class JavaFileWrapper(val path: String) extends File {
 
     def this(parent: String, child: String) = this(File.makePath(parent, child))
 
@@ -36,18 +36,4 @@ class JavaFileWrapper(override val path: String) extends File {
 
     def mkdirs = javaFile.mkdirs()
     def delete = javaFile.delete()
-}
-
-class FileFilter(val nameFilter: String) extends JFilenameFilter {
-
-  val regex = ("^"+nameFilter.replaceAll("\\*", ".*").replaceAll("\\?", ".")+"$").r
-
-  def accept(dir: JFile, name: String): Boolean = acceptName(name, regex)
-
-  protected def acceptName(name: String, filterRegex: Regex) = {
-    regex findFirstIn name match {
-      case None => false
-      case Some(n) => true
-    }
-  }
 }

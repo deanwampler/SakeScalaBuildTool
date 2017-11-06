@@ -21,8 +21,8 @@ showStackTracesOnFailures = false
 log.threshold = Level.Info
 
 // Add to the classpath using list semantics.
-environment.classpath :::= (files(libDir + "*.jar") -- files(libDir + "*src.jar"))
-environment.classpath ::= buildDir
+environment.classpath ++= (files(libDir + "*.jar") -- files(libDir + "*src.jar"))
+environment.classpath += buildDir
 
 target('all -> List('clean, 'compile, 'spec, 'jars))
 

@@ -1,6 +1,7 @@
 package sake.util
 
 import sake.environment._
+import java.io.{File => JFile}
 
 object FilesFinder {
 
@@ -27,17 +28,11 @@ object FilesFinder {
 
   // The lists are constructed to provide a reasonably natural order.
   protected def findFiles(specInPathPieces: Seq[String]): Seq[File] =
-    def ff(prefix: File, tail: Seq[String]): Vector[Vector[File]] =
-      specInPathPieces match {
-        case head +: tail => head match {
-          case "**" => findInCurrentDirRecur(prefix).foldLeft(Vector.empty[File] { (seq, s) =>
-
-
-      specInPathPieces match {
-        case head +: tail => head match {
-          case "**" => findInCurrentDirRecur(prefix).foldLeft(Vector.empty[File] { (seq, s) =>
-            seq ++ findFiles(s, tail)
-          }
+    specInPathPieces match {
+      case head +: tail => head match {
+        case "**" => findInCurrentDirRecur(prefix).foldLeft(Vector.empty[File] { (seq, s) =>
+          seq ++ findFiles(s, tail)
+        }
         case s => if (s.contains("*")) {
             findInCurrentDir(prefix, head).foldLeft(Vector.empty[File] { (seq, s) =>
             seq ++ findFiles(s, tail)
@@ -61,17 +56,18 @@ object FilesFinder {
       }
   }
 
-  protected def findInCurrentDir(path: String, pattern: String) = {
-      makeFile(path).contentsFilteredBy(pattern) match {
-          case None => Nil
-          case Some(l:List[_]) => l.map(File.makePath(path, _))
-      }
+  protected def findInCurrentDir(path: String, pattern: String): Seq[File] = {
+    val f = new JFile(path)
+    f.contentsFilteredBy(pattern) match {
+      case None => Nil
+      case Some(seq: Seq[_]) => seq.map(File.makePath(path, _))
+    }
   }
 
 protected def findInCurrentDirRecur(path: String): List[String] = {
-  val file = makeFile(path)
+  val file = new JFile(path)
   val recursiveList = isDirectory(file) match {
-      case false => List(path)  // e.g., "/dir/file/**" allowed.
+      case false => Seq(path)  // e.g., "/dir/file/**" allowed.
       case true  => file.contents match {
           case None => Nil
           case Some(l:List[_]) => l.foldLeft(List[String](path)) { (list, path2) =>
