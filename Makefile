@@ -2,7 +2,7 @@
 
 CLASSPATH=build:lib/specs_2.8.0.RC7-1.6.5-SNAPSHOT.jar:lib/embedded-interpreter-0.1-2.8.0.RC7.jar:lib/junit-4.5.jar
 SCALA_VERSION=2.8.0.RC7
-VERSION=1.1
+VERSION=2.0
 
 all: clean test jars
 
