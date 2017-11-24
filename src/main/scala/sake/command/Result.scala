@@ -1,50 +1,38 @@
 package sake.command
 
 import sake.util._
+import sake.target.Target
 
-abstract class Result() {
-    val success: Boolean
+sealed trait Result {
+  val exitCode: Int
+  val message: String
 
-    /** 
-     * Allow the user to specify an optional closure after a command that is effectively a
-     * post-processing hook. The Result of the command's execution is passed as the one argument.
-     * However, because of parsing issues and the need to handle failures at a place where we "see"
-     * them, failures are handled before the closure is invoked. Hence, this hook is only useful for
-     * post-processing successful results. 
-     */
-    def and(postAction: (Result) => Result) = postAction(this)
+  def passed: Boolean
+
+  /**
+   * Sequence actions. If this result is successful, print its message and
+   * proceed to the next action. Otherwise, return this result.
+   */
+  def and(nextAction: => Result) =
+    if (exitCode == 0) {
+      Log.log.info(message)
+      nextAction
+    } else this
 }
 
-case class Passed[R](result: Option[R], message: Option[String]) extends Result {
-    override val success = true
-    
-    def this(result: Option[R]) = this(result, None)
-    def this() = this(None)
-    
-    override def toString() = ResultString.asString(result, message)
+case class Passed(message: String = "") extends Result {
+  val exitCode: Int = 0
+  def passed: Boolean = true
 }
 
-case class Failed[R](result: Option[R], message: Option[String]) extends Result {
-    override val success = false
-    
-    def this(result: Option[R]) = this(result, None)
-    def this() = this(None)
-    
-    override def toString() = ResultString.asString(result, message)
+object Passed {
+  val default = Passed("")
 }
 
-object ResultString {
-    def asString[R](result: Option[R], message: Option[R]) = {
-        var s = new StringBuilder()
-        s.append("(status: ")
-        result match {
-            case None => s.append("?")
-            case Some(r) => s.append(r.toString())
-        }
-        message match {
-            case None => 
-            case Some(r) => s.append(", message: ").append(r.toString())
-        }
-        s.append(")").toString()
-    }
+case class Failed(exitCode: Int = 1, message: String = "", cause: Option[Throwable] = None) extends Result {
+  def passed: Boolean = false
+}
+
+object Failed {
+  def exception(message: String, cause: Throwable) = Failed(255, s"""FAILED: ${message} (cause: $cause)""", Some(cause))
 }

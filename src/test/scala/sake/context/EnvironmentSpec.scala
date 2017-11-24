@@ -1,20 +1,21 @@
-package sake.environment
+package sake.context
 
-import sake.util.Path
-import org.specs._
+import sake.files.{File, Path}
+import org.scalatest._
+import org.scalatest.Matchers._
 
-object EnvironmentSpec extends Specification {
+object EnvironmentSpec extends FreeSpec {
 
     var cpflag:Boolean = _
 
     doBeforeSpec {
         // Don't let CLASSPATH participate for most tests.
-        cpflag = Environment.combineCLASSPATHandSystemClassPath
-        Environment.combineCLASSPATHandSystemClassPath = false
+        cpflag = Environment.combineCLASSPATHandSystemCLASSPATH
+        Environment.combineCLASSPATHandSystemCLASSPATH = false
     }
 
     doAfterSpec {
-        Environment.combineCLASSPATHandSystemClassPath = cpflag
+        Environment.combineCLASSPATHandSystemCLASSPATH = cpflag
     }
 
     def sysClassPath = {
@@ -29,7 +30,7 @@ object EnvironmentSpec extends Specification {
         val beforeCP = sysClassPath
 
         doAfter {
-            Environment.default.classpath = beforeCP  // reset
+            Environment.classpath = beforeCP  // reset
         }
 
         "return the system classpath converted to a Path" in {
@@ -50,11 +51,11 @@ object EnvironmentSpec extends Specification {
         "remove duplicate entries, preserving priority order" in {
           val env = new Environment()
           env.classpath = sake.util.Path("foo/bar" :: "x/y" :: "x/y" :: "foo/bar" :: "baz/barf" :: Nil)(env.pathSeparator)
-          env.classpath mustEqual (sake.util.Path("foo/bar" :: "x/y" :: "baz/barf" :: Nil)(env.pathSeparator))
+          env.classpath shouldEqual (sake.util.Path("foo/bar" :: "x/y" :: "baz/barf" :: Nil)(env.pathSeparator))
         }
 
-        "include the environment's CLASSPATH if Environment.combineCLASSPATHandSystemClassPath is true" in {
-          Environment.combineCLASSPATHandSystemClassPath = true
+        "include the environment's CLASSPATH if Environment.combineCLASSPATHandSystemCLASSPATH is true" in {
+          Environment.combineCLASSPATHandSystemCLASSPATH = true
           val env = new Environment()
           env.classpath must beDifferent(sysClassPath)
         }
@@ -62,32 +63,32 @@ object EnvironmentSpec extends Specification {
 
     "The pathSeparator" should {
         "be the platform's path separator" in {
-            new Environment().pathSeparator mustEqual System.getProperty("path.separator")
+            new Environment().pathSeparator shouldEqual System.getProperty("path.separator")
         }
     }
 
     "The fileSeparator" should {
         "be the platform's file separator" in {
-            new Environment().fileSeparator mustEqual System.getProperty("file.separator")
+            new Environment().fileSeparator shouldEqual System.getProperty("file.separator")
         }
     }
 
     "The lineSeparator" should {
         "be the platform's line separator" in {
-            new Environment().lineSeparator mustEqual System.getProperty("line.separator")
+            new Environment().lineSeparator shouldEqual System.getProperty("line.separator")
         }
     }
 
     "The currentWorkingDirectory" should {
         "be the user's current directory" in {
-            new Environment().currentWorkingDirectory mustEqual System.getProperty("user.dir")
+            new Environment().currentWorkingDirectory shouldEqual System.getProperty("user.dir")
         }
     }
 
     "The System Property getter" should {
         "return the system property" in {
             val expected = System.getProperty("java.class.path")
-            Environment.getSystemProperty("java.class.path") mustEqual expected
+            Environment.getSystemProperty("java.class.path") shouldEqual expected
         }
     }
 
@@ -96,7 +97,7 @@ object EnvironmentSpec extends Specification {
             val save = System.getProperty("java.class.path")
             val expected = save + System.getProperty("file.separator") + "/foo/bar"
             Environment.setSystemProperty("java.class.path", expected)
-            Environment.getSystemProperty("java.class.path") mustEqual expected
+            Environment.getSystemProperty("java.class.path") shouldEqual expected
             Environment.setSystemProperty("java.class.path", save)
         }
     }
@@ -104,7 +105,7 @@ object EnvironmentSpec extends Specification {
     "The System Environment Variables getter" should {
         "return the system environment, a map of defined variables" in {
             val expected = Some(System.getenv.get("CLASSPATH"))
-            Environment.getSystemEnvironmentVariables.get("CLASSPATH") mustEqual expected
+            Environment.getSystemEnvironmentVariables.get("CLASSPATH") shouldEqual expected
         }
     }
 }

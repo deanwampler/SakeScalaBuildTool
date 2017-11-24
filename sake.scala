@@ -1,79 +1,70 @@
-import sake.Project._
+import sake._
+import scala.sys.process._
 
-// Define some convenient variables.
-val srcDir   = "src/"
-val buildDir = "build/"
-val libDir   = "lib/"
+val sakeBuild = new Project {
+  settings = settings.copy(
+    version = "2.0",
+    scalaVersion = "2.12.4",
+    userSettings = Map("foo" -> "bar"),
+    dryRun = false,
+    logThreshold = Log.Level.Info,
+    showStackTracesOnFailures = true)
 
-// Version strings used for the generated jars:
-// What version of Sake? Can specify on the command line with VERSION=...
-val version = environment.getOrElse("VERSION", "1.1")
-// What Scala version of Sake? Can specify on the command line with SCALA_VERSION=...
-val scalaVersion = environment.getOrElse("SCALA_VERSION", "2.12.4")
+  target('all -> Seq('clean, 'compile, 'test, 'jars))
 
-// If true, don't actually run any commands.
-environment.dryRun = false
+  target('jars -> Seq('jar, 'srcjar))
 
-// If true, show stack traces when a failure happens (doesn't affect "errors").
-showStackTracesOnFailures = false
+  target('jar) { context =>
+    val jarName = s"${targetDir}/sake-${scalaVersion}-${version}.jar"
+    sh(s"jar cf ${jarName} -C ${targetDir} sake")
+    sh(s"cp ${jarName} ${libDir}/${scalaVersion}")
+  }
 
-// Logging level: Info, Notice, Warn, Error, Failure
-log.threshold = Level.Info
+  target('srcjar) { context =>
+    val jarName = s"${targetDir}/sake-${scalaVersion}-${version}-src.jar"
+    sh(s"jar cf ${jarName} -C ${srcDir} sake")
+    sh(s"cp ${jarName} ${libDir}/${scalaVersion}")
+  }
 
-// Add to the classpath using list semantics.
-environment.classpath ++= (files(libDir + "*.jar") -- files(libDir + "*src.jar"))
-environment.classpath += buildDir
-
-target('all -> List('clean, 'compile, 'spec, 'jars))
-
-target('jars -> List('jar, 'srcjar))
-
-target('jar) {
-    val jarName = buildDir+"/sake-"+scalaVersion+"-"+version+".jar"
-    sh("jar cf "+jarName+" -C "+buildDir+" sake")
-    sh("cp "+jarName+" "+libDir+"/"+scalaVersion)
-}
-
-target('srcjar) {
-    val jarName = buildDir+"/sake-"+scalaVersion+"-"+version+"-src.jar"
-    sh("jar cf "+jarName+" -C "+buildDir+" sake")
-    sh("cp "+jarName+" "+libDir+"/"+scalaVersion)
-}
-
-target('spec) {
+  target('test) { context =>
     specs(
        'classpath -> environment.classpath,
-       'path -> "./spec/**/*.scala",
+       'path -> "./src/test/scala/**/*.scala",
        'pattern -> ".*Spec.*"
     )
-}
+  }
 
-target('compile -> List('clean, 'build_dir)) {
-    scalac(
-        'files     -> files(srcDir+"**/*.scala", specDir+"**/*.scala"),
-        'classpath -> environment.classpath,
-        'd         -> buildDir,
-        'opts      -> ("-unchecked -deprecation") // -Xplugin:" + sxr +" -P:sxr:base-directory:.")
-    )
-}
+  target('compile -> Seq('clean, 'target_dir)) { context =>
+    val flags = "-unchecked -deprecation"
+    val files = files(s"${srcDir}/**/*.scala", s"${testDir}/**/*.scala")
+    sh("scalac -d ${targetDir} -classpath ${Properties.classpath} ${flags} ${files}")
 
-target('clean) {
-    deleteRecursively(buildDir)
-}
+    // scalac(
+    //   files(properties.srcDir / "**/*.scala", properties.testDir / "**/*.scala"),
+    //   classpath(properties.classpath),
+    //   targetDir(properties.targetDir),
+    //   unchecked,
+    //   deprecation)
+  }
 
-target('build_dir) {
-    mkdir(buildDir)
-}
+  target('clean) { context =>
+      deleteRecursively(targetDir)
+  }
 
-target('fail) {
-    fail("boo!")
-}
+  target('target_dir) { context =>
+      mkdir(targetDir)
+  }
 
-import sake.util._
-target('ls) {
-    shell('command -> "ls", 'opts -> ".", 'outputFile -> File("foo.txt"))
-}
-target('cat ) {
-    shell('command -> "cat", 'inputFile -> File("foo.txt"), 'outputFile -> File("foo.txt2"))
-}
+  target('fail) { context =>
+      fail("boo!")
+  }
 
+  import sake.util._
+  target('ls) { context =>
+      sh(s"ls . > foo.txt")
+  }
+  target('cat ) { context =>
+      sh("cat foo.txt > foo.txt2")
+  }
+
+}

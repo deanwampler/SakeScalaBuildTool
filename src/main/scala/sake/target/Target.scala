@@ -1,63 +1,95 @@
 package sake.target
 
-import scala.collection.immutable._
-import sake.util._
+import sake.util.{Dedup, Exit}
+import sake.command.{Result, Passed, Failed}
 
-/** Basic target class that can have only dependencies not an action.
- * The dependencies are handles as private vars so they can be updated. It would
- * be nice to simply create a new Target when the dependencies are updates. Unfortunately,
- * you can't clone a by-name value, which is used in the TargetWithAction subclass.
+/**
+ * A Target has zero or more dependencies and a sequence of actions (which can be empty).
  */
-class Target(val name: Symbol, deps: List[Symbol]) {
-    private var deps_ = SymbolUtil.removeDuplicates(deps)
-    
-    def dependencies = deps_
-    
-    def build() = {}
-    
-    override def toString = String.format("%s: name = %s, dependencies = %s", getClass.getSimpleName, name, dependencies)
-}
+case class Target protected (name: String, dependencies: Seq[String], actions: Seq[Target.Action]) {
 
+  def apply(action: Target.Action): Target = copy(actions = actions :+ action)
 
-class TargetWithAction(name: Symbol, deps: List[Symbol], action: => Unit) 
-    extends Target(name, deps){
-    
-    override def build() = {
-        try {
-            action
-        } catch {
-            case th:Throwable => Exit.error("target \""+name.name+"\" failed: ", th)
-        }
+  def build(context: Target.Context): Result = {
+    try {
+      Target.buildActions(context, actions)
+    } catch {
+      case scala.util.control.NonFatal(ex) => Failed.exception(s"target ${name}", ex)
     }
+  }
 }
 
 object Target {
-    def apply(name:Symbol) = new Target(name, Nil)
-    def apply(name:Symbol, dependencies:List[Symbol]) = new Target(name, dependencies)
-    def apply(name:Symbol, dependencies:List[Symbol], action: => Unit) = 
-        new TargetWithAction(name, dependencies, action)
 
-    def merge(t1: Target, t2: Target): Target = {
-        validateMerge(t1, t2)
-        doMerge(t1, t2)
+  type Context = Map[String, Any]
+  type Action = Context => Result
+
+  /** Track all definitions for a target */
+  def targets: Map[String, Target] = allTargets
+
+  protected var allTargets: Map[String, Target] = Map.empty
+
+  /** Example: target(name, dependencies = Seq(dep1, dep2, ...), actions = Seq(act1, ...)) */
+  def apply(name: String, dependencies: Seq[String] = Vector.empty, actions: Seq[Action] = Vector.empty): Target =
+    makeTarget(name, dependencies, actions)
+
+  /** Example: target('name -> Seq('a, 'b), actions = Seq(act1, ...)) */
+  def apply(name_dependencies: (String, Seq[String]), actions: Seq[Action] = Vector.empty): Target =
+    makeTarget(name_dependencies._1, name_dependencies._2, actions)
+
+  /**
+   * Several names, with the same dependencies and actions.
+   * Example: target(names = Seq(name1, ...), dependencies = Seq(dep1, ...), actions = Seq(act1, ...))
+   */
+  def apply(names: Seq[String], dependencies: Seq[String] = Vector.empty, actions: Seq[Action] = Vector.empty): Vector[Target] =
+    names.map(n => makeTarget(n, dependencies, actions)).toVector
+
+  /**
+   * Several names, with the same dependencies and actions.
+   * Example: target(names_dependencies = (Seq(name1, ...) -> Seq(dep1, ...), actions = Seq(act1, ...))
+   */
+  def apply(names_dependencies: (Seq[String], Seq[String]), actions: Seq[Action] = Vector.empty): Vector[Target] = {
+    val names = names_dependencies._1
+    val dependencies = names_dependencies._2
+    names.map(n => makeTarget(n, dependencies, actions)).toVector
+  }
+
+  def buildActions(context: Context, actions: Seq[Action]): Result = {
+    def b(lastResult: Result, acts: Seq[Action]): Result = acts match {
+      case Nil => lastResult
+      case head +: tail =>
+        val result = head(context)
+        if (result.passed) b(result, tail) else result
     }
-    
-    private def validateMerge(t1: Target, t2: Target) = {
-        if (t1.name != t2.name)
-            Exit.error("Target.merge() called with two targets that don't have the same name: "+t1.name+", "+t2.name)
-        if (t1.isInstanceOf[TargetWithAction] && t2.isInstanceOf[TargetWithAction])
-            Exit.error("A target can have only one action. Two targets named "+t2.name
-                        +" both have actions defined.")
+    b(Passed.default, actions)
+  }
+
+  protected def makeTarget(name: String, dependencies: Seq[String], actions: Seq[Action]): Target = {
+    val t = new Target(name, Dedup(dependencies), actions)
+    val returnT = allTargets.get(name) match {
+      case None =>
+        allTargets += (name -> t)
+        t
+      case Some(t2) =>
+        val tt = Target.merge(t, t2)
+        allTargets += (name -> tt)
+        tt
     }
-        
-    private def doMerge(t1: Target, t2: Target) = t1 match {
-        // Merge dependencies in the declaration (lexical) order: t1 then t2!
-        case t:TargetWithAction => mergeDepsAndReturn(t1, t1, t2)
-        case _                  => mergeDepsAndReturn(t2, t1, t2)
-    }
-    
-    private def mergeDepsAndReturn(returnedTarget: Target, t1: Target, t2: Target) = {
-        returnedTarget.deps_ = SymbolUtil.removeDuplicates(t1.deps_ ::: t2.deps_)
-        returnedTarget
-    }
+    returnT
+  }
+
+  /**
+   * Merge two targets. The dependencies of t1 are taken first, with duplicates removed.
+   * A new action is synthesized from the two actions of the input targets, with t1 going first.
+   */
+  protected def merge(t1: Target, t2: Target): Target = {
+    validateMerge(t1, t2)
+    val deps = Dedup(t1.dependencies ++ t2.dependencies)
+    new Target(t1.name, deps, t1.actions ++ t2.actions)
+  }
+
+  protected def validateMerge(t1: Target, t2: Target) =
+    if (t1.name != t2.name)
+      Exit.error("Target.merge() called with two targets that don't have the same name: "+t1.name+", "+t2.name)
+
 }

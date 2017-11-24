@@ -1,15 +1,16 @@
 package sake.util
 
-import org.specs._ 
+import org.scalatest._
+import org.scalatest.Matchers._
 
-object ClassUtilSpec extends Specification { 
+object ClassUtilSpec extends FreeSpec {
     "toFullyQualifiedName" should {
         "accept an optional prefix to remove from the file name" in {
-            ClassUtil.toFullyQualifiedName("foo/bar/Baz.class") mustEqual "foo.bar.Baz"
+            ClassUtil.toFullyQualifiedName("foo/bar/Baz.class") shouldEqual "foo.bar.Baz"
         }
 
         "accept an optional prefix to remove from the file name" in {
-            ClassUtil.toFullyQualifiedName("foo/bar/Baz.class", "") mustEqual "foo.bar.Baz"
+            ClassUtil.toFullyQualifiedName("foo/bar/Baz.class", "") shouldEqual "foo.bar.Baz"
         }
 
         "throw a BuildError if the file name does not have the specified prefix to remove" in {
@@ -17,23 +18,23 @@ object ClassUtilSpec extends Specification {
         }
 
         "remove the prefix from the file name" in {
-            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz.class", "build/") mustEqual "foo.bar.Baz"
+            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz.class", "build/") shouldEqual "foo.bar.Baz"
         }
 
         "remove the prefix from the file name" in {
-            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz.class", "build/") mustEqual "foo.bar.Baz"
+            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz.class", "build/") shouldEqual "foo.bar.Baz"
         }
 
         "replace all '/' with '.'" in {
-            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz.class", "build/") mustEqual "foo.bar.Baz"
+            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz.class", "build/") shouldEqual "foo.bar.Baz"
         }
 
         "remove the trailing '.class'" in {
-            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz.class", "build/") mustEqual "foo.bar.Baz"
+            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz.class", "build/") shouldEqual "foo.bar.Baz"
         }
 
         "ignore a missing trailing '.class'" in {
-            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz", "build/") mustEqual "foo.bar.Baz"
+            ClassUtil.toFullyQualifiedName("build/foo/bar/Baz", "build/") shouldEqual "foo.bar.Baz"
         }
     }
 }

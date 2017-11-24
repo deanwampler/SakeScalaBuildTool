@@ -1,88 +1,86 @@
 package sake.util
 
-import org.specs._ 
+import org.scalatest._
+import org.scalatest.Matchers._
 
-object FilesFinderSpec extends Specification { 
+object FilesFinderSpec extends FreeSpec {
 
-    import sake.environment._
-    
+    import sake.context._
+
     "FilesFinder" should {
-        
+
         "throw a BuildError if all specified strings are empty" in {
             (new FilesFinder()("")) must throwA[BuildError]
             (new FilesFinder()("", "")) must throwA[BuildError]
             (new FilesFinder()(List("",""))) must throwA[BuildError]
         }
-        
+
         "throw a BuildError if empty lists of strings are specified" in {
             (new FilesFinder()(List())) must throwA[BuildError]
             (new FilesFinder()(Nil)) must throwA[BuildError]
         }
 
         "ignore empty input strings" in {
-            new FilesFinder()("", ".", "") mustEqual List(".")
+            new FilesFinder()("", ".", "") shouldEqual List(".")
         }
-    
+
         "return List('.') for specification '.'" in {
-            new FilesFinder()(".") mustEqual List(".")
+            new FilesFinder()(".") shouldEqual List(".")
         }
         "return List('..') for specification '..'" in {
-            new FilesFinder()("..") mustEqual List("..")
+            new FilesFinder()("..") shouldEqual List("..")
         }
         "return List('foo/bar/baz') for specification 'foo/bar/baz' if it exists" in {
-            val f = new FilesFinder() {
-                override def makeFile(path: String) = {
-                    val p = if (path.length == 0) "." else path
-                    p match {
-                        case "foo" => new FakeFile(p, true, true, List("bar"))
-                        case "foo/bar" => new FakeFile(p, true, true, List("baz"))
-                        case "foo/bar/baz" => new FakeFile(p, true, true, Nil)
-                        case _ => new FakeFile(p)
-                    }
-                }
+          val f = new FilesFinder() {
+            def toFile(parent: File, name: String): File = toFile(parent.getPath+"/"+name)
+            def toFile(path: String): File = path match {
+              case "" => new FakeFile(".")
+              case "foo" => new FakeFile(p, true, true, List("bar"))
+              case "foo/bar" => new FakeFile(p, true, true, List("baz"))
+              case "foo/bar/baz" => new FakeFile(p, true, true, Nil)
+              case _ => new FakeFile(p)
             }
-            f("foo/bar/baz") mustEqual List("foo/bar/baz")
+          }
+          f("foo/bar/baz") shouldEqual List("foo/bar/baz")
         }
         "return Nil for specification 'foo/bar/baz' if it does not exists" in {
-            val f = new FilesFinder() {
-                override def makeFile(path: String) = {
-                    val p = if (path.length == 0) "." else path
-                    p match {
-                        case "foo" => new FakeFile(p, true, true, List("bar"))
-                        case "foo/bar" => new FakeFile(p, true, true, List(""))
-                        case "foo/bar/baz" => new FakeFile(p)
-                        case _ => new FakeFile(p)
-                    }
-                }
+          val f = new FilesFinder() {
+            def toFile(parent: File, name: String): File = toFile(parent.getPath+"/"+name)
+            def toFile(path: String): File = path match {
+              case "" => new FakeFile(".")
+              case "foo" => new FakeFile(p, true, true, List("bar"))
+              case "foo/bar" => new FakeFile(p, true, true, List(""))
+              case "foo/bar/baz" => new FakeFile(p)
+              case _ => new FakeFile(p)
             }
-            f("foo/bar/baz") mustEqual Nil
+          }
+          f("foo/bar/baz") shouldEqual Nil
         }
-        
+
         val fFooBar12Baz = new FilesFinder() {
-            override def makeFile(path: String) = {
-                val p = if (path.length == 0) "." else path
-                p match {
-                    case "." => new FakeFile(p, true, true, List("foo"))
-                    case "foo" => new FakeFile(p, true, true, List("bar1", "bar2"))
-                    case "foo/bar1" => new FakeFile(p, true, true, List("baz"))
-                    case "foo/bar2" => new FakeFile(p, true, true, List("baz"))
-                    case "foo/bar1/baz" => new FakeFile(p, true, true, Nil)
-                    case "foo/bar2/baz" => new FakeFile(p, true, true, Nil)
-                    case _ => new FakeFile(p)
-                }
-            }
+          def toFile(parent: File, name: String): File = toFile(parent.getPath+"/"+name)
+          def toFile(path: String): File = path match {
+            case "" => new FakeFile(".")
+            case "." => new FakeFile(p, true, true, List("foo"))
+            case "foo" => new FakeFile(p, true, true, List("bar1", "bar2"))
+            case "foo/bar1" => new FakeFile(p, true, true, List("baz"))
+            case "foo/bar2" => new FakeFile(p, true, true, List("baz"))
+            case "foo/bar1/baz" => new FakeFile(p, true, true, Nil)
+            case "foo/bar2/baz" => new FakeFile(p, true, true, Nil)
+            case _ => new FakeFile(p)
+          }
         }
 
         "return List('foo/bar1/baz', 'foo/bar2/baz') for specification 'foo/*/baz' if they exist..." in {
-            fFooBar12Baz("foo/*/baz") mustEqual List("foo/bar1/baz", "foo/bar2/baz")
+            fFooBar12Baz("foo/*/baz") shouldEqual List("foo/bar1/baz", "foo/bar2/baz")
         }
-        
+
         "return List('foo') for specification '*' if it is the only item in '.'" in {
-            fFooBar12Baz("*") mustEqual List("foo")
+            fFooBar12Baz("*") shouldEqual List("foo")
         }
 
         "return List('foo/bar1') for specification '*/bar1' 'bar1' is the only item in 'foo'" in {
-            fFooBar12Baz("*/bar1") mustEqual List("foo/bar1")
+            fFooBar12Baz("*/bar1") shouldEqual List("foo/bar1")
         }
 
         "return Nil for specification 'foo/*/baz' if neither 'foo/bar1' nor 'foo/bar2' has a 'baz'" in {
@@ -100,7 +98,7 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("foo/bar/baz") mustEqual Nil
+            f("foo/bar/baz") shouldEqual Nil
         }
 
         "return Nil for specification '*' if the current directory is empty" in {
@@ -112,7 +110,7 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("*") mustEqual Nil
+            f("*") shouldEqual Nil
         }
 
         val fFooBar12BazMore = new FilesFinder() {
@@ -136,24 +134,24 @@ object FilesFinderSpec extends Specification {
         }
 
         "return List('foo/bar1/baz', ...) for specification 'foo/**/baz' if they exist" in {
-            fFooBar12BazMore("foo/**/baz") mustEqual List(
+            fFooBar12BazMore("foo/**/baz") shouldEqual List(
                 "foo/bar1/baz",
                 "foo/bar2/baz",
                 "foo/bar2/a/baz",
                 "foo/bar2/a/b/baz")
         }
-        
+
         "return List('foo/bar1/baz', ...) for specification '**/baz' if they exist" in {
-            fFooBar12BazMore("**/baz") mustEqual List(
+            fFooBar12BazMore("**/baz") shouldEqual List(
                 "foo/bar1/baz",
                 "foo/bar2/baz",
                 "foo/bar2/a/baz",
                 "foo/bar2/a/b/baz")
         }
-        
+
 
         "return List('foo/bar1/*Spec.class', ...) for specification 'foo/**/*Spec.class' if they exist..." in {
-            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class") mustEqual FakeFileForSpecs.fakeFilesExpected
+            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class") shouldEqual FakeFileForSpecs.fakeFilesExpected
         }
 
         "return Nil for specification 'foo/**/baz' if neither 'foo/bar1' nor 'foo/bar2' has a 'baz'" in {
@@ -174,7 +172,7 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("foo/**/baz") mustEqual Nil
+            f("foo/**/baz") shouldEqual Nil
         }
 
         "return Nil for specification '**' if the current directory is empty" in {
@@ -186,37 +184,37 @@ object FilesFinderSpec extends Specification {
                     }
                 }
             }
-            f("**") mustEqual Nil
+            f("**") shouldEqual Nil
         }
     }
-    
+
     "A specification like foo/bar1/**/*.class should match foo/bar1/Foo.scala, e.g., ** maps zero or more subpaths" should {
         "be fixed" in {
-            FakeFileForSpecs.oneFakeFile("foo/bar1/**/*.class") mustEqual FakeFileForSpecs.oneFakeFileExpected
-        }        
-        
+            FakeFileForSpecs.oneFakeFile("foo/bar1/**/*.class") shouldEqual FakeFileForSpecs.oneFakeFileExpected
+        }
+
     }
-    
+
     "When the specification has elements that don't overlap, apply()" should {
         "return the sum of the lists" in {
-            FakeFileForSpecs.fakeFilesFinder("foo/bar1/**/*Spec.class", "foo/bar2/**/*Spec.class") mustEqual FakeFileForSpecs.fakeFilesExpected
+            FakeFileForSpecs.fakeFilesFinder("foo/bar1/**/*Spec.class", "foo/bar2/**/*Spec.class") shouldEqual FakeFileForSpecs.fakeFilesExpected
         }
     }
-    
+
     "When the specification has elements that overlap, apply()" should {
         "returns the union of the lists (i.e., with duplicates removed)" in {
-            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class", "foo/bar2/**/*Spec.class") mustEqual FakeFileForSpecs.fakeFilesExpected
+            FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class", "foo/bar2/**/*Spec.class") shouldEqual FakeFileForSpecs.fakeFilesExpected
         }
     }
-    
+
     "When one specification is subtracted from another spec., apply()" should {
         "return the first list minus the second" in {
             val fakes = FakeFileForSpecs.fakeFilesFinder("foo/**/*Spec.class")
             val skips = FakeFileForSpecs.fakeFilesFinder("foo/bar1/**")
-            (fakes filterNot { x => skips contains x }).sortWith(_.length < _.length) mustEqual FakeFileForSpecs.fakeFilesExpectedBar2a
+            (fakes filterNot { x => skips contains x }).sortWith(_.length < _.length) shouldEqual FakeFileForSpecs.fakeFilesExpectedBar2a
         }
     }
-    
+
     "FilesFinder.isDirectory" should {
         "return true for a directory" in {
             (new FilesFinder).isDirectory(".") must beTrue

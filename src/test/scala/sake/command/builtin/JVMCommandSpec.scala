@@ -1,17 +1,18 @@
 package sake.command.builtin
 
-import org.specs._
+import org.scalatest._
+import org.scalatest.Matchers._
 import scala.util.matching.Regex
 import sake.util._
-import sake.environment._
+import sake.context._
 import java.io.{PrintStream, ByteArrayOutputStream}
 
-object JVMCommandSpec extends Specification {
-    val savedDryRun = Environment.default.dryRun
+object JVMCommandSpec extends FreeSpec {
+    val savedDryRun = Environment.dryRun
     val savedLog    = Log.log
     var byteStream  = new ByteArrayOutputStream()
     var newStream   = new PrintStream(byteStream)
-    val delim = Environment.default.pathSeparator
+    val delim = Environment.pathSeparator
 
     def checkString(regex: Regex, actual: String) = {
         (regex findFirstIn actual) match {
@@ -21,12 +22,12 @@ object JVMCommandSpec extends Specification {
     }
 
     doBeforeSpec {
-        Environment.default.dryRun = true
+        Environment.dryRun = true
         Log.log = new Log(Level.Info, newStream)
     }
 
     doAfterSpec {
-        Environment.default.dryRun = savedDryRun
+        Environment.dryRun = savedDryRun
         Log.log = savedLog
     }
 

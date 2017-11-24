@@ -1,28 +1,29 @@
 package sake.util
 
-import org.specs._ 
+import org.scalatest._
+import org.scalatest.Matchers._
 
-object ExitSpec extends Specification { 
+object ExitSpec extends FreeSpec {
     val oldLog = Log.log
-    
+
     doBeforeSpec {
         // Suppress stdout/stderr output...
         import java.io.{PrintStream, ByteArrayOutputStream}
         val newStream = new PrintStream(new ByteArrayOutputStream())
         Log.log = new Log(Level.Warn, newStream)
     }
-    
+
     doAfterSpec {
         Log.log = oldLog
     }
-    
+
     "The error method with just a message" should {
         "throw a BuildError with the message" in {
             try {
-                Exit.error("message") 
+                Exit.error("message")
                 fail()
             } catch {
-                case BuildError(msg, th) =>  msg mustEqual "message"
+                case BuildError(msg, th) =>  msg shouldEqual "message"
                 case _ => fail()
             }
         }
@@ -32,12 +33,12 @@ object ExitSpec extends Specification {
         "throw a BuildError with the message and the throwable" in {
             val ex = new Exception()
             try {
-                Exit.error("message", ex) 
+                Exit.error("message", ex)
                 fail()
             } catch {
                 case BuildError(msg, th) =>  {
-                    msg mustEqual "message"
-                    (th eq ex) mustEqual true
+                    msg shouldEqual "message"
+                    (th eq ex) shouldEqual true
                 }
                 case _ => fail()
             }

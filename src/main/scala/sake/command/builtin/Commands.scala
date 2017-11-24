@@ -1,14 +1,14 @@
 package sake.command.builtin
 
 import sake.command._
-import sake.util._
-import sake.util.Path._
+import sake.files.{File, JavaFilesFinder, Path}
+import sake.util.Exit
 
 trait Commands {
 
   var classpath = Path()
 
-  val files = new FilesFinder()
+  val files = JavaFilesFinder
 
   def mkdirs(paths: String*): Unit = mkdirs(paths.toList)
 
@@ -52,17 +52,12 @@ trait Commands {
    */
   def sh(command: String) = ShellCommand(command)
 
-  /**
-   * Use "shell" for invoking a shell command with key-value pairs.
-   */
-  val shell = new ShellCommand("shell", Map('command -> "shell", 'opts -> ""))
-
   val echo = new EchoCommand()
 
   val scala  = new JVMCommand("scala")
   val scalac = new JVMCommand("scalac", 'files -> ".")
 
-  val specs  = new SpecCommand()
+  // val specs  = new SpecCommand()
 
   val java   = new JVMCommand("java")
   val javac  = new JVMCommand("javac", 'files -> ".")

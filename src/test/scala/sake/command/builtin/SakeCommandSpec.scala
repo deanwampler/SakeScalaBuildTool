@@ -1,24 +1,25 @@
 package sake.command.builtin
 
 import sake.command._
-import org.specs._ 
+import org.scalatest._
+import org.scalatest.Matchers._
 
-object SakeCommandSpec extends Specification {
+object SakeCommandSpec extends FreeSpec {
     def makeTestSakeCommand(expectedFile: String, expectedTargets: String) = {
         new SakeCommand() {
             override def action(options: Map[Symbol, Any]):Result = {
                 val command = options.getOrElse('command, "").toString()
                 val input   = options.getOrElse('inputText, "").toString()
-                command mustEqual "scala"
+                command shouldEqual "scala"
                 (":load "+expectedFile+"\\s*[\\n\\r]+\\s*build\\(\""+expectedTargets+"\"\\)").r findFirstIn input match {
                     case None => fail(input)
-                    case Some(_) => 
+                    case Some(_) =>
                 }
-                new Passed()
-            } 
+                Passed()
+            }
         }
     }
-    
+
     "SakeCommand" should {
         "default to 'sake.scala' for the sake file" in {
             val sc = makeTestSakeCommand("sake.scala", "all")
@@ -30,7 +31,7 @@ object SakeCommandSpec extends Specification {
             sc()
         }
     }
-    
+
     "Invoking a SakeCommand object" should {
         "override the sake file if 'f is specified" in {
             val sc = makeTestSakeCommand("sake2.scala", "all")
@@ -52,6 +53,6 @@ object SakeCommandSpec extends Specification {
             sc('targets -> List("foo", 'bar))
         }
     }
-    
+
 }
 

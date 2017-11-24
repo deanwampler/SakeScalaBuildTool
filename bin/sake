@@ -1,4 +1,4 @@
-#!/bin/bash -- 
+#!/bin/bash --
 #===================================================================
 # sake - driver command for "sake" build tool.
 # Run "sake -h" for help.
@@ -87,8 +87,8 @@ done
 
 cygwin=false;
 case "`uname`" in
-    CYGWIN*) 
-        cygwin=true 
+    CYGWIN*)
+        cygwin=true
         SAKE_HOME=`cygpath --$format "$SAKE_HOME"`
         CLASSPATH=`cygpath --path --$format "$CLASSPATH"`
         ;;

@@ -1,106 +1,117 @@
 package sake
 
+// import scala.collection.immutable._
 import sake.command.builtin.Commands
-import scala.collection.immutable._
-import sake.environment._
-import sake.target._
-import sake.util._
-
+import sake.command.{Result, Passed, Failed}
+import sake.context.{Properties, Settings}
+import sake.target.Target
+import sake.util.{Exit, Log}
 
 /**
-* The ProjectDriver class is extended by the Project object.
-* The latter is used in actual build scripts, while the former is most
-* useful for testing.
+* The Project class defines actual build scripts.
 */
-class ProjectDriver extends Commands {
+class Project extends Commands {
 
-  val environment = Environment.default
-  var log = Log.log
-  val Level = sake.util.Level
+  var settings: Settings = Settings.default
+  var log: Log = Log.log
+  var logLevel: Log.Level.Value = Log.Level.Info
+
+  /**
+   * If true, don't actually build anything, just report the the commands that would be executed.
+   */
+  var dryRun = false
 
   var showStackTracesOnFailures = true
 
-  private var allTargetGrps: List[TargetGroup] = Nil
+  def build(targetName: String): Result = build(Seq(targetName))
 
-  def allTargetGroups = allTargetGrps.reverse // return in declared order
-
-  private var allTargs: Map[Symbol, Target] = Map().empty
-
-  def allTargets: Map[Symbol, Target] = {
-    if (allTargs.size == 0) allTargs ++= rationalizeTargetsFromGroups()
-    allTargs
+  def build(targetNames: Seq[String]): Result = {
+    val context = Map.empty[String, Any]  // Target.Context
+    def b(lastResult: Result, targs: Seq[Target]): Result = targs match {
+      case Nil => lastResult
+      case head +: tail =>
+        val result = doBuild(context, head)
+        if (result.passed) b(result, tail) else result
+    }
+    val result = b(Passed.default, determineTargets(targetNames))
+    result match {
+      case p: Passed => Log.log.info(s"Success! $p")
+      case f: Failed => handleBuildError(f)
+    }
+    result
   }
 
-  def build(targs: Symbol):Unit = build(List(targs))
+  protected def determineTargets(targetNames: Seq[String]): Seq[Target] =
+    determineBuildOrder(targetNames).distinct
 
-  def build(targs: String):Unit = build(targs.split(" ").map(Symbol(_)).toList)
-
-  def build(targs: Array[String]):Unit = build(targs.map(Symbol(_)).toList)
-
-  def build(targs: List[Symbol]):Unit =
-    determineTargets(targs) foreach { t => doBuild(t) }
-
-  protected def determineTargets(targs: List[Symbol]):List[Target] =
-    determineBuildOrder(targs).distinct
-
-  protected def determineBuildOrder(targs: List[Symbol]): List[Target] = {
-    targs.reverse.foldLeft(List[Target]()) { (all, t) =>
-      allTargets.get(t) match {
+  protected def determineBuildOrder(targetNames: Seq[String]): Seq[Target] = {
+    targetNames.foldLeft(Vector.empty[Target]) { (allTargs, t) =>
+      Target.targets.get(t) match {
         case None => Exit.error("No target "+t+" found!")
-        case Some(targ) => determineBuildOrder(targ.dependencies) ::: (targ :: all)
+        case Some(targ) =>
+          // Put dependencies before targ!
+          allTargs ++ determineBuildOrder(targ.dependencies) :+ targ
       }
     }
   }
 
-
-  protected def doBuild(t: Target) = {
-    log(Level.Info, "building "+t.name)
+  protected def doBuild(context: Target.Context, target: Target): Result = {
+    log(logLevel, "building "+target.name)
     try {
-      t.build()
+      target.build(context)
     } catch {
-      case BuildError(msg, th) => handleBuildError(msg, th)
+      case _root_.scala.util.control.NonFatal(ex) => Failed.exception(s"target ${target.name}", ex)
     }
   }
 
   /**
-   * Create one or more targets, passed in as a vararg list of Strings and/or
-   * Symbols or Lists of the same.
-   * @return TargetGroup containing the new Targets.
+   * Create a target with a sequence of dependencies and actions.
+   * Example: target(name, dependencies = Seq(dep1, dep2, ...), actions = Seq(act1, ...))
+   * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
+   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def target(targets: Any*) = {
-    val group = targets.foldLeft(new TargetGroup()) {
-      (group, targ) =>
-      group ::: (targ match {
-        case (n, deps) => TargetGroup(n, deps)
-        case n         => TargetGroup(n, Nil)
-      })
-    }
-    allTargetGrps ::= group
-    group
-  }
+  def target(name: String, dependencies: Seq[String] = Vector.empty, actions: Seq[Target.Action] = Vector.empty): Target =
+    Target(name, dependencies, actions)
 
-  private def rationalizeTargetsFromGroups() =
-    allTargetsFromGroups().foldLeft(allTargs) { (map, targ) =>
-      val targ2 = map.get(targ.name) match {
-        case None => targ
-        case Some(t) => Target.merge(t, targ)
-      }
-      map.updated(targ2.name, targ2)
-    }
+  /**
+   * Create a target with a sequence of dependencies and actions.
+   * Example: target('name -> Seq('a, 'b), actions = Seq(act1, ...))
+   * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
+   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
+   */
+  def target(name_dependencies: (String, Seq[String]), actions: Seq[Target.Action] = Vector.empty): Target =
+    Target(name_dependencies, actions)
 
-  private def allTargetsFromGroups() = {
-    for {
-      group <- allTargetGroups
-      targ  <- group.targets
-    } yield targ
-  }
+  /**
+   * Create one or more targets, passed in as a sequence of Strings, with the same
+   * sequence of dependencies and actions.
+   * Example: target(names = Seq(name1, ...), dependencies = Seq(dep1, ...), actions = Seq(act1, ...))
+   * @return Vector[Target] of the new Targets.
+   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
+   */
+  def target(names: Seq[String], dependencies: Seq[String] = Vector.empty, actions: Seq[Target.Action] = Vector.empty): Vector[Target] =
+    Target(names, dependencies, actions)
 
-  private def handleBuildError(msg: String, th: Throwable) {
-    if (showStackTracesOnFailures && th != null) {
-      th.printStackTrace(log.out)
+  /**
+   * Create one or more targets, passed in as a sequence of Symbols, Strings,
+   * or tuples, (name -> sequence of dependency names).
+   * Example: target(names_dependencies = (Seq(name1, ...) -> Seq(dep1, ...), actions = Seq(act1, ...))
+   * @return Vector[Target] of the new Targets.
+   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
+   */
+  def target(names_dependencies: (Seq[String], Seq[String]), actions: Seq[Target.Action] = Vector.empty): Vector[Target] =
+    Target(names_dependencies, actions)
+
+  private def handleBuildError(failed: Failed) {
+    Console.err.println(s"Build failure: $failed")
+    failed.cause match {
+      case Some(cause) if showStackTracesOnFailures => cause.printStackTrace(log.out)
+      case _ => // do nothing
     }
-    System.exit(1)
+    Exit.error("Build failed")
   }
 }
 
-object Project extends ProjectDriver
+object Project {
+  def apply() = new Project()
+}

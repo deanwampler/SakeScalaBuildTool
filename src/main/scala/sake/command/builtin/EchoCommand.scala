@@ -8,17 +8,17 @@ import sake.util._
  * You can also use "println". use EchoCommand if you want the output to be logged consistently
  * with the rest of the build output.
  */
-class EchoCommand(val defaultLevel: Level.Value) extends Command[Symbol,Any]("echo") {
-    
-    def this() = this(Level.Notice)
-    
+class EchoCommand(val defaultLevel: Log.Level.Value) extends Command[Symbol,Any]("echo") {
+
+    def this() = this(Log.Level.Notice)
+
     def apply(str: String): Result = {
         val list = str.split(" ").toList
-        apply('words -> str.split(" ").toList)
+        apply("words" -> str.split(" ").toList)
     }
 
     override def action(options: Map[Symbol,Any]) = {
-        val words = options.get('words) match {
+        val words = options.get("words") match {
             case None => ""
             case Some(x) => x match {
                 case list:List[_] => list.map(_.toString()).reduceRight(_+" "+_)
@@ -28,14 +28,14 @@ class EchoCommand(val defaultLevel: Level.Value) extends Command[Symbol,Any]("ec
         val level = options.get('level) match {
             case None => defaultLevel
             case Some(l) => l match {
-                case lev:Level.Value => lev
+                case lev:Log.Level.Value => lev
                 case _ => Exit.error("Invalid value for level ("+l+"). Must be a Log Level.")
             }
         }
-        Log.log(level, words) 
-        new Passed()
+        Log.log(level, words)
+        Passed()
     }
-    
-    override val requiredOptions: List[Symbol] = List('words)
+
+    override val requiredOptions: List[Symbol] = List("words")
 }
 

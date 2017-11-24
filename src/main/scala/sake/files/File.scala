@@ -1,9 +1,11 @@
-package sake.util
+package sake.files
 
 import java.io.{File => JFile, FilenameFilter => JFilenameFilter,
     Reader => JReader, Writer => JWriter}
 import scala.util.matching.Regex
-import sake.environment._
+
+import sake.context.Properties
+import sake.util.BuildError
 
 /**
  * A wrapper around Java's file. It's a trait to better support mocking with subclasses
@@ -18,7 +20,12 @@ trait File {
   def contents: Option[Seq[String]]
   def contentsFilteredBy(nameFilter: String): Option[Seq[String]]
 
+  def getPath: String
+
   def createNewFile: Boolean
+
+  // A child file or directory of this directory.
+  def / (child: String): File
 
   /**
    * Create a directory with this name and any of its parent directories that don't
@@ -64,22 +71,19 @@ trait File {
 
   // These methods were extracted to facilitate creation of test doubles.
   protected def makeFile(path: String):File = File(path)
-  protected def makeFile(parent: String, child: String):File = File(parent, child)
+  protected def makeFile(elements: String*):File = File(elements :_*)
 }
 
 /**
- * By default, we instantiate JavaFileWrappers in the apply methods.
+ * By default, we instantiate JavaFiles in the apply methods.
  */
 object File {
-  def apply(path: String) = new JavaFileWrapper(path)
-  def apply(parent: String, child: String) = new JavaFileWrapper(parent, child)
+  def apply(elements: String*) = new JavaFile(makePath(elements :_*))
 
-  implicit def toJavaFile(jfw: JavaFileWrapper): JFile = jfw.javaFile
+  implicit def toJavaFile(jfw: JavaFile): JFile = jfw.javaFile
 
-  def makePath(prefix: String, elem: String): String = prefix match {
-    case "" => elem
-    case _  => prefix + Environment.default.fileSeparator + elem
-  }
+  def makePath(parent: File, name: String): String = parent.getPath + Properties.fileSeparator + name
+  def makePath(elems: String*): String = elems.mkString(Properties.fileSeparator)
 }
 
 class FileFilter(val nameFilter: String) extends JFilenameFilter {

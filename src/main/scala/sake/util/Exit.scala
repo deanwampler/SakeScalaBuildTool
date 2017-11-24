@@ -1,9 +1,13 @@
 package sake.util
 
-import sake.environment.Environment
-
 object Exit {
-    
+
+    def success(message: String = "") = {
+      val sep = if (message.length > 0) ":" else "."
+      Log.log.info(s"Exiting${sep} ${message}")
+      sys.exit(0)
+    }
+
     def error(message:String) = {
         logMessage(message)
         throw new BuildError(message)
@@ -13,7 +17,7 @@ object Exit {
         logMessage(message)
         throw new BuildError(message, throwable)
     }
-    
-    private def logMessage(message: String) = Log.log(Level.Fatal, message)
+
+    private def logMessage(message: String) = Log.log.fatal(message)
 }
-    
+
