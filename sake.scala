@@ -39,7 +39,7 @@ val sakeBuild = new Project {
        pattern(".*Spec.*"))
   }
 
-  target("compile" -> Seq("clean", dir(settings.targetdir))) { context =>
+  target("compile" -> Seq("clean", mkdir(settings.targetdir))) { context =>
     scalac(
       files(srcfiles ++ testfiles),
       classpath(properties.classpath),
