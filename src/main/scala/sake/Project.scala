@@ -4,7 +4,7 @@ package sake
 import sake.command.builtin.Commands
 import sake.command.{Result, Passed, Failed}
 import sake.context.{Properties, Settings}
-import sake.target.Target
+import sake.target.{Target, TargetVector}
 import sake.util.Log
 import sake.files.File
 
@@ -25,10 +25,7 @@ class Project extends Commands {
   var showStackTracesOnFailures = true
 
   /** The user asks to build targets. Verify they exist and build them in order! */
-  def build(targetNames: String*): Result = build(targetNames :_*)
-
-  /** The user asks to build targets. Verify they exist and build them in order! */
-  def build(targetNames: Seq[String]): Result = {
+  def build(targetNames: String*): Result = {
     def b(lastResult: Result, targs: Seq[Target[_]]): Result = targs match {
       case Nil => lastResult
       case head +: tail =>
@@ -51,11 +48,11 @@ class Project extends Commands {
   /**
    * An implicit conversion that allows you to use the Scala process API, where
    * integer exit codes are returned, as actions for targets. This function lifts
-   * a function of type `Context => Int` to `Context => Result`, based on the
-   * exit code returned.
+   * a function of type `Target.Context => Int` to `Target.Context => Result`,
+   * based on the exit code returned.
    */
-  implicit def liftExitCode(f: Context => Int): Context => Result =
-    (c: Context) => f(c) match {
+  implicit def liftExitCode(f: Target.Context => Int): Target.Context => Result =
+    (c: Target.Context) => f(c) match {
       case 0 => Passed.default
       case n => Failed(n, s"Command failed, returned exit code $n")
     }
@@ -95,122 +92,230 @@ class Project extends Commands {
     }
   }
 
-  /**
-   * Create a target with a sequence of dependencies and actions.
-   * Example: target(name, dependencies = Seq(dep1, dep2, ...), actions = Seq(act1, ...))
-   * @return the new Target. Also updates the internal map of targets.
-   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
-   */
-  def target[T](value: T, dependencies: Seq[Target[_]] = Vector.empty, actions: Seq[Target.Action] = Vector.empty): Target[T] =
-    Target[T](value, dependencies, actions)
+  // Define methods the user would typically use in a build file to create targets.
+  // The assumption is that the actions wouldn't be passed as arguments, as in the
+  // Target constructor, but instead would be defined using the Target#apply method.
 
   /**
-   * Create a target with a sequence of dependencies and actions.
-   * Example: target("name" -> Seq("a", "b"), actions = Seq(act1, ...))
+   * Create a target with no dependencies (they could be added later).
+   * Example: target(name) { action }
+   * @return the new Target. Also updates the internal map of targets.
+   */
+  def target[T](value: T): Target[T] =
+    Target[T](value, dependencies = Vector.empty, actions = Vector.empty)
+
+  /**
+   * Create a target with a sequence of dependencies.
+   * Example: target(name, dependencies = Seq(dep1, dep2, ...)) { action }
    * @return the new Target. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def target[T](value_dependencies: (T, Seq[Target[_]]), actions: Seq[Target.Action] = Vector.empty): Target[T] =
-    Target[T](value_dependencies, actions)
+  def target[T](value: T, dependencies: Seq[Target[_]]): Target[T] =
+    Target[T](value, dependencies, actions = Vector.empty)
+
+  /**
+   * Create a target with a sequence of dependencies, using a tuple syntax.
+   * Example: target("name" -> Seq("a", "b")) { action }
+   * @return the new Target. Also updates the internal map of targets.
+   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
+   */
+  def target[T](value_dependencies: (T, Seq[Target[_]])): Target[T] =
+    Target[T](value_dependencies, actions = Vector.empty)
+
+  /**
+   * Create one or more targets, passed in as a sequence, with no dependencies.
+   * If present, the action literal will apply to all the targets.
+   * Example: target(names = Seq(name1, ...)) { action }
+   * @return Vector[Target] of the new Targets.
+   */
+  def target[T](values: Seq[T]): TargetVector[T] =
+    Target[T](values, dependencies = Vector.empty, actions = Vector.empty)
 
   /**
    * Create one or more targets, passed in as a sequence, with the same sequence
-   * of dependencies and actions.
-   * Example: target(names = Seq(name1, ...), dependencies = Seq(dep1, ...), actions = Seq(act1, ...))
+   * of dependencies. If present, the action literal will apply to all the targets.
+   * Example: target(names = Seq(name1, ...), dependencies = Seq(dep1, ...)) { action }
    * @return Vector[Target] of the new Targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def target[T](values: Seq[T], dependencies: Seq[Target[_]] = Vector.empty, actions: Seq[Target.Action] = Vector.empty): Vector[Target[T]] =
-    Target[T](values, dependencies, actions)
+  def target[T](values: Seq[T], dependencies: Seq[Target[_]]): TargetVector[T] =
+    Target[T](values, dependencies, actions = Vector.empty)
 
   /**
-   * Create one or more targets, passed in as a sequence, with the same sequence
-   * of dependencies and actions.
-   * Example: target(names_dependencies = (Seq(name1, ...) -> Seq(dep1, ...), actions = Seq(act1, ...))
+   * Create one or more targets, passed in as a sequence, with a sequence of
+   * dependencies, which will apply to each target. If present, the action literal
+   * will apply to all the targets.
+   * Example: target(names_dependencies = (Seq(name1, ...) -> Seq(dep1, ...)) { action }
    * @return Vector[Target] of the new Targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def target[T](values_dependencies: (Seq[T], Seq[Target[_]]), actions: Seq[Target.Action] = Vector.empty): Vector[Target[T]] =
-    Target[T](values_dependencies, actions)
+  def target[T](values_dependencies: (Seq[T], Seq[Target[_]])): TargetVector[T] =
+    Target[T](values_dependencies, actions = Vector.empty)
 
   /**
-   * Ensure that a directory already exists, but fail if the parent doesn't exist and the
-   * createParents flag is false (default is true).
-   * Example: mkdir(File(dirName), dependencies = Seq(dep1, dep2, ...), createParents = false)
+   * Ensure that a directory exists, with no dependencies, but fail if the parent
+   * doesn't exist or the creation fails.
+   * Example: mkdir(File(dirName))
+   * @see mkdirs, which creates parents if necessary.
+   * @return the new Target. Also updates the internal map of targets.
+   */
+  def mkdir(directory: File): Target[File] =
+    Target(directory, dependencies = Vector.empty, mkdirsAction(Seq(directory), false))
+
+  /**
+   * Ensure that a directory exists, after satisfying the dependencies, but fail
+   * if the parent doesn't exist or the creation fails.
+   * Example: mkdir(File(dirName), dependencies = Seq(dep1, dep2, ...))
+   * @see mkdirs, which creates parents if necessary.
    * @return the new Target. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def dir(directory: File, dependencies: Seq[Target[_]] = Vector.empty, createParents: Boolean = true): Target[File] =
-    Target(directory, dependencies, mkdirsAction(Seq(directory), createParents))
+  def mkdir(directory: File, dependencies: Seq[Target[_]]): Target[File] =
+    Target(directory, dependencies, mkdirsAction(Seq(directory), false))
 
   /**
-   * Ensure that a directory already exists, but fail if the parent doesn't exist and the
-   * createParents flag is false.
-   * Example: mkdir(File(dirName) -> Seq(dep1, dep2, ...), createParents = false)
+   * Ensure that a directory exists, after satisfying the dependencies, but fail
+   * if the parent doesn't exist or the creation fails.
+   * Example: mkdir(File(dirName) -> Seq(dep1, dep2, ...))
+   * @see mkdirs, which creates parents if necessary.
    * @return the new Target. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def dir(directory_dependencies: (File, Seq[Target[_]]), createParents: Boolean = true): Target[File] =
-    Target(directory_dependencies, mkdirsAction(Seq(directory_dependencies._1), createParents))
+  def mkdir(directory_dependencies: (File, Seq[Target[_]])): Target[File] =
+    Target(directory_dependencies, mkdirsAction(Seq(directory_dependencies._1), false))
 
   /**
-   * Ensure that one or more directories already exist, but fail immediately if any
-   * of the parents don't exist and the createParents flag is false, or if a creation fails.
-   * Example: mkdir(Seq(File(dirName1), File(dirName2)), Seq(dep1, dep2, ...), createParents = false)
+   * Ensure that one or more directories exist, with no dependencies, but fail
+   * if a parent doesn't exist, or if a creation fails. The process stops on the first failure.
+   * Example: mkdir(Seq(File(dirName1), File(dirName2)))
+   * @see mkdirs, which creates parents if necessary.
+   * @return the new Target. Also updates the internal map of targets.
+   */
+  def mkdir(directories: Seq[File]): Target[Seq[File]] =
+    Target(directories, dependencies = Vector.empty, mkdirsAction(directories, false))
+
+  /**
+   * Ensure that one or more directories exist, after satisfying the dependencies, but fail
+   * if a parent doesn't exist, or if a creation fails. The process stops on the first failure.
+   * Example: mkdir(Seq(File(dirName1), File(dirName2)), Seq(dep1, dep2, ...))
+   * @see mkdirs, which creates parents if necessary.
    * @return the new Target. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def dir(directories: Seq[File], dependencies: Seq[Target[_]] = Vector.empty, createParents: Boolean = true): Target[Seq[File]] =
-    Target(directories, dependencies, mkdirsAction(directories, createParents))
+  def mkdir(directories: Seq[File], dependencies: Seq[Target[_]]): Target[Seq[File]] =
+    Target(directories, dependencies, mkdirsAction(directories, false))
+
 
   /**
-   * Ensure that one or more directories already exist, but fail immediately if any
-   * of the parents don't exist and the createParents flag is false, or if a creation fails.
-   * Example: mkdir(Seq(File(dirName1), File(dirName2)) -> Seq(dep1, dep2, ...), createParents = false)
+   * Ensure that a directory exists, with no dependencies. Create the parents if
+   * they don't exist. Fail if any creation step fails.
+   * Example: mkdirs(File(dirName))
+   * @see mkdir, which fails if the parents don't exist.
+   * @return the new Target. Also updates the internal map of targets.
+   */
+  def mkdirs(directory: File): Target[File] =
+    Target(directory, dependencies = Vector.empty, mkdirsAction(Seq(directory), true))
+
+  /**
+   * Ensure that a directory exists, after satisfying the dependencies. Create the parents if
+   * they don't exist. Fail if any creation step fails.
+   * Example: mkdirs(File(dirName), dependencies = Seq(dep1, dep2, ...))
+   * @see mkdir, which fails if the parents don't exist.
    * @return the new Target. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def dir(directories_dependencies: (Seq[File], Seq[Target[_]]), createParents: Boolean = true): Target[Seq[File]] =
-    Target(directories_dependencies, mkdirsAction(directories_dependencies._1, createParents))
+  def mkdirs(directory: File, dependencies: Seq[Target[_]]): Target[File] =
+    Target(directory, dependencies, mkdirsAction(Seq(directory), true))
+
+  /**
+   * Ensure that a directory exists, after satisfying the dependencies. Create the parents if
+   * they don't exist. Fail if any creation step fails.
+   * Example: mkdirs(File(dirName) -> Seq(dep1, dep2, ...))
+   * @see mkdir, which fails if the parents don't exist.
+   * @return the new Target. Also updates the internal map of targets.
+   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
+   */
+  def mkdirs(directory_dependencies: (File, Seq[Target[_]])): Target[File] =
+    Target(directory_dependencies, mkdirsAction(Seq(directory_dependencies._1), true))
+
+  /**
+   * Ensure that one or more directories exist, with no dependencies. Create the parents if
+   * they don't exist. Fail if any creation step fails. The process stops on the first failure.
+   * Example: mkdirs(Seq(File(dirName1), File(dirName2)))
+   * @see mkdir, which fails if the parents don't exist.
+   * @return the new Target. Also updates the internal map of targets.
+   */
+  def mkdirs(directories: Seq[File]): Target[Seq[File]] =
+    Target(directories, dependencies = Vector.empty, mkdirsAction(directories, true))
+
+  /**
+   * Ensure that one or more directories exist, after satisfying the dependencies. Create the parents if
+   * they don't exist. Fail if any creation step fails. The process stops on the first failure.
+   * Example: mkdirs(Seq(File(dirName1), File(dirName2)), Seq(dep1, dep2, ...))
+   * @see mkdir, which fails if the parents don't exist.
+   * @return the new Target. Also updates the internal map of targets.
+   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
+   */
+  def mkdirs(directories: Seq[File], dependencies: Seq[Target[_]]): Target[Seq[File]] =
+    Target(directories, dependencies, mkdirsAction(directories, true))
 
 
   /**
-   * Create a file, based on a sequence of dependencies and actions.
-   * Example: file(afile, dependencies = Seq(dep1, dep2, ...), actions = Seq(act1, ...))
+   * Create a file, with no dependencies.
+   * Example: file(afile) { action }
    * @return  the new Target. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def file(file: File, dependencies: Seq[Target[_]] = Vector.empty, actions: Seq[Target.Action] = Vector.empty): Target[File] =
-    Target(file, dependencies, actions)
+  def file(file: File): Target[File] =
+    Target(file, dependencies = Vector.empty, actions = Vector.empty)
+
+  /**
+   * Create a file, based on a sequence of dependencies.
+   * Example: file(afile, dependencies = Seq(dep1, dep2, ...)) { action }
+   * @return  the new Target. Also updates the internal map of targets.
+   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
+   */
+  def file(file: File, dependencies: Seq[Target[_]]): Target[File] =
+    Target(file, dependencies, actions = Vector.empty)
 
   /**
    * Create a file, based on a sequence of dependencies and actions.
-   * Example: file(afile -> Seq("a", "b"), actions = Seq(act1, ...))
+   * Example: file(afile -> Seq("a", "b")) { action }
    * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def file(file_dependencies: (File, Seq[Target[_]]), actions: Seq[Target.Action] = Vector.empty): Target[File] =
-    Target(file_dependencies, actions)
+  def file(file_dependencies: (File, Seq[Target[_]])): Target[File] =
+    Target(file_dependencies, actions = Vector.empty)
 
   /**
-   * Create one or more files, passed in as a sequence, with the same sequence of
-   * dependencies and actions.
-   * Example: file(Seq(file1, ...), dependencies = Seq(dep1, ...), actions = Seq(act1, ...))
+   * Create one or more files, passed in as a sequence, with no dependencies.
+   * If an action literal is present, it is applied to all of them.
+   * Example: file(Seq(file1, ...)) { action }
    * @return Vector[Target] of the new Targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def file(files: Seq[File], dependencies: Seq[Target[_]] = Vector.empty, actions: Seq[Target.Action] = Vector.empty): Vector[Target[File]] =
-    Target(files, dependencies, actions)
+  def file(files: Seq[File]): TargetVector[File] =
+    Target(files, dependencies = Vector.empty, actions = Vector.empty)
 
   /**
    * Create one or more files, passed in as a sequence, with the same sequence of
-   * dependencies and actions.
-   * Example: file((Seq(file1, ...) -> Seq(dep1, ...), actions = Seq(act1, ...))
+   * dependencies. If an action literal is present, it is applied to all of them.
+   * Example: file(Seq(file1, ...), dependencies = Seq(dep1, ...)) { action }
    * @return Vector[Target] of the new Targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def file(files_dependencies: (Seq[File], Seq[Target[_]]), actions: Seq[Target.Action] = Vector.empty): Vector[Target[File]] =
-    Target(files_dependencies, actions)
+  def file(files: Seq[File], dependencies: Seq[Target[_]]): TargetVector[File] =
+    Target(files, dependencies, actions = Vector.empty)
+
+  /**
+   * Create one or more files, passed in as a sequence, with the shared sequence of
+   * dependencies. If an action literal is present, it is applied to all of them.
+   * Example: file((Seq(file1, ...) -> Seq(dep1, ...)) { action }
+   * @return Vector[Target] of the new Targets.
+   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
+   */
+  def file(files_dependencies: (Seq[File], Seq[Target[_]])): TargetVector[File] =
+    Target(files_dependencies, actions = Vector.empty)
 
   /**
    * Delete the target, which has no dependencies. For a directory, it deletes
@@ -260,15 +365,6 @@ class Project extends Commands {
   def clean(directories: Seq[File], dependencies: Seq[Target[_]]): Target[Seq[File]] =
     Target[Seq[File]](directories, dependencies, cleanAction(directories))
 
-  /**
-   * Delete one or more targets, after satisfying the dependencies. For directories, it deletes
-   * recursively. It stops immediately on the first failure, if any.
-   * Example: clean(Seq(File(dirName1), File(dirName2)) -> Seq(dep1, dep2, ...))
-   * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
-   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
-   */
-  def clean(directories_dependencies: (Seq[File], Seq[Target[_]])): Target[Seq[File]] =
-    Target[Seq[File]](directories_dependencies, cleanAction(directories_dependencies._1))
 
   import Target.Context
 

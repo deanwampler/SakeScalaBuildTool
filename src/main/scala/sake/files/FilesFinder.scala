@@ -15,11 +15,11 @@ trait FilesFinder {
   /**
    * Find files matching zero to many glob expressions.
    */
-  def apply(specifications: String*): Vector[File] = apply(specifications.toSeq)
+  def apply(specification: String, moreSpecifications: String*): Vector[File] =
+    apply(specification +: moreSpecifications)
 
   /**
-   * Find files matching zero to many glob expressions. Empty expressions and
-   * non-matching expressions are effectively ignored. Duplicates are removed.
+   * Find files matching a sequence of glob expressions.
    */
   def apply(specifications: Seq[String]): Vector[File] = {
     val specs = specifications.filter(_.length() > 0)

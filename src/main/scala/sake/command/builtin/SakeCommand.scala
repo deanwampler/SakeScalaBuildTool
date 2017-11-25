@@ -6,7 +6,7 @@ import sake.files.File
 /**
  * Command for recursive invocations of sake (as a new process), usually in a different directory.
  */
-case object SakeCommand extends ShellCommandBase {
+case object SakeCommand extends ShellCommand {
 
   import Argument._
 
@@ -39,14 +39,14 @@ case object SakeCommand extends ShellCommandBase {
     args
   )
 
-  def sake(args: ArgumentInstance[_]*): Result = run(args)
+  def sake(arg: ArgumentInstance[_], moreArgs: Seq[ArgumentInstance[_]]): Result = run(arg +: moreArgs)
   def sake(args: Seq[ArgumentInstance[_]]): Result = run(args)
 
   protected case class SakeTokens (
     targets: Seq[String] = Vector.empty,
     args: Seq[String] = Vector.empty,
     sakeFile: Option[File] = None,
-    directory: Option[File] = None) extends ShellCommandBase.TokensBase(Vector.empty, "", true) {
+    directory: Option[File] = None) extends TokensBase() {
 
     def appendArgs(newArgs: Seq[String]) = copy(args = args ++ newArgs)
     def appendTargets(newTargets: Seq[String]) = copy(targets = targets ++ newTargets)
@@ -54,6 +54,9 @@ case object SakeCommand extends ShellCommandBase {
     def setDirectory(dir: File) = copy(directory = Some(dir))
 
     def doValidate: (Boolean, String) = (true, "") // nothing to verify!
+
+    /** Even if nothing is defined, that's okay! */
+    def empty: Boolean = false
 
     override def toSeq: Seq[String] = {
       val f = if (sakeFile  != None) Vector("--file",      sakeFile.get.toString)  else Vector.empty[String]
@@ -64,9 +67,9 @@ case object SakeCommand extends ShellCommandBase {
 
   type Tokens = SakeTokens
 
-  protected def defaultTokens: Tokens = SakeTokens()
+  protected def defaultTokens: SakeTokens = SakeTokens()
 
-  protected def handleArgument[V](tokens: Tokens, arg: Argument[V], value: V): Either[String, Tokens] = arg match {
+  protected def handleArgument[V](tokens: SakeTokens, arg: Argument[V], value: V): Either[String, SakeTokens] = arg match {
     case `sakeFile`  => Right(tokens.setSakeFile(value.asInstanceOf[File]))
     case `directory` => Right(tokens.setDirectory(value.asInstanceOf[File]))
     case `targets`   => Right(tokens.appendTargets(value.asInstanceOf[Seq[String]]))

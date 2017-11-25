@@ -2,7 +2,7 @@ package sake.command.builtin
 
 import sake.command.{Command, Result, Passed, Failed}
 import sake.files.{File, JavaFilesFinder, Path}
-import sake.util.Exit
+import sake.util.{Exit, Log}
 
 trait Commands {
 
@@ -10,62 +10,88 @@ trait Commands {
 
   val files = JavaFilesFinder
 
-  def mkdirs(paths: String*): Unit = mkdirs(paths.toList)
+  /** Make one or more directories, but fail if parents don't exist. */
+  def mkdir(path: String, paths: String*): Result = mkdir(path +: paths)
 
-  def mkdirs(paths: List[String]): Unit = paths foreach { path =>
-    val dir = makeFile(path)
-    if (dir.exists == false && dir.mkdirs == false)
-      Exit.error("Could not create directory \""+path+"\".")
+  /** Make one or more directories, but fail if parents don't exist. */
+  def mkdir(paths: Seq[String]): Result = recurse(paths, "Could not create directory %s.") { path =>
+    val dir = File(path)
+    dir.exists || dir.mkdir
   }
 
-  def mkdir(path: String) = mkdirs(path)
+  /** Make one or more directories, including the parents, if necessary. */
+  def mkdirs(path: String, paths: String*): Result = mkdirs(path +: paths)
 
-  def delete(paths: String*): Unit = delete(paths.toList)
-
-  def delete(paths: List[String]): Unit = paths foreach { path =>
-    val file = makeFile(path)
-    if (file.exists && file.delete == false)
-      Exit.error("Could not delete \""+path+"\".")
+  /** Make one or more directories, including the parents, if necessary. */
+  def mkdirs(paths: Seq[String]): Result = recurse(paths, "Could not create directory %s, including parents.") { path =>
+    val dir = File(path)
+    dir.exists || dir.mkdirs
   }
 
-  def deleteRecursively(paths: String*): Unit = deleteRecursively(paths.toList)
+  /** Delete one or more paths, but not recursively. */
+  def delete(path: String, paths: String*): Result = delete(path +: paths)
 
-  def deleteRecursively(paths: List[String]): Unit = paths foreach { path =>
-    val file = makeFile(path)
-    if (file.exists && file.deleteRecursively == false)
-      Exit.error("Could not delete \""+path+"\" recursively.")
+  /** Delete one or more paths, but not recursively. */
+  def delete(paths: Seq[String]): Result = recurse(paths, "Could not delete directory %s.") { path =>
+    val dir = File(path)
+    dir.exists == false || dir.delete
   }
 
-  def fail(): Unit = fail("Build failed!")
+  /** Delete one or more paths recursively. */
+  def deleteRecursively(path: String, paths: String*): Result = deleteRecursively(path +: paths)
 
-  def fail(message: String): Unit = Exit.error(message)
+  /** Delete one or more paths recursively. */
+  def deleteRecursively(paths: Seq[String]): Result = recurse(paths, "Could not delete directory %s recursively.") { path =>
+    val dir = File(path)
+    dir.exists == false || dir.deleteRecursively
+  }
 
-  protected def makeFile(path: String) = File(path)
+  // Commands for logging ("echoing") messages.
+
+  /** Log an info message. It doesn't return a Result. */
+  def info(  message: String): Unit = Log.info(message)
+
+  /** Log a notice message. It doesn't return a Result. */
+  def notice(message: String): Unit = Log.notice(message)
+
+  /** Log a warning message. It doesn't return a Result. */
+  def warn(  message: String): Unit = Log.warn(message)
+
+  /** Log an error message. It doesn't return a Result. */
+  def error( message: String): Unit = Log.error(message)
+
+  /** Log a fatal message. It doesn't return a Result. */
+  def fatal( message: String): Unit = Log.fatal(message)
+
+  /** Fail immediately with a message. */
+  def fail(message: String = "Build failed!"): Unit = Exit.error(message)
 
   /**
    * Command for recursive invocation of sake (as a new process), usually in a different directory.
    */
-  def sake(args: SakeCommand.ArgumentInstance[_]*) = SakeCommand.sake(args)
-  def sake(args: Seq[SakeCommand.ArgumentInstance[_]]) = SakeCommand.sake(args)
+  def sake(arg: SakeCommand.ArgumentInstance[_], args: SakeCommand.ArgumentInstance[_]*): Result = SakeCommand.sake(arg +: args)
+
+  /**
+   * Command for recursive invocation of sake (as a new process), usually in a different directory.
+   */
+  def sake(args: Seq[SakeCommand.ArgumentInstance[_]]): Result = SakeCommand.sake(args)
 
   /**
    * Command for invocation of a Java command.
    */
-  def java(args: JavaCommand.ArgumentInstance[_]*) = JavaCommand.java(args)
-  def java(args: Seq[JavaCommand.ArgumentInstance[_]]) = JavaCommand.java(args)
+  def java(arg: JavaCommand.ArgumentInstance[_], args: JavaCommand.ArgumentInstance[_]*): Result = JavaCommand.java(arg +: args)
 
   /**
-   * Use "sh" for invoking a shell command with a command string.
+   * Command for invocation of a Java command.
    */
-  def sh(command: String) = ShellCommand.sh(command)
+  def java(args: Seq[JavaCommand.ArgumentInstance[_]]): Result = JavaCommand.java(args)
 
-  val echo = new EchoCommand()
 
-  // val scala  = new JavaCommand("scala")
-  // val scalac = new JavaCommand("scalac", 'files -> ".")
-
-  // val specs  = new SpecCommand()
-
-  // val java   = new JavaCommand("java")
-  // val javac  = new JavaCommand("javac", 'files -> ".")
+  protected def recurse[T](seq: Seq[T], errorMessage: String)(predicate: T => Boolean): Result = {
+    def r(seq2: Seq[T]): Result = seq2 match {
+      case Nil => Passed.default
+      case head +: tail => if(predicate(head)) r(tail) else Failed(1, errorMessage.format(head.toString))
+    }
+    r(seq)
+  }
 }

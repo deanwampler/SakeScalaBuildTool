@@ -8,7 +8,7 @@ import sake.files.{File, Path}
  * TODO: Currently constructs a command-line for the java program and runs it. Instead it should run in the same process.
  * TODO: Add Java 9 options. See http://www.oracle.com/technetwork/java/javase/documentation/index.html for more details.
  */
-case object JavaCommand extends Command {
+case object JavaCommand extends ShellCommand {
 
   import Argument._
 
@@ -133,13 +133,13 @@ case object JavaCommand extends Command {
     javaagent,
     splash)
 
-  def java(args: ArgumentInstance[_]*): Result = run(args)
+  def java(arg: ArgumentInstance[_], moreArgs: Seq[ArgumentInstance[_]]): Result = run(arg +: moreArgs)
   def java(args: Seq[ArgumentInstance[_]]): Result = run(args)
 
   protected case class JavaTokens(
     javaOptions: Seq[String] = Vector.empty,
     classOrJarFile: Seq[String] = Vector.empty,
-    appArgs: Seq[String] = Vector.empty) extends ShellCommandBase.TokensBase(Vector.empty, "", true) {
+    appArgs: Seq[String] = Vector.empty) extends TokensBase() {
 
     def appendOptions(ops: String*) = copy(javaOptions = javaOptions ++ ops)
     def setClass(clazz: String) = copy(classOrJarFile = Seq(clazz))
@@ -150,15 +150,19 @@ case object JavaCommand extends Command {
       if (classOrJarFile.size == 0) (false, "Must specify either the class name or the jar file.")
       else (true, "")
 
-    override def toSeq: Seq[String] =
+    def empty: Boolean = classOrJarFile.size == 0
+
+    def toSeq: Seq[String] =
       Vector("java") ++ javaOptions ++ classOrJarFile ++ appArgs
   }
 
   type Tokens = JavaTokens
 
-  protected def defaultTokens: Tokens = JavaTokens()
+  protected def defaultTokens: JavaTokens = JavaTokens()
 
-  protected def handleArgument[V](tokens: Tokens, arg: Argument[V], value: V): Either[String, Tokens] = {
+  private var clazzOrJarGiven = false
+
+  protected def handleArgument[V](tokens: JavaTokens, arg: Argument[V], value: V): Either[String, JavaTokens] = {
 
     def optString(s: Any): String =
       if (s.toString.trim.length > 0) ":"+s.toString.trim else ""
@@ -169,13 +173,13 @@ case object JavaCommand extends Command {
 
     arg match {
       case `clazz` =>
-        if (clazzOrJarGiven) Left(s"Can't specify both the class and app jar file: args = ${args.mkString(" ")}")
+        if (clazzOrJarGiven) Left("Can't specify both the class and app jar file")
         else {
           clazzOrJarGiven = true
           Right(tokens.setClass(value.toString))
         }
       case `jar` =>
-        if (clazzOrJarGiven) Left(s"Can't specify both the class and app jar file: args = ${args.mkString(" ")}")
+        if (clazzOrJarGiven) Left("Can't specify both the class and app jar file")
         else {
           clazzOrJarGiven = true
           Right(tokens.setJarFile(value.toString))
@@ -201,7 +205,7 @@ case object JavaCommand extends Command {
       case `agentPath`                 => Right(tokens.appendOptions(s"-agentpath:${value}"))
       case `javaagent`                 => Right(tokens.appendOptions(s"-javaagent:${value}"))
       case `splash`                    => Right(tokens.appendOptions(s"-splash:${value}"))
-      case unknown                     => Left(s"Unknown argument instance: argument = $argument, value = $value (all args: ${args.mkString(", ")}")
+      case unknown                     => Left(s"Unknown argument instance: argument = $arg, value = $value")
     }
   }
 }

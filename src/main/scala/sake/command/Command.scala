@@ -24,12 +24,9 @@ trait Command {
   lazy val argumentsWithDefaults: Set[Argument[_]] = supportedArguments.filter(_.default != None)
 
   /**
-   * The "action" that takes the supplied argument "instances" and performs the command's work.
+   * The "action" that takes the  the supplied argument "instances" and performs the command's work.
    */
   val action: Seq[ArgumentInstance[_]] => Result
-
-  /** Run the command by passing in a sequence of argument instances. */
-  def run(arguments: ArgumentInstance[_]*): Result = run(arguments.toVector)
 
   /** Run the command by passing in a sequence of argument instances. */
   def run(arguments: Seq[ArgumentInstance[_]]): Result = try {
@@ -59,7 +56,7 @@ trait Command {
   protected def addDefaults(arguments: Vector[ArgumentInstance[_]]): Vector[ArgumentInstance[_]] = {
     val args = arguments.map(_.argument).toSet
     val missing = argumentsWithDefaults -- args
-    arguments ++ (missing.map(arg => ArgumentInstance(arg, arg.default.get)))
+    arguments // ++ (missing.map(arg => ArgumentInstance(arg, arg.default.get)))
   }
 
   protected def checkForMissingRequiredOptions(arguments: Vector[ArgumentInstance[_]]): Result = {
@@ -86,7 +83,7 @@ trait Command {
    * @param validateErrorMessageFormat error message returned if `validate` fails. Used in printf-style message; it must contain one %s for the string version of the value.
    * @param validate a function to verify the value passed by a user is valid. Default is to accept as is.
    */
-  case class Argument[-T](
+  case class Argument[T](
     required: Boolean = false,
     default: Option[T] = None,
     description: String = "",
@@ -102,7 +99,7 @@ trait Command {
    * When a build file uses an argument, this type encapsulates the argument
    * used and the value passed to it.
    */
-  case class ArgumentInstance[-T](argument: Argument[T], value: T)
+  case class ArgumentInstance[T](argument: Argument[T], value: T)
 
   object Argument {
 

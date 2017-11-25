@@ -51,17 +51,17 @@ object Target {
    * Several names, with the same dependencies and actions.
    * Example: target(values = Seq(name1, ...), dependencies = Seq(dep1, ...), actions = Seq(act1, ...))
    */
-  def apply[T](values: Seq[T], dependencies: Seq[Target[_]], actions: Seq[Action]): Vector[Target[T]] =
-    values.map(v => makeTarget(v, dependencies, actions)).toVector
+  def apply[T](values: Seq[T], dependencies: Seq[Target[_]], actions: Seq[Action]): TargetVector[T] =
+    TargetVector(values.map(v => makeTarget(v, dependencies, actions)).toVector)
 
   /**
    * Several values of the same type, which share the same dependencies and actions.
    * Example: target(values_dependencies = (Seq(name1, ...) -> Seq(dep1, ...), actions = Seq(act1, ...))
    */
-  def apply[T](values_dependencies: (Seq[T], Seq[Target[_]]), actions: Seq[Action]): Vector[Target[T]] = {
+  def apply[T](values_dependencies: (Seq[T], Seq[Target[_]]), actions: Seq[Action]): TargetVector[T] = {
     val values = values_dependencies._1
     val dependencies = values_dependencies._2
-    values.map(v => makeTarget(v, dependencies, actions)).toVector
+    TargetVector(values.map(v => makeTarget(v, dependencies, actions)).toVector)
   }
 
   import sake.files.File
@@ -114,4 +114,13 @@ object Target {
     if (t.value != tany.value)
       Exit.error("Target.merge() called with two targets that don't have the same value: "+t.value+" vs. "+tany.value)
 
+}
+
+/**
+ * Encapsulates a Vector of targets, purely so that user can add an action literal
+ * to all of them at once.
+ */
+case class TargetVector[+T](targets: Vector[Target[T]]) {
+  def apply(action: Target.Context => Result): TargetVector[T] =
+    copy(targets = targets.map(t => t.copy(actions = t.actions :+ action)))
 }
