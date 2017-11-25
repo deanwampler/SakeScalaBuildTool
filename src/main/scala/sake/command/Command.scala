@@ -8,7 +8,6 @@ import sake.util._
  * Note that each argument can have a particular type, which will be checked at run time.
  */
 trait Command {
-  import Command._
 
   /** The name of the command. */
   val name: String
@@ -70,13 +69,14 @@ trait Command {
     else
       Passed.default
   }
-}
-
-object Command {
 
   /**
    * Definition of a command argument that combines a flag with an optional value of type `T`.
    * (If there is no value, we normally call those "flags".)
+   * Note that by defining this class nested in the `Command` case class, we can
+   * enforce that users can only pass arguments to commands that are defined _with_ the
+   * the commands. For example, it will be a compile error to pass a `scalac` flag to a
+   * `jar` command.
    * For the type, you'll typically use `String` or `Any` if you just want to pass
    * the argument through to the underlying command implementation. Consider using
    * Refined (https://github.com/fthomas/refined/) to further constrain the allowed values.
@@ -115,27 +115,52 @@ object Command {
     def flag(description: String = ""): ArgumentInstance[Unit] =
       ArgumentInstance(Argument(description = description), Unit)
 
-    /** Define a string argument with no validation. */
+    /** Define a string argument with optional validation. */
     def string(
       required: Boolean = false,
       default: Option[String] = None,
-      description: String = ""): Argument[String] =
-      Argument[String](required = required, default = default, description = description)
+      description: String = "",
+      validate: String => Boolean = (s: String) => true): Argument[String] =
+      Argument[String](required = required, default = default, description = description, validate = validate)
 
     /**
-     * Define a string argument with no validation, except that it can't be empty.
-     * This includes disallowing a string that is just whitespace.
+     * Define a string argument that can't be empty or contain just whitespace,
+     * with optional additional validation.
      */
     def nonemptyString(
       required: Boolean = false,
       default: Option[String] = None,
-      description: String = ""): Argument[String] =
+      description: String = "",
+      validateErrorMessageFormat: String = "",
+      validate: String => Boolean = (s: String) => true): Argument[String] =
       new Argument[String](
         required = required,
         default = default,
         description = description,
-        validateErrorMessageFormat = """String %s can not be empty.""",
-        _.length > 0)
+        validateErrorMessageFormat = """String %s can not be empty. """ + validateErrorMessageFormat,
+        s => s.trim.length > 0 && validate(s))
+
+
+    /**
+     * Define a key-value pair argument, with a string key and a user-specified
+     * value type. They key can't be empty. The optional validation function,
+     * can further constrain the key and value.
+     * @param default note the type of the default is `(String,K)`, while the type parameter of the method is `K`.
+     * @param validate note the type of validate is `(String,K) => Boolean`, while the type parameter of the method is `K`.
+     */
+    def keyValue[V](
+      required: Boolean = false,
+      default: Option[(String,V)] = None,
+      description: String = "",
+      validateErrorMessageFormat: String = "Key-value %s is invalid",
+      validate: (K,V) => Boolean = (tup: (K,V)) => true): Argument[(String,V)] =
+      new Argument[(String,V)](
+        required = required,
+        default = default,
+        description = description,
+        validateErrorMessageFormat = validateErrorMessageFormat,
+        { case (k,v) => k.trim.length > 0 && validate(k->v) })
+
 
     import scala.math.Numeric
     import scala.math.Numeric._

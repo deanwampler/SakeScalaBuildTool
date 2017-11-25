@@ -54,11 +54,11 @@ trait Commands {
 
   val echo = new EchoCommand()
 
-  val scala  = new JVMCommand("scala")
-  val scalac = new JVMCommand("scalac", 'files -> ".")
+  val scala  = new JavaCommand("scala")
+  val scalac = new JavaCommand("scalac", 'files -> ".")
 
   // val specs  = new SpecCommand()
 
-  val java   = new JVMCommand("java")
-  val javac  = new JVMCommand("javac", 'files -> ".")
+  val java   = new JavaCommand("java")
+  val javac  = new JavaCommand("javac", 'files -> ".")
 }

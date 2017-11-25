@@ -3,6 +3,7 @@ package sake.command
 import sake.util._
 import sake.target.Target
 
+// TODO: Replace with either or a Cats equivalent?
 sealed trait Result {
   val exitCode: Int
   val message: String

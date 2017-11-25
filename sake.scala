@@ -2,7 +2,7 @@ import sake._
 import scala.sys.process._
 
 val sakeBuild = new Project {
-  settings = settings.copy(
+  val settings = defaultSettings.copy(
     version = "2.0",
     scalaVersion = "2.12.4",
     userSettings = Map("foo" -> "bar"),
@@ -10,61 +10,55 @@ val sakeBuild = new Project {
     logThreshold = Log.Level.Info,
     showStackTracesOnFailures = true)
 
-  target('all -> Seq('clean, 'compile, 'test, 'jars))
+  target("all" -> Seq("clean", "compile", "test", "jars"))
 
-  target('jars -> Seq('jar, 'srcjar))
+  val srcfiles:  Seq[File] = filesRecursive(root = settings.srcDir,  glob = "*.scala")
+  val testfiles: Seq[File] = filesRecursive(root = settings.testDir, glob = "*.scala")
 
-  target('jar) { context =>
-    val jarName = s"${targetDir}/sake-${scalaVersion}-${version}.jar"
-    sh(s"jar cf ${jarName} -C ${targetDir} sake")
-    sh(s"cp ${jarName} ${libDir}/${scalaVersion}")
+  val binjar: File = settings.targetDir / s"sake-${settings.scalaVersion}-${settings.version}.jar"
+  val srcjar: File = settings.targetDir / s"sake-${settings.scalaVersion}-${settings.version}-src.jar"))
+
+  target("jars" -> Seq(binjar, srcjar))
+
+  file(binjar) { context =>
+    jar(
+      jarName(context.target),
+      sourceDirs(settings.targetDir / "classes"))
   }
 
-  target('srcjar) { context =>
-    val jarName = s"${targetDir}/sake-${scalaVersion}-${version}-src.jar"
-    sh(s"jar cf ${jarName} -C ${srcDir} sake")
-    sh(s"cp ${jarName} ${libDir}/${scalaVersion}")
+  file(srcjar) { context =>
+    jar(
+      jarName(context.target),
+      sourceDirs(settings.sourceDir, settings.testDir))
   }
 
-  target('test) { context =>
-    specs(
-       'classpath -> environment.classpath,
-       'path -> "./src/test/scala/**/*.scala",
-       'pattern -> ".*Spec.*"
-    )
+  target("test" -> "compile") { context =>
+    scalatest(
+       classpath(settings.classpath),
+       files(testfiles),
+       pattern(".*Spec.*"))
   }
 
-  target('compile -> Seq('clean, 'target_dir)) { context =>
-    val flags = "-unchecked -deprecation"
-    val files = files(s"${srcDir}/**/*.scala", s"${testDir}/**/*.scala")
-    sh("scalac -d ${targetDir} -classpath ${Properties.classpath} ${flags} ${files}")
-
-    // scalac(
-    //   files(properties.srcDir / "**/*.scala", properties.testDir / "**/*.scala"),
-    //   classpath(properties.classpath),
-    //   targetDir(properties.targetDir),
-    //   unchecked,
-    //   deprecation)
+  target("compile" -> Seq("clean", dir(settings.targetdir))) { context =>
+    scalac(
+      files(srcfiles ++ testfiles),
+      classpath(properties.classpath),
+      targetDir(properties.targetDir),
+      unchecked,
+      deprecation)
   }
 
-  target('clean) { context =>
-      deleteRecursively(targetDir)
+  target("clean" -> Seq(clean(settings.targetDir))
+
+  target("fail") { context =>
+    fail("boo!")
   }
 
-  target('target_dir) { context =>
-      mkdir(targetDir)
+  target("ls") { context =>
+    "ls . > foo.txt".!
   }
 
-  target('fail) { context =>
-      fail("boo!")
+  target("cat", "echo") { context =>
+    s"${context.target} sake.scala > sake.scala"!
   }
-
-  import sake.util._
-  target('ls) { context =>
-      sh(s"ls . > foo.txt")
-  }
-  target('cat ) { context =>
-      sh("cat foo.txt > foo.txt2")
-  }
-
 }

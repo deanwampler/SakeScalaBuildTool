@@ -8,7 +8,7 @@ import sake.files.{File, Path}
  */
 case object ShellCommand extends Command {
 
-  import Command._
+  import Command.Argument._
 
   val name = "ShellCommand"
 
