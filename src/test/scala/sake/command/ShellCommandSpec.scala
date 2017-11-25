@@ -9,7 +9,7 @@ import java.io.{PrintStream, ByteArrayOutputStream}
 
 object ShellCommandSpec extends FreeSpec {
     val savedDryRun = Environment.dryRun
-    val savedLog    = Log.log
+    val savedLog    = Log.default
     var byteStream  = new ByteArrayOutputStream()
     var newStream   = new PrintStream(byteStream)
     val delim = Environment.pathSeparator
@@ -22,11 +22,11 @@ object ShellCommandSpec extends FreeSpec {
     }
 
     doBeforeSpec {
-        Log.log = new Log(Level.Info, newStream)
+        Log.default = new Log(Level.Info, newStream)
     }
 
     doAfterSpec {
-        Log.log = savedLog
+        Log.default = savedLog
     }
 
     "A new ShellCommand created with just a name" should {
@@ -101,7 +101,7 @@ object ShellCommandSpec extends FreeSpec {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
-            Log.log.out = newStream
+            Log.default.out = newStream
             Environment.dryRun = true
         }
         doAfter {
@@ -119,7 +119,7 @@ object ShellCommandSpec extends FreeSpec {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
-            Log.log.out = newStream
+            Log.default.out = newStream
             Environment.dryRun = true
         }
         doAfter {
@@ -137,7 +137,7 @@ object ShellCommandSpec extends FreeSpec {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
-            Log.log.out = newStream
+            Log.default.out = newStream
             Environment.dryRun = true
         }
         doAfter {

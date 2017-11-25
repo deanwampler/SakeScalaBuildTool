@@ -1,6 +1,6 @@
 package sake.command.builtin
 
-import sake.command._
+import sake.command.{Command, Result, Passed, Failed}
 import sake.files.{File, JavaFilesFinder, Path}
 import sake.util.Exit
 
@@ -43,22 +43,29 @@ trait Commands {
   protected def makeFile(path: String) = File(path)
 
   /**
-   * Command for recursive invocations of sake (as a new process), usually in a different directory.
+   * Command for recursive invocation of sake (as a new process), usually in a different directory.
    */
-  val sakecmd = new SakeCommand()
+  def sake(args: SakeCommand.ArgumentInstance[_]*) = SakeCommand.sake(args)
+  def sake(args: Seq[SakeCommand.ArgumentInstance[_]]) = SakeCommand.sake(args)
+
+  /**
+   * Command for invocation of a Java command.
+   */
+  def java(args: JavaCommand.ArgumentInstance[_]*) = JavaCommand.java(args)
+  def java(args: Seq[JavaCommand.ArgumentInstance[_]]) = JavaCommand.java(args)
 
   /**
    * Use "sh" for invoking a shell command with a command string.
    */
-  def sh(command: String) = ShellCommand(command)
+  def sh(command: String) = ShellCommand.sh(command)
 
   val echo = new EchoCommand()
 
-  val scala  = new JavaCommand("scala")
-  val scalac = new JavaCommand("scalac", 'files -> ".")
+  // val scala  = new JavaCommand("scala")
+  // val scalac = new JavaCommand("scalac", 'files -> ".")
 
   // val specs  = new SpecCommand()
 
-  val java   = new JavaCommand("java")
-  val javac  = new JavaCommand("javac", 'files -> ".")
+  // val java   = new JavaCommand("java")
+  // val javac  = new JavaCommand("javac", 'files -> ".")
 }

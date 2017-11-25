@@ -33,8 +33,8 @@ trait Command {
 
   /** Run the command by passing in a sequence of argument instances. */
   def run(arguments: Seq[ArgumentInstance[_]]): Result = try {
-    def err(f: Failed): Failed  = { Log.log.error(s"Command $name failed: $f"); f }
-    def info(p: Passed): Passed = { Log.log.info(s"Command $name successful! $p"); p }
+    def err(f: Failed): Failed  = { Log.error(s"Command $name failed: $f"); f }
+    def info(p: Passed): Passed = { Log.info(s"Command $name successful! $p"); p }
 
     completeArguments(arguments) match {
       case Left(failed) => err(failed)
@@ -59,7 +59,7 @@ trait Command {
   protected def addDefaults(arguments: Vector[ArgumentInstance[_]]): Vector[ArgumentInstance[_]] = {
     val args = arguments.map(_.argument).toSet
     val missing = argumentsWithDefaults -- args
-    arguments ++ (missing.map(arg => ArgumentInstance(arg, arg.default)))
+    arguments ++ (missing.map(arg => ArgumentInstance(arg, arg.default.get)))
   }
 
   protected def checkForMissingRequiredOptions(arguments: Vector[ArgumentInstance[_]]): Result = {
@@ -86,7 +86,7 @@ trait Command {
    * @param validateErrorMessageFormat error message returned if `validate` fails. Used in printf-style message; it must contain one %s for the string version of the value.
    * @param validate a function to verify the value passed by a user is valid. Default is to accept as is.
    */
-  case class Argument[+T](
+  case class Argument[-T](
     required: Boolean = false,
     default: Option[T] = None,
     description: String = "",
@@ -102,7 +102,7 @@ trait Command {
    * When a build file uses an argument, this type encapsulates the argument
    * used and the value passed to it.
    */
-  case class ArgumentInstance[+T](argument: Argument[T], value: T)
+  case class ArgumentInstance[-T](argument: Argument[T], value: T)
 
   object Argument {
 
@@ -112,8 +112,7 @@ trait Command {
      * @param flags  a sequence of different flags allowed for the argument, e.g., "-h" and "--help". The command can interpret them as it sees fit.
      * @param required  does the user have to specify one of the flags?
      */
-    def flag(description: String = ""): ArgumentInstance[Unit] =
-      ArgumentInstance(Argument(description = description), Unit)
+    def flag(description: String = ""): Argument[Unit] = Argument(description = description)
 
     /** Define a string argument with optional validation. */
     def string(
@@ -121,7 +120,11 @@ trait Command {
       default: Option[String] = None,
       description: String = "",
       validate: String => Boolean = (s: String) => true): Argument[String] =
-      Argument[String](required = required, default = default, description = description, validate = validate)
+      Argument(
+        required = required,
+        default = default,
+        description = description,
+        validate = validate)
 
     /**
      * Define a string argument that can't be empty or contain just whitespace,
@@ -133,33 +136,33 @@ trait Command {
       description: String = "",
       validateErrorMessageFormat: String = "",
       validate: String => Boolean = (s: String) => true): Argument[String] =
-      new Argument[String](
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = """String %s can not be empty. """ + validateErrorMessageFormat,
-        s => s.trim.length > 0 && validate(s))
+        (s: String) => s.trim.length > 0 && validate(s))
 
 
     /**
      * Define a key-value pair argument, with a string key and a user-specified
      * value type. They key can't be empty. The optional validation function,
      * can further constrain the key and value.
-     * @param default note the type of the default is `(String,K)`, while the type parameter of the method is `K`.
-     * @param validate note the type of validate is `(String,K) => Boolean`, while the type parameter of the method is `K`.
+     * @param default note the type of the default is `(String,V)`, while the type parameter of the method is `V` and the returned Argument type is `(String,V)`.
+     * @param validate note the type of validate is a two-argument function `(String,V) => Boolean`, while the type parameter of the method is `V` and the returned Argument type is `(String,V)`.
      */
     def keyValue[V](
       required: Boolean = false,
       default: Option[(String,V)] = None,
       description: String = "",
       validateErrorMessageFormat: String = "Key-value %s is invalid",
-      validate: (K,V) => Boolean = (tup: (K,V)) => true): Argument[(String,V)] =
-      new Argument[(String,V)](
+      validate: (String, V) => Boolean = (s: String, v: V) => true): Argument[(String,V)] =
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = validateErrorMessageFormat,
-        { case (k,v) => k.trim.length > 0 && validate(k->v) })
+        (tup: (String,V)) => tup._1.trim.length > 0 && validate(tup._1, tup._2))
 
 
     import scala.math.Numeric
@@ -169,53 +172,63 @@ trait Command {
     def nonnegative[T : Numeric](
       required: Boolean = false,
       default: Option[T] = None,
-      description: String = ""): Argument[T] = Argument[T](
+      description: String = ""): Argument[T] =
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = "Value %s must be non-negative.",
-        n => implicitly[Numeric[T]].compare(n, implicitly[Numeric[T]].zero) >= 0)
+        (n: T) => implicitly[Numeric[T]].compare(n, implicitly[Numeric[T]].zero) >= 0)
 
     /** Define an argument where the value is a positive number, i.e., > 0. */
     def positive[T : Numeric](
       required: Boolean = false,
       default: Option[T] = None,
-      description: String = ""): Argument[T] = Argument[T](
+      description: String = ""): Argument[T] =
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = "Value %s must be positive.",
-        n => implicitly[Numeric[T]].compare(n, implicitly[Numeric[T]].zero) > 0)
+        (n: T) => implicitly[Numeric[T]].compare(n, implicitly[Numeric[T]].zero) > 0)
 
     /**
      * Define an argument for a sequence of items, e.g., for the string tokens to
-     * construct a shell command.
-     * No validation is done; the sequence can be empty, for example.
+     * construct a shell command, with optional validation of each element.
+     * No validation of the sequence itself is done; the sequence can be empty, for example.
      */
     def seq[T](
       create: Boolean = false,
       required: Boolean = false,
       default: Option[Seq[T]] = None,
-      description: String = ""): Argument[Seq[T]] = new Argument[Seq[T]](
+      description: String = "",
+      validateErrorMessageFormat: String = "",
+      validate: T => Boolean = (t: T) => true): Argument[Seq[T]] =
+      Argument(
         required = required,
         default = default,
-        description = description)
+        description = description,
+        validateErrorMessageFormat = validateErrorMessageFormat,
+        (seq: Seq[T]) => seq.forall(validate))
 
     /**
      * Define an argument for a nonempty sequence of items, e.g., for the string tokens to
-     * construct a shell command.
-     * No validation is done other than ensuring the sequence isn't empty.
+     * construct a shell command, with optional validation of each element.
+     * No validation of the sequence itself is done other than ensuring the sequence isn't empty.
      */
     def nonemptySeq[T](
       create: Boolean = false,
       required: Boolean = false,
       default: Option[Seq[T]] = None,
-      description: String = ""): Argument[Seq[T]] = new Argument[Seq[T]](
+      description: String = "",
+      validateErrorMessageFormat: String = "",
+      validate: T => Boolean = (t: T) => true): Argument[Seq[T]] =
+      Argument(
         required = required,
         default = default,
         description = description,
-        validateErrorMessageFormat = "The sequence can't be empty. %s",
-        _.size > 0)
+        validateErrorMessageFormat = "The sequence can't be empty. " + validateErrorMessageFormat,
+        (seq: Seq[T]) => seq.size > 0 && seq.forall(validate))
 
 
     import sake.files.File
@@ -231,12 +244,13 @@ trait Command {
       create: Boolean = false,
       required: Boolean = false,
       default: Option[Seq[File]] = None,
-      description: String = ""): Argument[Seq[File]] = Argument[Seq[File]](
+      description: String = ""): Argument[Seq[File]] =
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = "At least one of %s is not a file that already exists and creating it failed.",
-        filesValidate(create, _))
+        (seq: Seq[File]) => filesValidate(create, seq))
 
     /**
      * Define an argument where the value is a file that does not have to exist or you can
@@ -249,7 +263,8 @@ trait Command {
       create: Boolean = false,
       required: Boolean = false,
       default: Option[File] = None,
-      description: String = ""): Argument[File] = new Argument[File](
+      description: String = ""): Argument[File] =
+      Argument(
         required = required,
         default = default,
         description = description,
@@ -267,12 +282,13 @@ trait Command {
       create: Boolean = false,
       required: Boolean = false,
       default: Option[Seq[File]] = None,
-      description: String = ""): Argument[Seq[File]] = new Argument[Seq[File]](
+      description: String = ""): Argument[Seq[File]] =
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = "At least one of %s is not a directory that already exists and creating it failed.",
-        directoriesValidate(create, _))
+        (seq: Seq[File]) => directoriesValidate(create, seq))
 
     /**
      * Define an argument where the value is a directory that does not have to exist or you can
@@ -285,7 +301,8 @@ trait Command {
       create: Boolean = false,
       required: Boolean = false,
       default: Option[File] = None,
-      description: String = ""): Argument[File] = new Argument[File](
+      description: String = ""): Argument[File] =
+      Argument(
         required = required,
         default = default,
         description = description,
@@ -299,12 +316,13 @@ trait Command {
     def existingFiles(
       required: Boolean = false,
       default: Option[Seq[File]] = None,
-      description: String = ""): Argument[Seq[File]] = new Argument[Seq[File]](
+      description: String = ""): Argument[Seq[File]] =
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = "At least one of %s is not a file that already exists.",
-        _ forall (_.isFile))
+        (seq: Seq[File]) => seq forall (_.isFile))
 
     /**
      * Define an argument where the value is a file, not a directory, that already exists.
@@ -313,12 +331,13 @@ trait Command {
     def existingFile(
       required: Boolean = false,
       default: Option[File] = None,
-      description: String = ""): Argument[File] = new Argument[File](
+      description: String = ""): Argument[File] =
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = "%s is not a file that already exists.",
-        _.isFile)
+        (f: File) => f.isFile)
 
     /**
      * Define an argument where the value is a sequence of directories, not files, that already exist.
@@ -327,12 +346,13 @@ trait Command {
     def existingDirectories(
       required: Boolean = false,
       default: Option[Seq[File]] = None,
-      description: String = ""): Argument[Seq[File]] = new Argument[Seq[File]](
+      description: String = ""): Argument[Seq[File]] =
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = "At least one of %s is not a directory that already exists.",
-        _ forall (_.isDirectory))
+        (seq: Seq[File]) => seq forall (_.isDirectory))
 
     /**
      * Define an argument where the value is a directory, not a file, that already exists.
@@ -341,12 +361,13 @@ trait Command {
     def existingDirectory(
       required: Boolean = false,
       default: Option[File] = None,
-      description: String = ""): Argument[File] = new Argument[File](
+      description: String = ""): Argument[File] =
+      Argument(
         required = required,
         default = default,
         description = description,
         validateErrorMessageFormat = "%s is not a directory that already exists.",
-        _.isDirectory)
+        (d: File) => d.isDirectory)
 
     import sake.files.Path
 
@@ -354,7 +375,8 @@ trait Command {
     def path[T](
       required: Boolean = false,
       default: Option[Path[T]] = None,
-      description: String = ""): Argument[Path[T]] = new Argument[Path[T]](
+      description: String = ""): Argument[Path[T]] =
+      Argument(
         required = required,
         default = default,
         description = description)

@@ -8,23 +8,23 @@ import sake.context._
 import java.io.{PrintStream, ByteArrayOutputStream}
 
 object EchoCommandSpec extends FreeSpec {
-    val savedLog    = Log.log
+    val savedLog    = Log.default
     var byteStream  = new ByteArrayOutputStream()
     var newStream   = new PrintStream(byteStream)
 
     doBeforeSpec {
-        Log.log = new Log(Level.Notice, newStream)
+        Log.default = new Log(Level.Notice, newStream)
     }
 
     doAfterSpec {
-        Log.log = savedLog
+        Log.default = savedLog
     }
 
     "Running an EchoCommand" should {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
-            Log.log.out = newStream
+            Log.default.out = newStream
         }
 
         "maps 'words -> any to 'any.toString()'" in {

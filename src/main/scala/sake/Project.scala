@@ -14,7 +14,7 @@ import sake.files.File
 class Project extends Commands {
 
   var settings: Settings = Settings.default
-  var log: Log = Log.log
+  var log: Log = Log.default
   var logLevel: Log.Level.Value = Log.Level.Info
 
   /**
@@ -47,6 +47,18 @@ class Project extends Commands {
         f
     }
   }
+
+  /**
+   * An implicit conversion that allows you to use the Scala process API, where
+   * integer exit codes are returned, as actions for targets. This function lifts
+   * a function of type `Context => Int` to `Context => Result`, based on the
+   * exit code returned.
+   */
+  implicit def liftExitCode(f: Context => Int): Context => Result =
+    (c: Context) => f(c) match {
+      case 0 => Passed.default
+      case n => Failed(n, s"Command failed, returned exit code $n")
+    }
 
   protected def determineTargets(targetNames: Seq[String]): Either[String, Seq[Target[_]]] = {
     def buildOrder(targetNames: Seq[Target[_]]): Seq[Target[_]] = {
@@ -129,7 +141,7 @@ class Project extends Commands {
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
   def dir(directory: File, dependencies: Seq[Target[_]] = Vector.empty, createParents: Boolean = true): Target[File] =
-    Target[File](directory, dependencies, mkdirsAction(Seq(directory), createParents))
+    Target(directory, dependencies, mkdirsAction(Seq(directory), createParents))
 
   /**
    * Ensure that a directory already exists, but fail if the parent doesn't exist and the
@@ -139,7 +151,7 @@ class Project extends Commands {
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
   def dir(directory_dependencies: (File, Seq[Target[_]]), createParents: Boolean = true): Target[File] =
-    Target[File](directory_dependencies, mkdirsAction(Seq(directory_dependencies._1), createParents))
+    Target(directory_dependencies, mkdirsAction(Seq(directory_dependencies._1), createParents))
 
   /**
    * Ensure that one or more directories already exist, but fail immediately if any
@@ -149,7 +161,7 @@ class Project extends Commands {
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
   def dir(directories: Seq[File], dependencies: Seq[Target[_]] = Vector.empty, createParents: Boolean = true): Target[Seq[File]] =
-    Target[Seq[File]](directories, dependencies, mkdirsAction(directories, createParents))
+    Target(directories, dependencies, mkdirsAction(directories, createParents))
 
   /**
    * Ensure that one or more directories already exist, but fail immediately if any
@@ -158,8 +170,8 @@ class Project extends Commands {
    * @return the new Target. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def dir(directories_dependencies: (Seq[File], Seq[Target[_]]), createParents: Boolean = true): Target[File] =
-    Target[File](directories_dependencies, mkdirsAction(directories_dependencies._1, createParents))
+  def dir(directories_dependencies: (Seq[File], Seq[Target[_]]), createParents: Boolean = true): Target[Seq[File]] =
+    Target(directories_dependencies, mkdirsAction(directories_dependencies._1, createParents))
 
 
   /**
@@ -169,7 +181,7 @@ class Project extends Commands {
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
   def file(file: File, dependencies: Seq[Target[_]] = Vector.empty, actions: Seq[Target.Action] = Vector.empty): Target[File] =
-    Target[File](file, dependencies, actions)
+    Target(file, dependencies, actions)
 
   /**
    * Create a file, based on a sequence of dependencies and actions.
@@ -178,7 +190,7 @@ class Project extends Commands {
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
   def file(file_dependencies: (File, Seq[Target[_]]), actions: Seq[Target.Action] = Vector.empty): Target[File] =
-    Target[File](file_dependencies, actions)
+    Target(file_dependencies, actions)
 
   /**
    * Create one or more files, passed in as a sequence, with the same sequence of
@@ -188,7 +200,7 @@ class Project extends Commands {
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
   def file(files: Seq[File], dependencies: Seq[Target[_]] = Vector.empty, actions: Seq[Target.Action] = Vector.empty): Vector[Target[File]] =
-    Target[File](files, dependencies, actions)
+    Target(files, dependencies, actions)
 
   /**
    * Create one or more files, passed in as a sequence, with the same sequence of
@@ -198,7 +210,16 @@ class Project extends Commands {
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
   def file(files_dependencies: (Seq[File], Seq[Target[_]]), actions: Seq[Target.Action] = Vector.empty): Vector[Target[File]] =
-    Target[File](files_dependencies, actions)
+    Target(files_dependencies, actions)
+
+  /**
+   * Delete the target, which has no dependencies. For a directory, it deletes
+   * recursively.
+   * Example: clean(File(dirName))
+   * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
+   */
+  def clean(directory: File): Target[File] =
+    Target[File](directory, Vector.empty, cleanAction(Seq(directory)))
 
   /**
    * Delete the target, after satisfying the dependencies. For a directory, it deletes
@@ -207,7 +228,7 @@ class Project extends Commands {
    * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def clean(directory: File, dependencies: Seq[Target[_]] = Vector.empty): Target[File] =
+  def clean(directory: File, dependencies: Seq[Target[_]]): Target[File] =
     Target[File](directory, dependencies, cleanAction(Seq(directory)))
 
   /**
@@ -221,14 +242,23 @@ class Project extends Commands {
     Target[File](directory_dependencies, cleanAction(Seq(directory_dependencies._1)))
 
   /**
+   * Delete one or more targets, which have no dependencies. For directories, it deletes
+   * recursively. It stops immediately on the first failure, if any.
+   * Example: clean(Seq(File(dirName1), File(dirName2)))
+   * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
+   */
+  def clean(directories: Seq[File]): Target[Seq[File]] =
+    Target[Seq[File]](directories, Vector.empty, cleanAction(directories))
+
+  /**
    * Delete one or more targets, after satisfying the dependencies. For directories, it deletes
    * recursively. It stops immediately on the first failure, if any.
    * Example: clean(Seq(File(dirName1), File(dirName2)), Seq(dep1, dep2, ...))
    * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def clean(directories: Seq[File], dependencies: Seq[Target[_]] = Vector.empty): Target[File] =
-    Target[File](directories, dependencies, cleanAction(directories))
+  def clean(directories: Seq[File], dependencies: Seq[Target[_]]): Target[Seq[File]] =
+    Target[Seq[File]](directories, dependencies, cleanAction(directories))
 
   /**
    * Delete one or more targets, after satisfying the dependencies. For directories, it deletes
@@ -237,8 +267,8 @@ class Project extends Commands {
    * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
    * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def clean(directories_dependencies: (Seq[File], Seq[Target[_]])): Target[File] =
-    Target[File](directories_dependencies, cleanAction(directories_dependencies._1))
+  def clean(directories_dependencies: (Seq[File], Seq[Target[_]])): Target[Seq[File]] =
+    Target[Seq[File]](directories_dependencies, cleanAction(directories_dependencies._1))
 
   import Target.Context
 
@@ -266,10 +296,10 @@ class Project extends Commands {
   }
 
   private def reportSuccess(passed: Passed): Unit =
-    Log.log.info(s"Success! $passed")
+    Log.info(s"Success! $passed")
 
   private def reportBuildError(failed: Failed): Unit = {
-    Log.log.error(s"Build failure: $failed")
+    Log.error(s"Build failure: $failed")
     failed.cause match {
       case Some(cause) if showStackTracesOnFailures => cause.printStackTrace(log.out)
       case _ => // do nothing
@@ -277,6 +307,3 @@ class Project extends Commands {
   }
 }
 
-object Project {
-  def apply() = new Project()
-}

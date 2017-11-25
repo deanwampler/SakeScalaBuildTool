@@ -28,6 +28,12 @@ trait File {
   def / (child: String): File
 
   /**
+   * Create a directory with this name, but fail if the parent directories don't
+   * already exist.
+   */
+  def mkdir: Boolean
+
+  /**
    * Create a directory with this name and any of its parent directories that don't
    * already exist.
    */
@@ -84,6 +90,9 @@ object File {
 
   def makePath(parent: File, name: String): String = parent.getPath + Properties.fileSeparator + name
   def makePath(elems: String*): String = elems.mkString(Properties.fileSeparator)
+
+  /** Current working directory */
+  def cwd = apply(".")
 }
 
 class FileFilter(val nameFilter: String) extends JFilenameFilter {

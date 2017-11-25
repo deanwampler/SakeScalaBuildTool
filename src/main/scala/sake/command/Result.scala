@@ -16,7 +16,7 @@ sealed trait Result {
    */
   def and(nextAction: => Result) =
     if (exitCode == 0) {
-      Log.log.info(message)
+      Log.info(message)
       nextAction
     } else this
 }

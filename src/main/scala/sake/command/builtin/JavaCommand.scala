@@ -1,14 +1,16 @@
 package sake.command.builtin
 
+import sake.command.{Command, Result, Passed, Failed}
 import sake.files.{File, Path}
 
 /**
  * Define and run an arbitrary Java program.
+ * TODO: Currently constructs a command-line for the java program and runs it. Instead it should run in the same process.
  * TODO: Add Java 9 options. See http://www.oracle.com/technetwork/java/javase/documentation/index.html for more details.
  */
 case object JavaCommand extends Command {
 
-  import Command.Argument._
+  import Argument._
 
   val name = "JavaCommand"
 
@@ -16,10 +18,12 @@ case object JavaCommand extends Command {
     required = false,
     default  = None,
     description = "the main class name")
+
   val jar = Argument.file(
     required = false,
     default  = None,
     description = "the application jar file")
+
   val appArgs = Argument.seq[String](
     required = false,
     default  = None,
@@ -35,6 +39,11 @@ case object JavaCommand extends Command {
   val version = Argument.flag("print the JVM version and exit")
   val showVersion = Argument.flag("print the JVM version and continue")
 
+  val versionRequired = Argument.nonemptyString(
+    required = false,
+    default  = None,
+    description = "Warning: this feature is deprecated and will be removed in a future release. Require the specified version to run.")
+
   val jreRestrictSearch = Argument.flag("Warning: this feature is deprecated and will be removed in a future release. Include user private JREs in the version search")
   val jreNoRestrictSearch = Argument.flag("Warning: this feature is deprecated and will be removed in a future release. Exclude user private JREs in the version search")
 
@@ -47,21 +56,16 @@ case object JavaCommand extends Command {
     description = "class search path of directories and zip/jar files. A colon separated list of directories, JAR archives, and ZIP archives to search for class files.")
 
   val systemProp = Argument.keyValue[String](
-      required = false,
-      default  = None,
-      description = """The java "-D<name>=<value>" flag to set a system property""")
+    required = false,
+    default  = None,
+    description = """The java "-D<name>=<value>" flag to set a system property""")
 
   val verbose = Argument.nonemptyString(
-      required = false,
-      default  = None,
-      description = """enable verbose output. The value must be one of "class", "gc", or "jni" """,
-      validateErrorMessageFormat = """The verbose argument %s is not valid. It must be one of "class", "gc", or "jni" """,
-      validate = s => s == "class" || s == "gc" || s == "jni")
-
-  val versionRequired = Argument.nonemptyString(
-      required = false,
-      default  = None,
-      description = "Warning: this feature is deprecated and will be removed in a future release. Require the specified version to run.")
+    required = false,
+    default  = None,
+    description = """enable verbose output. The value must be one of "class", "gc", or "jni" """,
+    validateErrorMessageFormat = """The verbose argument %s is not valid. It must be one of "class", "gc", or "jni" """,
+    validate = s => s == "class" || s == "gc" || s == "jni")
 
   val enableAssertions = Argument.string(
       required = false,
@@ -112,48 +116,92 @@ case object JavaCommand extends Command {
     d32,
     d64,
     server,
+    verbose,
     version,
     showVersion,
+    versionRequired,
     jreRestrictSearch,
     jreNoRestrictSearch,
+    enableAssertions,
+    disableAssertions,
     enableSystemAssertions,
     disableSystemAssertions,
     classpath,
     systemProp,
-    verbose,
-    versionRequired,
-    enableAssertions,
-    disableAssertions,
     agentLib,
     agentPath,
     javaagent,
     splash)
 
-  def sh(command: String): Result = commandStringArg(command) match {
-    case Left(error) => Failed(1, error)
-    case Right(argInstance) => run(argInstance)
+  def java(args: ArgumentInstance[_]*): Result = run(args)
+  def java(args: Seq[ArgumentInstance[_]]): Result = run(args)
+
+  protected case class JavaTokens(
+    javaOptions: Seq[String] = Vector.empty,
+    classOrJarFile: Seq[String] = Vector.empty,
+    appArgs: Seq[String] = Vector.empty) extends ShellCommandBase.TokensBase(Vector.empty, "", true) {
+
+    def appendOptions(ops: String*) = copy(javaOptions = javaOptions ++ ops)
+    def setClass(clazz: String) = copy(classOrJarFile = Seq(clazz))
+    def setJarFile(jar: String) = copy(classOrJarFile = Seq("-jar", jar))
+    def setAppArgs(args: Seq[String]) = copy(appArgs = args)
+
+    def doValidate: (Boolean, String) =
+      if (classOrJarFile.size == 0) (false, "Must specify either the class name or the jar file.")
+      else (true, "")
+
+    override def toSeq: Seq[String] =
+      Vector("java") ++ javaOptions ++ classOrJarFile ++ appArgs
   }
 
-  def sh(commandTokens: Seq[String]): Result = commandTokensArg(commandTokens) match {
-    case Left(error) => Failed(1, error)
-    case Right(argInstance) => run(argInstance)
-  }
+  type Tokens = JavaTokens
 
-  import scala.sys.process._
+  protected def defaultTokens: Tokens = JavaTokens()
 
-  val action: Seq[ArgumentInstance[_]] => Result = {
-    case ArgumentInstance(commandStringArg, commandString: String) +: Nil =>
-      val exitCode = commandString.!
-      if (exitCode == 0) Passed.default
-      else Failed(exitCode, "Java command failed: $commandString")
-    case ArgumentInstance(commandTokensArg, commandTokens: Seq[_]) +: Nil =>
-      val tokens = commandTokens.map(_.toString)      // force "_" to be String
-      val exitCode = tokens.!
-      if (exitCode == 0) Passed.default
-      else Failed(exitCode, s"Java command failed: ${tokens.mkString(" ")}")
-    case Nil =>
-      Failed(1, "No command string or tokens specified!")
-    case seq =>
-      Failed(1, s"Can't specify the command using both a string and a sequence of tokens: ${seq.mkString(", ")}")
+  protected def handleArgument[V](tokens: Tokens, arg: Argument[V], value: V): Either[String, Tokens] = {
+
+    def optString(s: Any): String =
+      if (s.toString.trim.length > 0) ":"+s.toString.trim else ""
+    def kvString(a: Any): String = {
+      val kv = a.asInstanceOf[(String, Any)]
+      s"${kv._1}=${kv._2}"
+    }
+
+    arg match {
+      case `clazz` =>
+        if (clazzOrJarGiven) Left(s"Can't specify both the class and app jar file: args = ${args.mkString(" ")}")
+        else {
+          clazzOrJarGiven = true
+          Right(tokens.setClass(value.toString))
+        }
+      case `jar` =>
+        if (clazzOrJarGiven) Left(s"Can't specify both the class and app jar file: args = ${args.mkString(" ")}")
+        else {
+          clazzOrJarGiven = true
+          Right(tokens.setJarFile(value.toString))
+        }
+      case `appArgs`                   => Right(tokens.setAppArgs(value.asInstanceOf[Seq[String]]))
+      case `help`                      => Right(tokens.appendOptions("-help"))
+      case `helpX`                     => Right(tokens.appendOptions("-X"))
+      case `d32`                       => Right(tokens.appendOptions("-d32"))
+      case `d64`                       => Right(tokens.appendOptions("-d64"))
+      case `server`                    => Right(tokens.appendOptions("-server"))
+      case `verbose`                   => Right(tokens.appendOptions(s"-verbose${optString(value)}"))
+      case `showVersion`               => Right(tokens.appendOptions("-showversion"))
+      case `versionRequired`           => Right(tokens.appendOptions(s"-version${optString(value)}"))
+      case `jreRestrictSearch`         => Right(tokens.appendOptions("-jre-restrict-search"))
+      case `jreNoRestrictSearch`       => Right(tokens.appendOptions("-no-jre-restrict-search"))
+      case `enableAssertions`          => Right(tokens.appendOptions(s"-enableassertions${optString(value)}"))
+      case `disableAssertions`         => Right(tokens.appendOptions(s"-disableassertions${optString(value)}"))
+      case `enableSystemAssertions`    => Right(tokens.appendOptions("-enablesystemassertions"))
+      case `disableSystemAssertions`   => Right(tokens.appendOptions("-disablesystemassertions"))
+      case `classpath`                 => Right(tokens.appendOptions("-classpath", value.toString))
+      case `systemProp`                => Right(tokens.appendOptions(s"-D${kvString(value)}"))
+      case `agentLib`                  => Right(tokens.appendOptions(s"-agentlib:${value}"))
+      case `agentPath`                 => Right(tokens.appendOptions(s"-agentpath:${value}"))
+      case `javaagent`                 => Right(tokens.appendOptions(s"-javaagent:${value}"))
+      case `splash`                    => Right(tokens.appendOptions(s"-splash:${value}"))
+      case unknown                     => Left(s"Unknown argument instance: argument = $argument, value = $value (all args: ${args.mkString(", ")}")
+    }
   }
 }

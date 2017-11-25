@@ -4,17 +4,17 @@ import org.scalatest._
 import org.scalatest.Matchers._
 
 object ExitSpec extends FreeSpec {
-    val oldLog = Log.log
+    val oldLog = Log.default
 
     doBeforeSpec {
         // Suppress stdout/stderr output...
         import java.io.{PrintStream, ByteArrayOutputStream}
         val newStream = new PrintStream(new ByteArrayOutputStream())
-        Log.log = new Log(Level.Warn, newStream)
+        Log.default = new Log(Level.Warn, newStream)
     }
 
     doAfterSpec {
-        Log.log = oldLog
+        Log.default = oldLog
     }
 
     "The error method with just a message" should {

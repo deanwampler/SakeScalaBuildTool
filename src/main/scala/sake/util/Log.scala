@@ -3,14 +3,9 @@ package sake.util
 /**
  * A simple logging facility.
  */
-class Log(var threshold: Log.Level.Value,
-  var out: java.io.PrintStream,
-  var messageFormatter: (Log.Level.Value, String) => String) {
-
-  def this(threshold: Log.Level.Value, out: java.io.PrintStream) =
-      this(threshold, out, (l,s) => String.format("%s: %s",l,s))
-  def this(threshold: Log.Level.Value) = this(threshold, Console.out)
-  def this() = this(Log.Level.Warn)
+class Log(var threshold: Log.Level.Value = Log.Level.Info,
+  var out: java.io.PrintStream = Console.out,
+  var messageFormatter: (Log.Level.Value, String) => String = (l,s) => String.format("%s: %s",l,s)) {
 
   def info(message: String): Unit   = apply(Log.Level.Info,   message)
   def notice(message: String): Unit = apply(Log.Level.Notice, message)
@@ -31,5 +26,11 @@ object Log {
     val Fatal  = Value("Fatal")
   }
 
-  var log = new Log()
+  var default = new Log()
+
+  def info(message: String): Unit   = default.info(message)
+  def notice(message: String): Unit = default.notice(message)
+  def warn(message: String): Unit   = default.warn(message)
+  def error(message: String): Unit  = default.error(message)
+  def fatal(message: String): Unit  = default.fatal(message)
 }

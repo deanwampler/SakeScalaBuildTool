@@ -9,7 +9,7 @@ import java.io.{PrintStream, ByteArrayOutputStream}
 
 object JVMCommandSpec extends FreeSpec {
     val savedDryRun = Environment.dryRun
-    val savedLog    = Log.log
+    val savedLog    = Log.default
     var byteStream  = new ByteArrayOutputStream()
     var newStream   = new PrintStream(byteStream)
     val delim = Environment.pathSeparator
@@ -23,19 +23,19 @@ object JVMCommandSpec extends FreeSpec {
 
     doBeforeSpec {
         Environment.dryRun = true
-        Log.log = new Log(Level.Info, newStream)
+        Log.default = new Log(Level.Info, newStream)
     }
 
     doAfterSpec {
         Environment.dryRun = savedDryRun
-        Log.log = savedLog
+        Log.default = savedLog
     }
 
     "Running a JVMCommand with standard options" should {
         doBefore {
             byteStream  = new ByteArrayOutputStream()
             newStream   = new PrintStream(byteStream)
-            Log.log.out = newStream
+            Log.default.out = newStream
         }
 
         "maps 'classpath -> List(a,b,c) to -classpath a:b:c'" in {

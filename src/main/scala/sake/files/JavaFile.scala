@@ -36,6 +36,7 @@ case class JavaFile(path: String) extends File {
 
   def reader = new JInputStreamReader(new JFileInputStream(path))
 
+  def mkdir  = javaFile.mkdir()
   def mkdirs = javaFile.mkdirs()
   def delete = javaFile.delete()
 }

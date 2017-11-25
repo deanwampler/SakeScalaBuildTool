@@ -4,7 +4,7 @@ object Exit {
 
     def success(message: String = "") = {
       val sep = if (message.length > 0) ":" else "."
-      Log.log.info(s"Exiting${sep} ${message}")
+      Log.info(s"Exiting${sep} ${message}")
       sys.exit(0)
     }
 
@@ -18,6 +18,6 @@ object Exit {
         throw new BuildError(message, throwable)
     }
 
-    private def logMessage(message: String) = Log.log.fatal(message)
+    private def logMessage(message: String) = Log.fatal(message)
 }
 

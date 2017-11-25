@@ -1,41 +1,54 @@
 package sake.command.builtin
 
-import sake.command._
-import sake.util._
+import sake.command.{Command, Result, Passed, Failed}
+import sake.util.Log
 
 /**
  * Log a string at the specified level.
  * You can also use "println". use EchoCommand if you want the output to be logged consistently
  * with the rest of the build output.
  */
-class EchoCommand(val defaultLevel: Log.Level.Value) extends Command[Symbol,Any]("echo") {
+case class EchoCommand(val level: Log.Level.Value = Log.Level.Info) extends Command {
 
-    def this() = this(Log.Level.Notice)
+  import Argument._
 
-    def apply(str: String): Result = {
-        val list = str.split(" ").toList
-        apply("words" -> str.split(" ").toList)
-    }
+  val name = "EchoCommand"
 
-    override def action(options: Map[Symbol,Any]) = {
-        val words = options.get("words") match {
-            case None => ""
-            case Some(x) => x match {
-                case list:List[_] => list.map(_.toString()).reduceRight(_+" "+_)
-                case y => y.toString()
-            }
-        }
-        val level = options.get('level) match {
-            case None => defaultLevel
-            case Some(l) => l match {
-                case lev:Log.Level.Value => lev
-                case _ => Exit.error("Invalid value for level ("+l+"). Must be a Log Level.")
-            }
-        }
-        Log.log(level, words)
-        Passed()
-    }
+  val echoStringArg: Argument[String] = Argument.nonemptyString(
+    required = false,
+    default  = None,
+    description = "Holds the whole echo string")
 
-    override val requiredOptions: List[Symbol] = List("words")
+  val echoTokensArg: Argument[Seq[String]] = Argument.nonemptySeq[String](
+    required = false,
+    default  = None,
+    description = "Holds the whole echo string as tokens")
+
+  val supportedArguments: Set[Argument[_]] = Set(echoStringArg, echoTokensArg)
+
+  def echo(echo: String): Result = echoStringArg(echo) match {
+    case Left(error) => Failed(1, error)
+    case Right(argInstance) => run(argInstance)
+  }
+
+  def echo(echoTokens: Seq[String]): Result = echoTokensArg(echoTokens) match {
+    case Left(error) => Failed(1, error)
+    case Right(argInstance) => run(argInstance)
+  }
+
+  import scala.sys.process._
+
+  val action: Seq[ArgumentInstance[_]] => Result = {
+    case ArgumentInstance(echoStringArg, echoString: String) +: Nil =>
+      Log.default(level, echoString)
+      Passed.default
+    case ArgumentInstance(echoTokensArg, echoTokens: Seq[_]) +: Nil =>
+      val tokens = echoTokens.map(_.toString)      // force "_" to be String
+      Log.default(level, tokens.mkString(" "))
+      Passed.default
+    case Nil =>
+      Failed(1, "No echo string or tokens specified!")
+    case seq =>
+      Failed(1, s"Can't specify echo arguments using both a string and a sequence of tokens: ${seq.mkString(", ")}")
+  }
 }
-
