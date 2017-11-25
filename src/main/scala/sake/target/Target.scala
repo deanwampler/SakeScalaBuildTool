@@ -1,6 +1,6 @@
 package sake.target
 
-import sake.util.{Dedup, Exit}
+import sake.util.Exit
 import sake.command.{Result, Passed, Failed}
 
 /**
@@ -84,7 +84,7 @@ object Target {
   }
 
   protected def makeTarget[T](value: T, dependencies: Seq[Target[_]], actions: Seq[Action]): Target[T] =
-    registerTarget(new Target[T](value, Dedup(dependencies), actions))
+    registerTarget(new Target[T](value, dependencies.distinct, actions))
 
   protected def registerTarget[T](target: Target[T]): Target[T] =
     allTargets.get(target.name) match {
