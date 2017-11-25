@@ -8,7 +8,7 @@ import sake.util.Log
  * You can also use "println". use EchoCommand if you want the output to be logged consistently
  * with the rest of the build output.
  */
-case class EchoCommand(val level: Log.Level.Value = Log.Level.Info) extends Command {
+case class EchoCommand(level: Log.Level.Value = Log.Level.Info) extends Command {
 
   import Argument._
 
@@ -52,3 +52,4 @@ case class EchoCommand(val level: Log.Level.Value = Log.Level.Info) extends Comm
       Failed(1, s"Can't specify echo arguments using both a string and a sequence of tokens: ${seq.mkString(", ")}")
   }
 }
+
