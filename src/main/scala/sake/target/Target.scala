@@ -21,13 +21,17 @@ case class Target[T] protected (
   preActions: Seq[Context[T] => Result] = Vector.empty,
   postActions: Seq[Context[T] => Result] = Vector.empty) {
 
+  /** Add dependencies, "build this after these" */
+  def after (dep1: Target[_], deps: Target[_]*) = copy(dependencies = dependencies ++ (dep1 +: deps))
+
+  /** Add dependencies, "build this after these" */
+  def after (deps: Seq[Target[_]]) = copy(dependencies = dependencies ++ deps)
+
   /** Add dependencies */
-  def dependencies (dep1: Target[_], deps: Target[_]*) = copy(dependencies = dependencies ++ (dep1 +: deps))
-  def dependencies (deps: Seq[Target[_]]) = copy(dependencies = dependencies ++ deps)
   def deps (dep1: Target[_], deps: Target[_]*) = copy(dependencies = dependencies ++ (dep1 +: deps))
+
+  /** Add dependencies */
   def deps (deps: Seq[Target[_]]) = copy(dependencies = dependencies ++ deps)
-  def apply (dep1: Target[_], deps: Target[_]*) = copy(dependencies = dependencies ++ (dep1 +: deps))
-  def apply (deps: Seq[Target[_]]) = copy(dependencies = dependencies ++ deps)
 
   /** Add an action to the target. This is NOT the method to call to build a target. */
   def apply(action: Context[T] => Result): Target[T] = copy(actions = actions :+ action)
@@ -82,6 +86,23 @@ case class Target[T] protected (
  * to all of them at once.
  */
 case class TargetVector[T](targets: Vector[Target[T]]) {
+  /** Add dependencies to all the targets; "build this after these" */
+  def after (dep1: Target[_], deps: Target[_]*) =
+    copy(targets = targets.map(t => t.copy(dependencies = t.dependencies ++ (dep1 +: deps))))
+
+  /** Add dependencies to all the targets; "build this after these" */
+  def after (deps: Seq[Target[_]]) =
+    copy(targets = targets.map(t => t.copy(dependencies = t.dependencies ++ deps)))
+
+  /** Add dependencies to all the targets. */
+  def deps (dep1: Target[_], deps: Target[_]*) =
+    copy(targets = targets.map(t => t.copy(dependencies = t.dependencies ++ (dep1 +: deps))))
+
+  /** Add dependencies to all the targets. */
+  def deps (deps: Seq[Target[_]]) =
+    copy(targets = targets.map(t => t.copy(dependencies = t.dependencies ++ deps)))
+
+  /** Add an action to all the targets. */
   def apply(action: Context[T] => Result): TargetVector[T] =
     copy(targets = targets.map(t => t.copy(actions = t.actions :+ action)))
 }

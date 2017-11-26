@@ -4,6 +4,7 @@ import sake.util.Log
 import scala.sys.process._
 
 val sakeBuild = new Project("sakeBuild") {
+  import implicits._
 
   settings = settings.copy(
     version = "2.0",
@@ -13,7 +14,7 @@ val sakeBuild = new Project("sakeBuild") {
     showStackTracesOnFailures = true,
     custom = Map("foo" -> "bar"))
 
-  target("all" -> Seq("clean", "compile", "test", "jars"))
+  target("all").after(Seq("clean", "compile", "test", "jars"))
 
   val srcfiles:  Seq[File] = findRecursive(settings.srcDirs,  "*.scala")
   val testfiles: Seq[File] = findRecursive(settings.testDirs, "*.scala")
@@ -21,7 +22,7 @@ val sakeBuild = new Project("sakeBuild") {
   val binjar: File = settings.targetDir / s"sake-${settings.scalaVersion}-${settings.version}.jar"
   val srcjar: File = settings.targetDir / s"sake-${settings.scalaVersion}-${settings.version}-src.jar"
 
-  target("jars" -> Seq(binjar, srcjar))
+  target("jars").after(Seq(binjar, srcjar))
 
   file(binjar) { context =>
     // jar(
@@ -37,7 +38,7 @@ val sakeBuild = new Project("sakeBuild") {
     success
   }
 
-  target("test" -> "compile") { context =>
+  target("test").deps("compile") { context =>
     // scalatest(
     //    classpath(settings.classpath),
     //    files(testfiles),
@@ -45,7 +46,7 @@ val sakeBuild = new Project("sakeBuild") {
     success
   }
 
-  target("compile" -> Seq("clean", mkdir(settings.targetDir))) { context =>
+  target("compile").after(Seq("clean", mkdir(settings.targetDir))) { context =>
     // scalac(
     //   files(srcfiles ++ testfiles),
     //   classpath(properties.classpath),
@@ -55,7 +56,7 @@ val sakeBuild = new Project("sakeBuild") {
     success
   }
 
-  target("clean" -> Seq(clean(settings.targetDir)))
+  target("clean").after(clean(settings.targetDir))
 
   target("fail") { context =>
     fail("boo!")
