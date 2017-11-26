@@ -42,11 +42,11 @@ trait FilesFinder {
   protected def findFiles(parent: File, elems: Seq[String]): Vector[File] = elems match {
     case head +: tail =>
       if (head == "**") {
-        findInDirRecursive(parent).foldLeft(Vector.empty[File]) { (seq, s) =>
+        findRecursive(parent).foldLeft(Vector.empty[File]) { (seq, s) =>
           seq ++ findFiles(s, tail)
         }
       } else if (head.contains("*")) {
-        findInDir(parent, head).foldLeft(Vector.empty[File]) { (seq, s) =>
+        find(parent, head).foldLeft(Vector.empty[File]) { (seq, s) =>
           seq ++ findFiles(s, tail)
         }
       } else {
@@ -64,35 +64,35 @@ trait FilesFinder {
   }
 
   /** Find all files in a directory. */
-  def findInDir(parent: File): Seq[File] = findInDir(parent, "*")
+  def find(parent: File): Seq[File] = find(parent, "*")
 
   /** Find all files in a directory that match a pattern. */
-  def findInDir(parent: File, filePattern: String): Seq[File] =
+  def find(parent: File, filePattern: String): Seq[File] =
     parent.contentsFilteredBy(filePattern).toVector
 
   /** Find all files in one or more directories. */
-  def findInDir(parents: Seq[File]): Seq[File] = findInDir(parents, "*")
+  def find(parents: Seq[File]): Seq[File] = find(parents, "*")
 
   /** Find all files in one or more directories that match a pattern. */
-  def findInDir(parents: Seq[File], filePattern: String): Seq[File] =
-    parents.toVector.flatMap(parent => findInDir(parent, filePattern))
+  def find(parents: Seq[File], filePattern: String): Seq[File] =
+    parents.toVector.flatMap(parent => find(parent, filePattern))
 
   /** Find all files in a directory, recursively. */
-  def findInDirRecursive(parent: File): Seq[File] = findInDirRecursive(parent, "*")
+  def findRecursive(parent: File): Seq[File] = findRecursive(parent, "*")
 
   /** Find all files in a directory, recursively, that match a pattern. */
-  def findInDirRecursive(parent: File, filePattern: String): Seq[File] = {
+  def findRecursive(parent: File, filePattern: String): Seq[File] = {
     val dirs = parent.contents filter (_.isDirectory)
-    val matches = findInDir(parent, filePattern)
-    matches ++ (dirs flatMap (d => findInDirRecursive(d)))
+    val matches = find(parent, filePattern)
+    matches ++ (dirs flatMap (d => findRecursive(d)))
   }
 
   /** Find all files in one or more directories, recursively. */
-  def findInDirRecursive(parents: Seq[File]): Seq[File] = findInDirRecursive(parents, "*")
+  def findRecursive(parents: Seq[File]): Seq[File] = findRecursive(parents, "*")
 
   /** Find all files in one or more directories, recursively, that match a pattern. */
-  def findInDirRecursive(parents: Seq[File], filePattern: String): Seq[File] =
-    parents.toVector.flatMap(parent => findInDirRecursive(parent, filePattern))
+  def findRecursive(parents: Seq[File], filePattern: String): Seq[File] =
+    parents.toVector.flatMap(parent => findRecursive(parent, filePattern))
 }
 
 object JavaFilesFinder extends FilesFinder {

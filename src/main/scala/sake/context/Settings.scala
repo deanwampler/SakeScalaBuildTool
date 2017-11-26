@@ -16,7 +16,7 @@ import sake.util.Log
  * @param dryRun           Don't actually run the commands.
  * @param logThreshold     Logging level: Info (default), Notice, Warn, Error, Failure
  * @param showStackTracesOnFailures If true (default), show stack traces when a failure happens.
- * @param other            Key-value map of settings for your own use.
+ * @param custom           Key-value map of settings for your own use.
  */
 case class Settings(
   version: String = "2.0",
@@ -29,7 +29,7 @@ case class Settings(
   dryRun: Boolean = false,
   logThreshold: Log.Level.Value = Log.Level.Info,
   showStackTracesOnFailures: Boolean = true,
-  other: Map[String,Any] = Map.empty)
+  custom: Map[String,Any] = Map.empty)
 
 object Settings {
   lazy val default = new Settings()

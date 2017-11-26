@@ -11,12 +11,12 @@ val sakeBuild = new Project("sakeBuild") {
     dryRun = false,
     logThreshold = Log.Level.Info,
     showStackTracesOnFailures = true,
-    other = Map("foo" -> "bar"))
+    custom = Map("foo" -> "bar"))
 
   target("all" -> Seq("clean", "compile", "test", "jars"))
 
-  val srcfiles:  Seq[File] = findInDirRecursive(settings.srcDirs,  "*.scala")
-  val testfiles: Seq[File] = findInDirRecursive(settings.testDirs, "*.scala")
+  val srcfiles:  Seq[File] = findRecursive(settings.srcDirs,  "*.scala")
+  val testfiles: Seq[File] = findRecursive(settings.testDirs, "*.scala")
 
   val binjar: File = settings.targetDir / s"sake-${settings.scalaVersion}-${settings.version}.jar"
   val srcjar: File = settings.targetDir / s"sake-${settings.scalaVersion}-${settings.version}-src.jar"
