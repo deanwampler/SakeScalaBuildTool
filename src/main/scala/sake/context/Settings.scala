@@ -1,6 +1,6 @@
 package sake.context
 
-import sake.files.{File, FilesFinder, JavaFilesFinder, Path}
+import sake.files.{ClassPathUtil, Path, File, FilesFinder, JavaFilesFinder}
 import sake.util.Log
 
 /**
@@ -19,50 +19,20 @@ import sake.util.Log
  * @param other            Key-value map of settings for your own use.
  */
 case class Settings(
-  version: String,
-  scalaVersion: String,
-  srcDirs: Vector[File],
-  testDirs: Vector[File],
-  libDirs: Vector[File],
-  targetDir: File,
-  classPathPrefix: Path[File],
-  dryRun: Boolean,
-  logThreshold: Log.Level.Value,
-  showStackTracesOnFailures: Boolean,
-  val other: Map[String,Any]
-)
+  version: String = "2.0",
+  scalaVersion: String = "2.12.4",
+  srcDirs: Vector[File]  = Vector(File("src/main/scala")),
+  testDirs: Vector[File] = Vector(File("src/test/scala")),
+  libDirs: Vector[File]  = Vector(File("lib/")),
+  targetDir: File        = File("target/"),
+  classPathPrefix: Path[File] = ClassPathUtil.classpath,
+  dryRun: Boolean = false,
+  logThreshold: Log.Level.Value = Log.Level.Info,
+  showStackTracesOnFailures: Boolean = true,
+  other: Map[String,Any] = Map.empty)
 
 object Settings {
-  val default = Settings()
-
-  def apply(
-    version: String = "2.0",
-    scalaVersion: String = "2.12.4",
-    srcDirs: Vector[File]  = Vector(File("src/main/scala")),
-    testDirs: Vector[File] = Vector(File("src/test/scala")),
-    libDirs: Vector[File]  = Vector(File("lib/")),
-    targetDir: File        = File("target/"),
-    classPathPrefix: Path[File] = pathArgPlaceholder,
-    dryRun: Boolean = false,
-    logThreshold: Log.Level.Value = Log.Level.Info,
-    showStackTracesOnFailures: Boolean = true,
-    other: Map[String,Any] = Map.empty): Settings = {
-
-    // Compute the default prefix if the placeholder instance was provided!
-    val prefix =
-      if (classPathPrefix eq pathArgPlaceholder) finder.find(libDirs, targetDir)
-      else classPathPrefix
-
-    new Settings(
-      version, scalaVersion,
-      srcDirs, testDirs, libDirs, targetDir, prefix,
-      dryRun, logThreshold, showStackTracesOnFailures, other)
-  }
-
-  // Override for mocking.
-  protected[context] var finder: DefaultClassPathPrefixFinder = DefaultJavaClassPathPrefixFinder
-
-  val pathArgPlaceholder = Path[File]()
+  lazy val default = new Settings()
 }
 
 /**

@@ -32,6 +32,11 @@ object Passed {
 
 case class Failed(exitCode: Int = 1, message: String = "", cause: Option[Throwable] = None) extends Result {
   def passed: Boolean = false
+
+  override def toString = {
+    val th = if (cause == None) ")" else """, cause = "${cause.get}")"""
+    s"""Failed(exitCode = $exitCode, message = "$message"$th"""
+  }
 }
 
 object Failed {

@@ -89,15 +89,15 @@ done
 function stdinput {
 cat <<-EOF
 :load $file
-Project.all.map(p => p.build("${targets[@]}"))
+Project.all.map { case (name, project) => project.build("${targets[@]}") }
 EOF
 }
 
 cd $directory
 if [[ $interactive -eq 0 ]]
 then
-  CLASSPATH=$CLASSPATH scala ${args[@]} -i $file
+  CLASSPATH=$CLASSPATH scala -language:postfixOps ${args[@]} -i $file
 else
-  stdinput | CLASSPATH=$CLASSPATH scala ${args[@]}
+  stdinput | CLASSPATH=$CLASSPATH scala -language:postfixOps ${args[@]}
 fi
 echo ""

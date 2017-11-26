@@ -47,14 +47,11 @@ class Project(val name: String) extends Commands {
   /**
    * An implicit conversion that allows you to use the Scala process API, where
    * integer exit codes are returned, as actions for targets. This function lifts
-   * a function of type `Context => Int` to `Context => Result`,
-   * based on the exit code returned.
+   * the exit code to a Result.
    */
-  implicit def liftExitCode(f: Context => Int): Context => Result =
-    (c: Context) => f(c) match {
-      case 0 => Passed.default
-      case n => Failed(n, s"Command failed, returned exit code $n")
-    }
+  implicit def exitCodeToResult(code: Int): Result =
+    if (code == 0) Passed.default
+    else Failed(code, s"Command failed, returned exit code $code")
 
   protected def determineTargets(targetNames: Seq[String]): Either[String, Seq[Target[_]]] = {
     def buildOrder(targetNames: Seq[Target[_]]): Seq[Target[_]] = {
@@ -77,8 +74,8 @@ class Project(val name: String) extends Commands {
     }
     unknowns.size match {
       case 0 => Right(buildOrder(targets).distinct)
-      case 1 => Left(s"Unknown target: ${unknowns.head}")
-      case _ => Left(s"Unknown targets: ${unknowns.mkString(", ")}")
+      case 1 => Left(s"Project $name: unknown target: ${unknowns.head} (known targets: ${targetNames.mkString(", ")})")
+      case _ => Left(s"Project $name: unknown targets: ${unknowns.mkString(", ")} (known targets: ${targetNames.mkString(", ")})")
     }
   }
 
@@ -99,12 +96,21 @@ class Project(val name: String) extends Commands {
   // Target constructor, but instead would be defined using the Target#apply method.
 
   /**
-   * Create a target with no dependencies (they could be added later).
+   * Create a one or more targets with no dependencies (they could be added later).
    * Example: target(name) { action }
    * @return the new Target. Also updates the internal map of targets.
    */
-  def target[T](value: T): Target[T] =
-    Target[T](value, dependencies = Vector.empty, actions = Vector.empty)
+  def target[T](value: T, values: T*): TargetVector[T] =
+    Target[T](value +: values, dependencies = Vector.empty, actions = Vector.empty)
+
+  /**
+   * Create one or more targets, passed in as a sequence, with no dependencies.
+   * If present, the action literal will apply to all the targets.
+   * Example: target(names = Seq(name1, ...)) { action }
+   * @return Vector[Target] of the new Targets.
+   */
+  def target[T](values: Seq[T]): TargetVector[T] =
+    Target[T](values, dependencies = Vector.empty, actions = Vector.empty)
 
   /**
    * Create a target with a sequence of dependencies.
@@ -123,15 +129,6 @@ class Project(val name: String) extends Commands {
    */
   def target[T](value_dependencies: (T, Seq[Target[_]])): Target[T] =
     Target[T](value_dependencies, actions = Vector.empty)
-
-  /**
-   * Create one or more targets, passed in as a sequence, with no dependencies.
-   * If present, the action literal will apply to all the targets.
-   * Example: target(names = Seq(name1, ...)) { action }
-   * @return Vector[Target] of the new Targets.
-   */
-  def target[T](values: Seq[T]): TargetVector[T] =
-    Target[T](values, dependencies = Vector.empty, actions = Vector.empty)
 
   /**
    * Create one or more targets, passed in as a sequence, with the same sequence
@@ -155,33 +152,33 @@ class Project(val name: String) extends Commands {
     Target[T](values_dependencies, actions = Vector.empty)
 
 
-  /** Return the files in a directory. */
-  def findInDir(parent: File): Seq[File] =
-    JavaFilesFinder.findInDir(parent)
-
-  /** Return the files in a directory that match a glob pattern. */
-  def findInDir(parent: File, filePattern: String): Seq[File] =
-    JavaFilesFinder.findInDir(parent, filePattern)
+  /** Return the files in one or more directories. */
+  def findInDir(parent: File, parents: File*): Seq[File] =
+    JavaFilesFinder.findInDir(parent +: parents)
 
   /** Return the files in one or more directories. */
   def findInDir(parents: Seq[File]): Seq[File] =
     JavaFilesFinder.findInDir(parents)
+
+  /** Return the files in a directory that match a glob pattern. */
+  def findInDir(parent: File, filePattern: String): Seq[File] =
+    JavaFilesFinder.findInDir(parent, filePattern)
 
   /** Return the files in one or more directories that match a glob pattern. */
   def findInDir(parents: Seq[File], filePattern: String): Seq[File] =
     JavaFilesFinder.findInDir(parents, filePattern)
 
   /** Return the files in a directory, recursively. */
-  def findInDirRecursive(parent: File): Seq[File] =
-    JavaFilesFinder.findInDirRecursive(parent)
-
-  /** Return the files in a directory, recursively, that match a glob pattern. */
-  def findInDirRecursive(parent: File, filePattern: String): Seq[File] =
-    JavaFilesFinder.findInDirRecursive(parent, filePattern)
+  def findInDirRecursive(parent: File, parents: File*): Seq[File] =
+    JavaFilesFinder.findInDirRecursive(parent +: parents)
 
   /** Return the files in one or more directories, recursively. */
   def findInDirRecursive(parents: Seq[File]): Seq[File] =
     JavaFilesFinder.findInDirRecursive(parents)
+
+  /** Return the files in a directory, recursively, that match a glob pattern. */
+  def findInDirRecursive(parent: File, filePattern: String): Seq[File] =
+    JavaFilesFinder.findInDirRecursive(parent, filePattern)
 
   /** Return the files in one or more directories, recursively, that match a glob pattern. */
   def findInDirRecursive(parents: Seq[File], filePattern: String): Seq[File] =

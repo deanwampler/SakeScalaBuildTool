@@ -45,7 +45,7 @@ val sakeBuild = new Project("sakeBuild") {
     success
   }
 
-  target("compile" -> Seq("clean", mkdir(settings.targetdir))) { context =>
+  target("compile" -> Seq("clean", mkdir(settings.targetDir))) { context =>
     // scalac(
     //   files(srcfiles ++ testfiles),
     //   classpath(properties.classpath),
