@@ -1,125 +1,103 @@
-#!/bin/bash --
+#!/usr/bin/env bash --
 #===================================================================
 # sake - driver command for "sake" build tool.
 # Run "sake -h" for help.
 #===================================================================
 
-set +x
-
-# Uncomment the desired Sake and/or Scala version for the build you want and
-# the scala tools you are using or define these variables on the command line
-# ${SCALA_VERSION:=2.7.7}
-: ${SCALA_VERSION:=2.8.0.RC7}
-: ${VERSION:=1.1}
-
 if [ "$SAKE_HOME" = "" ] ; then
-    SAKE_HOME=${0%bin/sake}
-    if [ "$SAKE_HOME" = "" ] ; then
-        SAKE_HOME="."
-    elif [ "$SAKE_HOME" = "./sake" ] ; then
-        # Actually running in sake's bin directory!
-        SAKE_HOME=".."
-    fi
-    export SAKE_HOME=$(cd $SAKE_HOME; pwd)  # resolve to absolute... (TODO: a better way?)
+  SAKE_HOME=${0%bin/sake}
+  if [ "$SAKE_HOME" = "" ] ; then
+    SAKE_HOME="."
+  elif [ "$SAKE_HOME" = "./sake" ] ; then
+    # Actually running in sake's bin directory!
+    SAKE_HOME=".."
+  fi
+  export SAKE_HOME=$(cd $SAKE_HOME; pwd)  # resolve to absolute... (TODO: a better way?)
 fi
-for lib in ${SAKE_HOME}/lib/*.jar ${SAKE_HOME}/lib/${SCALA_VERSION}/*.jar
+
+for lib in ${SAKE_HOME}/lib/*.jar
 do
-    case "$lib" in
-        *src.jar)
-            ;;  # do nothing
-        *)
-            CLASSPATH=$lib:$CLASSPATH
-            ;;
-    esac
+  case "$lib" in
+    *src.jar) ;;  # do nothing
+    *) CLASSPATH=$lib:$CLASSPATH ;;
+  esac
 done
 
-file=sake.scala
-interactive="false"
-args[0]=-classpath
-args[1]=$CLASSPATH
+# TODO FIX
+CLASSPATH=target/scala-2.12/classes
 
-function showhelp {
+file=sake.scala
+let interactive=1
+targets=()
+directory=$PWD
+
+function help {
     cat <<-EOF
-usage: sake [-h] [-f sake.scala] [scala_opts] [targets]
-where:
-    -h                     This help message (also "--h", "-help", "--help", etc. are allowed)
-    -i                     Interactive mode. After loading the build file, it puts you at the scala
-                           command prompt. Use commands like "build('all)" to build targets.
-    -f build_file          The build file name, where "sake.scala" is the default.
-    -C | --directory dir   Run in this directory, rather than the current working directory.
-    scala_opts             Any other options are passed to the "scala" command. However, any
-                           -classpath items will be prepended to the CLASSPATH.
-    targets                What to build; defaults to "all", unless in interactive mode, in which
-                           case nothing is built by default. If targets are specified, they are
-                           built after loading the build file and before presenting the scala prompt.
+usage: sake [options] [targets]
+where the following sake options must come first:
+
+    -h | --help             Show this help message and exit.
+    -i | --interactive      Interactive mode. After loading the build file, it puts you at the scala
+                            command prompt. Use commands like "build("all")" to build targets.
+    -f | --file build_file  The build file name, where "sake.scala" is the default.
+    -C | --directory dir    Run in this directory, rather than the current working directory.
+                            (-C is a make convention)
+    targets                 What to build; defaults to "all", unless in interactive mode, in which
+                            case nothing is built by default. If targets are specified, they are
+                            built after loading the build file and before presenting the scala prompt.
 EOF
 }
 
 while [ $# -gt 0 ]
 do
 	case $1 in
-		-h*|--h*)
-			showhelp
+		-h|--help)
+			help
 			exit 0
 			;;
-		-i)
-			interactive="true"
+		-i|--interactive)
+      let interactive=0
 			;;
-		-f)
+		-f|--file)
 			shift
 			file=$1
 			;;
+    -C|--directory)
+      shift
+      directory=$1
+      ;;
 		-classpath)
 			shift
 			CLASSPATH=$CLASSPATH:$1
-			args[1]=$args[1]:$1
 			;;
 		-*)
-			args[${#args[@]}]=$1
-			shift
-			args[${#args[@]}]=$1
+      echo "Unrecognized option: $1"
+      help
+      exit 1
 			;;
 		*)
-			targets[${#targets[@]}]=$1
+			targets+=($1)
 			;;
 	esac
 	shift
 done
 
-cygwin=false;
-case "`uname`" in
-    CYGWIN*)
-        cygwin=true
-        SAKE_HOME=`cygpath --$format "$SAKE_HOME"`
-        CLASSPATH=`cygpath --path --$format "$CLASSPATH"`
-        ;;
-esac
 
-export CLASSPATH
 
-if [ $interactive = "false" ]; then
-    if [ "${#targets[@]}" == 0 ]; then
-        targets[0]="all"
-    fi
-else
-    scala -version | grep --silent 2.7.2
-    if [ $? = 0 ] ; then
-        echo "The interactive option can't be used with scala v2.7.2, because a bug in"
-        echo "the -i option causes it to load the build file twice. Upgrade to a more recent version instead."
-        exit 1
-    fi
-fi
+[[ $interactive -eq 1 ]] && [[ "${#targets[@]}" -eq 0 ]] && targets=("all")
 
 function stdinput {
 cat <<-EOF
 :load $file
-build("${targets[@]}")
+Project.all.map(p => p.build("${targets[@]}"))
 EOF
 }
 
-if [ $interactive = "true" ]; then
-    env SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]} -i $file
+cd $directory
+if [[ $interactive -eq 0 ]]
+then
+  CLASSPATH=$CLASSPATH scala ${args[@]} -i $file
 else
-    stdinput | env SCALA_VERSION=$SCALA_VERSION VERSION=$VERSION scala ${args[@]}
+  stdinput | CLASSPATH=$CLASSPATH scala ${args[@]}
 fi
 echo ""

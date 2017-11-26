@@ -7,16 +7,16 @@ import sake.util.Log
  * Defines convenient variables for builds.
  * @param version          Version string for this project.
  * @param scalaVersion     Version of Scala.
- * @param srcDirs          One or more directories where source files are find.
- * @param srcDirs          One or more directories where source files are find.
- * @param testDirs         One or more directories where test source files are find.
- * @param libDirs          One or more directories where libraries are find that aren't resolved with Ivy or Maven.
+ * @param srcDirs          One or more directories where source files are found.
+ * @param testDirs         One or more directories where test source files are found.
+ * @param libDirs          One or more directories where libraries are found that aren't resolved with Ivy or Maven.
  * @param targetDir        Directory where compiled class files and archives are written.
  * @param classPathPrefix  A Path for the CLASSPATH that is put before any elements resolved using Ivy or Maven.
  *                         Defaults to any jar in the libDirs (except for source jars: "*src.jar") and any class files in targetDir.
- * @param showStackTracesOnFailures If true (default), show stack traces when a failure happens.
+ * @param dryRun           Don't actually run the commands.
  * @param logThreshold     Logging level: Info (default), Notice, Warn, Error, Failure
- * @param userSettings     Key-value map of settings for your own use.
+ * @param showStackTracesOnFailures If true (default), show stack traces when a failure happens.
+ * @param other            Key-value map of settings for your own use.
  */
 case class Settings(
   version: String,
@@ -29,7 +29,7 @@ case class Settings(
   dryRun: Boolean,
   logThreshold: Log.Level.Value,
   showStackTracesOnFailures: Boolean,
-  val userSettings: Map[String,Any]
+  val other: Map[String,Any]
 )
 
 object Settings {
@@ -46,7 +46,7 @@ object Settings {
     dryRun: Boolean = false,
     logThreshold: Log.Level.Value = Log.Level.Info,
     showStackTracesOnFailures: Boolean = true,
-    userSettings: Map[String,Any] = Map.empty): Settings = {
+    other: Map[String,Any] = Map.empty): Settings = {
 
     // Compute the default prefix if the placeholder instance was provided!
     val prefix =
@@ -56,7 +56,7 @@ object Settings {
     new Settings(
       version, scalaVersion,
       srcDirs, testDirs, libDirs, targetDir, prefix,
-      dryRun, logThreshold, showStackTracesOnFailures, userSettings)
+      dryRun, logThreshold, showStackTracesOnFailures, other)
   }
 
   // Override for mocking.
@@ -72,9 +72,9 @@ object Settings {
 trait DefaultClassPathPrefixFinder {
   def find(libDirs: Seq[File], targetDir: File): Path[File] = {
     val finder = makeFinder()
-    val files = (finder(libDirs.map(_ + Properties.fileSeparator + "*.jar")) diff
-     finder(libDirs.map(_ + Properties.fileSeparator + "*src.jar"))) :+ targetDir
-    Path(files, Properties.fileSeparator)
+    val files = (finder(libDirs.map(_ + File.separator + "*.jar")) diff
+     finder(libDirs.map(_ + File.separator + "*src.jar"))) :+ targetDir
+    Path(files, File.separator)
   }
 
   protected def makeFinder(): FilesFinder

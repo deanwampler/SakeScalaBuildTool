@@ -8,26 +8,27 @@ case class JavaFile(path: String) extends File {
 
   @transient val javaFile = new JFile(path)
 
-  def exists = javaFile.exists()
+  def exists: Boolean = javaFile.exists()
 
-  def isDirectory = javaFile.isDirectory()
+  def isDirectory: Boolean = javaFile.isDirectory()
 
-  def isFile = javaFile.isFile()
+  def isFile: Boolean = javaFile.isFile()
 
-  def getPath = javaFile.getPath()
+  def getName: String = javaFile.getName()
+  def getPath: String = javaFile.getPath()
 
   def toJavaFile(jfw: JavaFile): JFile = jfw.javaFile
 
   def / (child: String): File = JavaFile(path, child)
 
-  def contents = {
+  def contents: Seq[File] = {
     val ary = javaFile.list()
-    if (ary == null) None else Some(ary.toList)
+    if (ary == null) Vector.empty else ary.toVector.map(f => File(f))
   }
 
-  def contentsFilteredBy(nameFilter: String) = {
+  def contentsFilteredBy(nameFilter: String): Seq[File] = {
     val ary = javaFile.list(new FileFilter(nameFilter))
-    if (ary == null) None else Some(ary.toList)
+    if (ary == null) Vector.empty else ary.toVector.map(f => File(f))
   }
 
   def createNewFile = javaFile.createNewFile()

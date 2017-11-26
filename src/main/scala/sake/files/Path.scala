@@ -1,7 +1,5 @@
 package sake.files
 
-import sake.context.Properties
-
 /**
  * Encapsulate path-like structures, like CLASSPATH. The delimiter is used for toString.
  */
@@ -26,10 +24,10 @@ case class Path[+T](elements: Vector[T], separator: String) extends Seq[T] {
 }
 
 object Path {
-  def apply[T](elements: Vector[T] = Vector.empty, separator: String = Properties.pathSeparator) = new Path[T](elements, separator)
+  def apply[T](elements: Vector[T] = Vector.empty, separator: String = ClassPathUtil.separator) = new Path[T](elements, separator)
   def empty[T] = Path[T]()
 
-  def make[T](elements: Seq[String], separator: String = Properties.pathSeparator)(toT: String => T) =
+  def make[T](elements: Seq[String], separator: String = ClassPathUtil.separator)(toT: String => T) =
     new Path[T](elements.map(toT).toVector, separator)
 }
 

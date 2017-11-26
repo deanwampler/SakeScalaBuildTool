@@ -20,7 +20,7 @@ object ExitSpec extends FreeSpec {
     "The error method with just a message" should {
         "throw a BuildError with the message" in {
             try {
-                Exit.error("message")
+                Exit.fatal("message")
                 fail()
             } catch {
                 case BuildError(msg, th) =>  msg shouldEqual "message"
@@ -33,7 +33,7 @@ object ExitSpec extends FreeSpec {
         "throw a BuildError with the message and the throwable" in {
             val ex = new Exception()
             try {
-                Exit.error("message", ex)
+                Exit.fatal("message", ex)
                 fail()
             } catch {
                 case BuildError(msg, th) =>  {

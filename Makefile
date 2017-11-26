@@ -1,8 +1,9 @@
 # gnu make
 
 SCALA_VERSION=2.12.4
+SCALA_MINOR_VERSION=2.12
 VERSION=2.0
-CLASSES=target/$(SCALA_VERSION)/classes
+CLASSES=target/scala-$(SCALA_MINOR_VERSION)/classes
 CLASSPATH=$(CLASSES):lib/scalatest_2.12-3.0.4.jar:lib/embedded-interpreter-0.1-2.8.0.RC7.jar
 
 all: clean test jars
@@ -14,10 +15,10 @@ SRCS := $(shell find src/main/scala -type f)
 TEST_SRCS := $(shell find src/test/scala -type f)
 
 compile: target_dir
-	scalac -d $(PWD)/$(CLASSES) -classpath ${CLASSPATH} -unchecked -deprecation $(SRCS)
+	scalac -d $(PWD)/$(CLASSES) -classpath ${CLASSPATH} -unchecked -deprecation -feature $(SRCS)
 
 test_compile:
-	scalac -d $(PWD)/$(CLASSES) -classpath build:${CLASSPATH} -unchecked -deprecation $(TEST_SRCS)
+	scalac -d $(PWD)/$(CLASSES) -classpath build:${CLASSPATH} -unchecked -deprecation -feature $(TEST_SRCS)
 
 test: clean compile test_compile _test
 _test:

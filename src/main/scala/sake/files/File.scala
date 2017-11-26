@@ -4,7 +4,6 @@ import java.io.{File => JFile, FilenameFilter => JFilenameFilter,
     Reader => JReader, Writer => JWriter}
 import scala.util.matching.Regex
 
-import sake.context.Properties
 import sake.util.BuildError
 
 /**
@@ -12,20 +11,32 @@ import sake.util.BuildError
  * that are either real or fake.
  */
 trait File {
+  /** A full or relative path; what you typically specify to create the file. */
   val path: String
   if (path.length == 0) throw new BuildError("File path can't be an empty string.")
+
   def exists: Boolean
   def isDirectory: Boolean
   def isFile: Boolean
-  def contents: Option[Seq[String]]
-  def contentsFilteredBy(nameFilter: String): Option[Seq[String]]
+  def contents: Seq[File]
+  def contentsFilteredBy(nameFilter: String): Seq[File]
 
+  /** The last name in the path. */
+  def getName: String
+
+  /** The full path. */
   def getPath: String
 
   def createNewFile: Boolean
 
-  // A child file or directory of this directory.
+  /** A child file or directory of this directory. */
   def / (child: String): File
+
+  /**
+   * A child file or directory of this directory, where we use the name of the
+   * file argument as a relative path to be created under this directory.
+   */
+  def / (child: File): File = /(child.getName)
 
   /**
    * Create a directory with this name, but fail if the parent directories don't
@@ -46,19 +57,16 @@ trait File {
 
   /**
    * Delete the File or directory, recursively. If it is a non-empty directory, it will delete
-   * all the contents first.
+   * all the contents first. Stops on the first failure.
    */
-  def deleteRecursively:Boolean = {
+  def deleteRecursively: Boolean = {
     if (isDirectory) {
-      contents match {
-        case None => true
-        case Some(files) => files.foreach { f =>
-          if (makeFile(path, f).deleteRecursively == false)
-            return false
-        }
+      def del(ds: Seq[File]): Boolean = ds match {
+        case Nil => true
+        case head +: tail => head.deleteRecursively && del(tail)
       }
-    }
-    delete
+      del(contents) && delete
+    } else delete
   }
 
   /**
@@ -86,13 +94,17 @@ trait File {
 object File {
   def apply(elements: String*) = new JavaFile(makePath(elements :_*))
 
+  import scala.language.implicitConversions
+
   implicit def toJavaFile(jfw: JavaFile): JFile = jfw.javaFile
 
-  def makePath(parent: File, name: String): String = parent.getPath + Properties.fileSeparator + name
-  def makePath(elems: String*): String = elems.mkString(Properties.fileSeparator)
+  def makePath(parent: File, name: String): String = parent.getPath + separator + name
+  def makePath(elems: String*): String = elems.mkString(separator)
 
   /** Current working directory */
   def cwd = apply(".")
+
+  val separator: String = java.io.File.separator
 }
 
 class FileFilter(val nameFilter: String) extends JFilenameFilter {

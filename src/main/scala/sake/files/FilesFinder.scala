@@ -32,7 +32,7 @@ trait FilesFinder {
     validateSpec(spec)
     // Split on the file delimiter, then if the first element is "",
     // it means the path spec is absolute (starts at "/").
-    spec.split(Properties.fileSeparator).toSeq match {
+    spec.split(File.separator).toSeq match {
       case   "" +: tail => findFiles(toFile("/"),  tail)
       case head +: tail => findFiles(toFile(head), tail)
     }
@@ -42,11 +42,11 @@ trait FilesFinder {
   protected def findFiles(parent: File, elems: Seq[String]): Vector[File] = elems match {
     case head +: tail =>
       if (head == "**") {
-        findInCurrentDirRecur(parent).foldLeft(Vector.empty[File]) { (seq, s) =>
+        findInDirRecursive(parent).foldLeft(Vector.empty[File]) { (seq, s) =>
           seq ++ findFiles(s, tail)
         }
       } else if (head.contains("*")) {
-        findInCurrentDir(parent, head).foldLeft(Vector.empty[File]) { (seq, s) =>
+        findInDir(parent, head).foldLeft(Vector.empty[File]) { (seq, s) =>
           seq ++ findFiles(s, tail)
         }
       } else {
@@ -58,29 +58,41 @@ trait FilesFinder {
 
   protected def validateSpec(spec: String) = {
     """\*\*\w""".r findFirstIn spec match {
-        case Some(_) => Exit.error("'**' in a specification can only be followed by '/' or end of string.")
+        case Some(_) => Exit.fatal("'**' in a specification can only be followed by '/' or end of string.")
         case None =>
     }
   }
 
-  protected def findInCurrentDir(parent: File, pattern: String): Vector[File] =
-    parent.contentsFilteredBy(pattern) match {
-      case None => Vector.empty
-      case Some(seq: Seq[_]) => seq.map(toFile(parent, _)).toVector
-    }
+  /** Find all files in a directory. */
+  def findInDir(parent: File): Seq[File] = findInDir(parent, "*")
 
-  protected def findInCurrentDirRecur(parent: File): Vector[File] = {
-    if (parent.isDirectory == false) Vector(parent)  // e.g., "/dir/file/**" allowed.
-    else {
-      parent.contents match {
-        case None => Vector.empty
-        case Some(seq: Seq[_]) => seq.foldLeft(Vector(parent)) { (vector, name) =>
-            val file = toFile(parent, name)
-            (vector :+ file) ++ findInCurrentDirRecur(file)
-        }
-      }
-    }
+  /** Find all files in a directory that match a pattern. */
+  def findInDir(parent: File, filePattern: String): Seq[File] =
+    parent.contentsFilteredBy(filePattern).toVector
+
+  /** Find all files in one or more directories. */
+  def findInDir(parents: Seq[File]): Seq[File] = findInDir(parents, "*")
+
+  /** Find all files in one or more directories that match a pattern. */
+  def findInDir(parents: Seq[File], filePattern: String): Seq[File] =
+    parents.toVector.flatMap(parent => findInDir(parent, filePattern))
+
+  /** Find all files in a directory, recursively. */
+  def findInDirRecursive(parent: File): Seq[File] = findInDirRecursive(parent, "*")
+
+  /** Find all files in a directory, recursively, that match a pattern. */
+  def findInDirRecursive(parent: File, filePattern: String): Seq[File] = {
+    val dirs = parent.contents filter (_.isDirectory)
+    val matches = findInDir(parent, filePattern)
+    matches ++ (dirs flatMap (d => findInDirRecursive(d)))
   }
+
+  /** Find all files in one or more directories, recursively. */
+  def findInDirRecursive(parents: Seq[File]): Seq[File] = findInDirRecursive(parents, "*")
+
+  /** Find all files in one or more directories, recursively, that match a pattern. */
+  def findInDirRecursive(parents: Seq[File], filePattern: String): Seq[File] =
+    parents.toVector.flatMap(parent => findInDirRecursive(parent, filePattern))
 }
 
 object JavaFilesFinder extends FilesFinder {

@@ -8,12 +8,12 @@ object Exit {
     sys.exit(0)
   }
 
-  def error(message:String) = {
+  def fatal(message:String) = {
     Log.fatal(message)
     throw new BuildError(message)
   }
 
-  def error(message:String, throwable: Throwable) = {
+  def fatal(message:String, throwable: Throwable) = {
     Log.fatal(message)
     throw new BuildError(message, throwable)
   }

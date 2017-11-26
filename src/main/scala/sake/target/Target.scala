@@ -2,6 +2,7 @@ package sake.target
 
 import sake.util.Exit
 import sake.command.{Result, Passed, Failed}
+import sake.context.Context
 
 /**
  * A Target has zero or more dependencies and a sequence of actions (which can be empty).
@@ -16,7 +17,7 @@ case class Target[+T] protected (
 
   def apply(action: Target.Action): Target[T] = copy(actions = actions :+ action)
 
-  def build(context: Target.Context): Result = {
+  def build(context: Context): Result = {
     try {
       Target.buildActions(context, actions)
     } catch {
@@ -26,11 +27,6 @@ case class Target[+T] protected (
 }
 
 object Target {
-
-  case class Context(target: Target[_], properties: Map[String, Any]) {
-    def apply(key: String): Any = properties(key)
-    def get(key: String): Option[Any] = properties.get(key)
-  }
 
   type Action = Context => Result
 
@@ -69,6 +65,8 @@ object Target {
   // These conversions are primarily used to autoconvert dependencies specified as
   // strings, symbols, files, etc.
 
+  import scala.language.implicitConversions
+
   implicit def toTarget(name: String) = apply[String](name, Nil, Nil)
   implicit def toTarget(name: Symbol) = apply[String](name.toString, Nil, Nil)
   implicit def toTarget(file: sake.files.File) = apply[File](file, Nil, Nil)
@@ -105,14 +103,14 @@ object Target {
    */
   protected def merge[T](t: Target[T], tany: Target[Any]): Target[T] = {
     validateMerge(t, tany)
-    val deps = Dedup(t.dependencies ++ tany.dependencies)
+    val deps = (t.dependencies ++ tany.dependencies).distinct
     new Target[T](t.value, deps, t.actions ++ tany.actions)
   }
 
   // TODO. We exit if unable to merge, rather than return a Result.
   protected def validateMerge[T](t: Target[T], tany: Target[Any]) =
     if (t.value != tany.value)
-      Exit.error("Target.merge() called with two targets that don't have the same value: "+t.value+" vs. "+tany.value)
+      Exit.fatal("Target.merge() called with two targets that don't have the same value: "+t.value+" vs. "+tany.value)
 
 }
 
@@ -121,6 +119,6 @@ object Target {
  * to all of them at once.
  */
 case class TargetVector[+T](targets: Vector[Target[T]]) {
-  def apply(action: Target.Context => Result): TargetVector[T] =
+  def apply(action: Context => Result): TargetVector[T] =
     copy(targets = targets.map(t => t.copy(actions = t.actions :+ action)))
 }

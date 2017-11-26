@@ -3,24 +3,21 @@ package sake
 // import scala.collection.immutable._
 import sake.command.builtin.Commands
 import sake.command.{Result, Passed, Failed}
-import sake.context.{Properties, Settings}
+import sake.context.{Context, Settings}
 import sake.target.{Target, TargetVector}
-import sake.util.Log
-import sake.files.File
+import sake.util.{Exit, Log}
+import sake.files.{File, FilesFinder, JavaFilesFinder}
 
 /**
 * The Project class defines actual build scripts.
 */
-class Project extends Commands {
+class Project(val name: String) extends Commands {
+
+  Project.add(this)
 
   var settings: Settings = Settings.default
   var log: Log = Log.default
   var logLevel: Log.Level.Value = Log.Level.Info
-
-  /**
-   * If true, don't actually build anything, just report the the commands that would be executed.
-   */
-  var dryRun = false
 
   var showStackTracesOnFailures = true
 
@@ -29,7 +26,7 @@ class Project extends Commands {
     def b(lastResult: Result, targs: Seq[Target[_]]): Result = targs match {
       case Nil => lastResult
       case head +: tail =>
-        val context = Target.Context(head, Map.empty[String, Any])  // TODO add environment?
+        val context = Context(head, settings, Map.empty[String, Any])  // TODO what should go in the map?
         val result = doBuild(context, head)
         if (result.passed) b(result, tail) else result
     }
@@ -45,14 +42,16 @@ class Project extends Commands {
     }
   }
 
+  import scala.language.implicitConversions
+
   /**
    * An implicit conversion that allows you to use the Scala process API, where
    * integer exit codes are returned, as actions for targets. This function lifts
-   * a function of type `Target.Context => Int` to `Target.Context => Result`,
+   * a function of type `Context => Int` to `Context => Result`,
    * based on the exit code returned.
    */
-  implicit def liftExitCode(f: Target.Context => Int): Target.Context => Result =
-    (c: Target.Context) => f(c) match {
+  implicit def liftExitCode(f: Context => Int): Context => Result =
+    (c: Context) => f(c) match {
       case 0 => Passed.default
       case n => Failed(n, s"Command failed, returned exit code $n")
     }
@@ -83,7 +82,7 @@ class Project extends Commands {
     }
   }
 
-  protected def doBuild(context: Target.Context, target: Target[_]): Result = {
+  protected def doBuild(context: Context, target: Target[_]): Result = {
     log(logLevel, "building "+target.value)
     try {
       target.build(context)
@@ -91,6 +90,9 @@ class Project extends Commands {
       case scala.util.control.NonFatal(ex) => Failed.exception(s"target ${target.name}", ex)
     }
   }
+
+  /** Force an action to succeed */
+  def success: Result = Passed.default
 
   // Define methods the user would typically use in a build file to create targets.
   // The assumption is that the actions wouldn't be passed as arguments, as in the
@@ -151,6 +153,39 @@ class Project extends Commands {
    */
   def target[T](values_dependencies: (Seq[T], Seq[Target[_]])): TargetVector[T] =
     Target[T](values_dependencies, actions = Vector.empty)
+
+
+  /** Return the files in a directory. */
+  def findInDir(parent: File): Seq[File] =
+    JavaFilesFinder.findInDir(parent)
+
+  /** Return the files in a directory that match a glob pattern. */
+  def findInDir(parent: File, filePattern: String): Seq[File] =
+    JavaFilesFinder.findInDir(parent, filePattern)
+
+  /** Return the files in one or more directories. */
+  def findInDir(parents: Seq[File]): Seq[File] =
+    JavaFilesFinder.findInDir(parents)
+
+  /** Return the files in one or more directories that match a glob pattern. */
+  def findInDir(parents: Seq[File], filePattern: String): Seq[File] =
+    JavaFilesFinder.findInDir(parents, filePattern)
+
+  /** Return the files in a directory, recursively. */
+  def findInDirRecursive(parent: File): Seq[File] =
+    JavaFilesFinder.findInDirRecursive(parent)
+
+  /** Return the files in a directory, recursively, that match a glob pattern. */
+  def findInDirRecursive(parent: File, filePattern: String): Seq[File] =
+    JavaFilesFinder.findInDirRecursive(parent, filePattern)
+
+  /** Return the files in one or more directories, recursively. */
+  def findInDirRecursive(parents: Seq[File]): Seq[File] =
+    JavaFilesFinder.findInDirRecursive(parents)
+
+  /** Return the files in one or more directories, recursively, that match a glob pattern. */
+  def findInDirRecursive(parents: Seq[File], filePattern: String): Seq[File] =
+    JavaFilesFinder.findInDirRecursive(parents, filePattern)
 
   /**
    * Ensure that a directory exists, with no dependencies, but fail if the parent
@@ -366,8 +401,6 @@ class Project extends Commands {
     Target[Seq[File]](directories, dependencies, cleanAction(directories))
 
 
-  import Target.Context
-
   protected def mkdirsAction(files: Seq[File], createParents: Boolean): Vector[Context => Result] = {
     val md = if (createParents) (f: File) => f.mkdirs else (f: File) => f.mkdir
     def mds(fs: Seq[File], r: Result): Result = fs match {
@@ -403,3 +436,13 @@ class Project extends Commands {
   }
 }
 
+object Project {
+  var all: Map[String, Project] = Map.empty
+
+  def add(p: Project): Unit =
+    if (all.contains(p.name)) {
+      Exit.fatal(s"Projects must have unique names. This one: ${p.name}. Defined projects: ${all.keySet.mkString(", ")}")
+    } else {
+      all += (p.name -> p)
+    }
+}

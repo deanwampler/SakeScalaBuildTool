@@ -48,23 +48,38 @@ trait Commands {
 
   // Commands for logging ("echoing") messages.
 
-  /** Log an info message. It doesn't return a Result. */
-  def info(  message: String): Unit = Log.info(message)
+  /** Log an info message and return a Result. */
+  def info(  message: String): Result = {
+    Log.info(message)
+    Passed.default
+  }
 
-  /** Log a notice message. It doesn't return a Result. */
-  def notice(message: String): Unit = Log.notice(message)
+  /** Log a notice message and return a Result. */
+  def notice(message: String): Result = {
+    Log.notice(message)
+    Passed.default
+  }
 
-  /** Log a warning message. It doesn't return a Result. */
-  def warn(  message: String): Unit = Log.warn(message)
+  /** Log a warning message and return a Result. */
+  def warn(  message: String): Result = {
+    Log.warn(message)
+    Passed.default
+  }
 
-  /** Log an error message. It doesn't return a Result. */
-  def error( message: String): Unit = Log.error(message)
+  /** Log an error message and return a Result. */
+  def error( message: String): Result = {
+    Log.error(message)
+    Passed.default
+  }
 
-  /** Log a fatal message. It doesn't return a Result. */
-  def fatal( message: String): Unit = Log.fatal(message)
+  /** Fail immediately with a message.  */
+  def fatal( message: String): Result = {
+    Exit.fatal(message)
+    Failed(1, message) // never get here, as Exit.fatal exits, but to get the types right...
+  }
 
-  /** Fail immediately with a message. */
-  def fail(message: String = "Build failed!"): Unit = Exit.error(message)
+  /** Fail immediately with a message.  */
+  def fail(message: String = "Build failed!"): Result = fatal(message)
 
   /**
    * Command for recursive invocation of sake (as a new process), usually in a different directory.
