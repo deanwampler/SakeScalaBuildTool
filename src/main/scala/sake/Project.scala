@@ -171,33 +171,52 @@ class Project(val name: String) extends Commands {
   // Also, the dependencies are added using Target#dependencies or related methods.
 
   /**
+   * Create a target with no dependencies (they can be added later).
+   * Example: target(name1) { action }
+   * @return the new Target. Also updates the internal map of targets.
+   */
+  def target[T : TargetKind](value: T): Target[T] =
+    makeTarget(implicitly[TargetKind[T]], value)
+
+  /**
    * Create targets with no dependencies (they can be added later).
    * If followed by an action literal, it will be applied to all the targets.
    * Example: target(name1, name2) { action }
    * @return a TargetVector with the new Targets. Also updates the internal map of targets.
    */
-  def target[T : TargetKind](value: T, values: T*): TargetVector[T] =
-    makeTargets(implicitly[TargetKind[T]], value +: values)
+  def target[T : TargetKind](value1: T, value2: T, values: T*): TargetVector[T] =
+    makeTargets(implicitly[TargetKind[T]], value1 +: value2 +: values)
 
   /**
    * Create one or more targets, passed in as a sequence, with no dependencies.
    * If followed by an action literal, it will be applied to all the targets.
    * Example: target(names = Seq(name1, ...)) { action }
-   * @return Vector[Target] of the new Targets.
+   * @return TargetVector with the new Targets. Also updates the internal map of targets.
    */
   def target[T : TargetKind](values: Seq[T]): TargetVector[T] =
     makeTargets(implicitly[TargetKind[T]], values)
 
   /**
-   * Ensure that one or more directories exist, but fail if the parent doesn't exist
+   * Ensure that a directory exists, but fail if the parent doesn't exist
    * or the creation fails.  The process stops on the first failure.
    * Dependencies can be added afterwards.
    * Example: mkdir(File(dirName))
    * @see mkdirs, which creates parents if necessary.
    * @return the new Target. Also updates the internal map of targets.
    */
-  def mkdir(directory: File, directories: File*): TargetVector[File] =
-    makeTargets(FileTargetKind, directory +: directories, postActions = mkdirsAction(false))
+  def mkdir(directory: File): Target[File] =
+    makeTarget(FileTargetKind, directory, postActions = mkdirsAction(false))
+
+  /**
+   * Ensure that one or more directories exist, but fail if the parent doesn't exist
+   * or the creation fails.  The process stops on the first failure.
+   * Dependencies can be added afterwards.
+   * Example: mkdir(File(dirName1), File(dirName2))
+   * @see mkdirs, which creates parents if necessary.
+   * @return TargetVector with the new Targets. Also updates the internal map of targets.
+   */
+  def mkdir(directory1: File, directory2: File, directories: File*): TargetVector[File] =
+    makeTargets(FileTargetKind, directory1 +: directory2 +: directories, postActions = mkdirsAction(false))
 
   /**
    * Ensure that one or more directories exist, with no dependencies, but fail
@@ -205,10 +224,21 @@ class Project(val name: String) extends Commands {
    * Dependencies can be added afterwards.
    * Example: mkdir(Seq(File(dirName1), File(dirName2)))
    * @see mkdirs, which creates parents if necessary.
-   * @return the new Target. Also updates the internal map of targets.
+   * @return TargetVector with the new Targets. Also updates the internal map of targets.
    */
   def mkdir(directories: Seq[File]): TargetVector[File] =
     makeTargets(FileTargetKind, directories, postActions = mkdirsAction(false))
+
+  /**
+   * Ensure that a directory exists. Create the parents if they don't
+   * exist. Fail if any creation step fails. The process stops on the first failure.
+   * Dependencies can be added afterwards.
+   * Example: mkdirs(File(dirName))
+   * @see mkdir, which fails if the parents don't exist.
+   * @return the new Target. Also updates the internal map of targets.
+   */
+  def mkdirs(directory: File): Target[File] =
+    makeTarget(FileTargetKind, directory, postActions = mkdirsAction(true))
 
   /**
    * Ensure that one or more directories exist. Create the parents if they don't
@@ -216,10 +246,10 @@ class Project(val name: String) extends Commands {
    * Dependencies can be added afterwards.
    * Example: mkdirs(File(dirName))
    * @see mkdir, which fails if the parents don't exist.
-   * @return the new Target. Also updates the internal map of targets.
+   * @return TargetVector with the new Targets. Also updates the internal map of targets.
    */
-  def mkdirs(directory: File, directories: File*): TargetVector[File] =
-    makeTargets(FileTargetKind, directory +: directories, postActions = mkdirsAction(true))
+  def mkdirs(directory1: File, directory2: File, directories: File*): TargetVector[File] =
+    makeTargets(FileTargetKind, directory1 +: directory2 +: directories, postActions = mkdirsAction(true))
 
   /**
    * Ensure that one or more directories exist. Create the parents if they don't
@@ -227,42 +257,61 @@ class Project(val name: String) extends Commands {
    * Dependencies can be added afterwards.
    * Example: mkdirs(Seq(File(dirName1), File(dirName2)))
    * @see mkdir, which fails if the parents don't exist.
-   * @return the new Target. Also updates the internal map of targets.
+   * @return TargetVector with the new Targets. Also updates the internal map of targets.
    */
   def mkdirs(directories: Seq[File]): TargetVector[File] =
     makeTargets(FileTargetKind, directories, postActions = mkdirsAction(true))
 
 
   /**
-   * Create one or more files, passed in as a sequence, with no dependencies.
-   * If an action literal is present, it is applied to all of them.
+   * Target for creation of a file, with no dependencies.
+   * An action is required to do the actual creation, as appropriate.
    * After the actions are completed, the files must exist or the build fails.
    * Example: file(afile) { action }
    * @return  the new Target. Also updates the internal map of targets.
-   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
    */
-  def file(f: File, files: File*): TargetVector[File] =
-    makeTargets(FileTargetKind, f +: files, postActions = fileExistsAction())
+  def file(f: File): Target[File] =
+    makeTarget(FileTargetKind, f, postActions = fileExistsAction())
 
   /**
-   * Create one or more files, passed in as a sequence, with no dependencies.
+   * Target for creation of files, with no dependencies.
+   * An action is required to do the actual creation, as appropriate.
+   * If an action literal is present, it is applied to all of them.
+   * After the actions are completed, the files must exist or the build fails.
+   * Example: file(file1, file2) { action }
+   * @return TargetVector with the new Targets. Also updates the internal map of targets.
+   */
+  def file(f1: File, f2: File, files: File*): TargetVector[File] =
+    makeTargets(FileTargetKind, f1 +: f2 +: files, postActions = fileExistsAction())
+
+  /**
+   * Target for creation of files, with no dependencies.
+   * An action is required to do the actual creation, as appropriate.
    * If an action literal is present, it is applied to all of them.
    * After the actions are completed, the files must exist or the build fails.
    * Example: file(Seq(file1, ...)) { action }
-   * @return Vector[Target] of the new Targets.
-   * @note No nesting of dependencies and their dependencies is supported! Use a separate target invocation.
+   * @return TargetVector with the new Targets. Also updates the internal map of targets.
    */
   def file(files: Seq[File]): TargetVector[File] =
     makeTargets(FileTargetKind, files, postActions = fileExistsAction())
 
   /**
-   * Delete one or more files or directories. For directories, it deletes
+   * Delete a file or directory. For a directory, it deletes recursively.
+   * It stops immediately on the first failure, if any.
+   * Example: clean(File(dirName))
+   * @return the new Targets. Also updates the internal map of targets.
+   */
+  def clean(file: File): Target[File] =
+    makeTarget(FileTargetKind, file, actions = cleanAction())
+
+  /**
+   * Delete files or directories. For directories, it deletes
    * recursively. It stops immediately on the first failure, if any.
    * Example: clean(File(dirName))
-   * @return Vector[Target] of the new Targets. Also updates the internal map of targets.
+   * @return TargetVector with the new Targets. Also updates the internal map of targets.
    */
-  def clean(file: File, files: File*): TargetVector[File] =
-    makeTargets(FileTargetKind, file +: files, actions = cleanAction())
+  def clean(file1: File, file2: File, files: File*): TargetVector[File] =
+    makeTargets(FileTargetKind, file1 +: file2 +: files, actions = cleanAction())
 
   /**
    * Delete one or more targets, which have no dependencies. For directories, it deletes

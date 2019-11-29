@@ -22,16 +22,27 @@ case class Target[T] protected (
   postActions: Seq[Context[T] => Result] = Vector.empty) {
 
   /** Add dependencies, "build this after these" */
-  def after (dep1: Target[_], deps: Target[_]*) = copy(dependencies = dependencies ++ (dep1 +: deps))
+  def after(d1: Target[_], ds: Target[_]*) =
+    copy(dependencies = dependencies ++ (d1 +: ds))
 
   /** Add dependencies, "build this after these" */
-  def after (deps: Seq[Target[_]]) = copy(dependencies = dependencies ++ deps)
+  def after(ds: TargetVector[_]) =
+    copy(dependencies = dependencies ++ ds.targets)
+
+  /** Add dependencies, "build this after these" */
+  def after(ds: Seq[Target[_]]) = copy(dependencies = dependencies ++ ds)
 
   /** Add dependencies */
-  def deps (dep1: Target[_], deps: Target[_]*) = copy(dependencies = dependencies ++ (dep1 +: deps))
+  def deps(d1: Target[_], ds: Target[_]*) =
+    copy(dependencies = dependencies ++ (d1 +: ds))
 
   /** Add dependencies */
-  def deps (deps: Seq[Target[_]]) = copy(dependencies = dependencies ++ deps)
+  def deps(ds: TargetVector[_]) =
+    copy(dependencies = dependencies ++ (ds.targets))
+
+  /** Add dependencies */
+  def deps(ds: Seq[Target[_]]) = copy(dependencies = dependencies ++ ds)
+
 
   /** Add an action to the target. This is NOT the method to call to build a target. */
   def apply(action: Context[T] => Result): Target[T] = copy(actions = actions :+ action)
@@ -81,6 +92,7 @@ case class Target[T] protected (
     }
 }
 
+
 /**
  * Encapsulates a Vector of targets, purely so that user can add an action literal
  * to all of them at once.
@@ -105,4 +117,10 @@ case class TargetVector[T](targets: Vector[Target[T]]) {
   /** Add an action to all the targets. */
   def apply(action: Context[T] => Result): TargetVector[T] =
     copy(targets = targets.map(t => t.copy(actions = t.actions :+ action)))
+
+  /** Append target vectors. */
+  def ++ (tv: TargetVector[T]): TargetVector[T] = TargetVector(targets ++ tv.targets)
+
+  /** Append target vectors. */
+  def ++ (seq: Seq[Target[T]]): TargetVector[T] = TargetVector(targets ++ seq)
 }
